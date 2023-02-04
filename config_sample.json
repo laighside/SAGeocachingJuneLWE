@@ -1,0 +1,73 @@
+{
+    /* June LWE Website Configuration file */
+    /* This is a sample file with confidential data removed, you need to fill in the missing data before use */
+    /* The default location for this file is /etc/jlwe/jlwe.json but this can be changed in JlweCore.cpp, or by defining CONFIG_FILE at compile time */
+
+    /* The domain of the website */
+    "websiteDomain": "jlwe.org",
+
+    /* Use http or https for internal links */
+    "http": "https://",
+
+    /* Email to display publicly on website */
+    "adminEmail": "admin@jlwe.org",
+
+    /* Email to use in "from" field - must have the same domain name as the website */
+    "mailerAddress": "mail@jlwe.org",
+
+    /* The source domain used when forwarding emails
+       usually the same at the website domain */
+    "emailForwarderDomain": "jlwe.org",
+
+    /* The max size for POST requests */
+    "maxPostSize": 500000,
+
+    /* Is the contact us form on the website enabled? */
+    "contactEnable": true,
+
+    /* MySQL database credentials */
+    "mysql": {
+        "username": "",
+        "password": "",
+        "database": "",
+        "host": "localhost"
+    },
+
+    /* Settings for the file manager */
+    "files": {
+        "directory":"",
+        "urlPrefix":"/files",
+        "maxUploadSize":104857600,
+        "imagePrefix":"/img/uploads"
+    },
+
+    /* Settings for Google reCAPTCHA service */
+    "recaptcha": {
+        "url":"https://www.google.com/recaptcha/api/siteverify",
+        "key":""
+    },
+
+    /* API key for Google Maps */
+    "GoogleMapsApiKey": "",
+
+    /* Path to the Maxmind GeoIP database file */
+    "mmdbFilename": "",
+
+    /* Settings for Stripe Payments account */
+    "stripe": {
+        "url":"https://api.stripe.com/v1/checkout/sessions",
+        "publicKey":"",
+        "secretKey":"",
+        "publicKeyTest":"",
+        "secretKeyTest":"",
+        "testMode":false,
+        "webhookIPAddressList": [
+            ""
+        ],
+        "webhookSigningSecrets": [
+            ""
+        ]
+    }
+
+}
+

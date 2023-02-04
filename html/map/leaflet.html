@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+       #map {
+       position: absolute;
+       top: 0;
+       left: 0;
+       width: 100%;
+       height: 100%;
+       }
+       html, body {
+            margin:0;
+            padding:0;
+            width:100%;
+            height:100%;
+       }
+    </style>
+    <meta charset="UTF-8"/>
+    <meta name="description" content="Online map of the June LWE game caches - for use on mobile phone browsers."/>
+    <meta name="keywords" content="SA Geocaching,June LWE Event,JLWE,Online map"/>
+    <meta name="author" content="SA Geocaching"/>
+    <meta name="google-site-verification" content="gkPaf_hyjrm4feVKS53tVX-UAx5PavDLJ3Ym1nk0Hdc" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+
+    <!-- Leaflet JS -->
+    <link rel="stylesheet" href="/css/leaflet.css" />
+    <script type="text/javascript" src="/js/ext/leaflet.js"></script>
+
+    <!-- For Google maps -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDI4Sojm2qDipIgzO2jVNv95u4HxkjLcNI"></script>
+    <script src='https://unpkg.com/leaflet.gridlayer.googlemutant@latest/Leaflet.GoogleMutant.js'></script>
+
+    <!-- For KML files -->
+    <script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js'></script>
+
+    <!-- Other JS functions -->
+    <script type="text/javascript" src="/js/utils.js"></script>
+    <script type="text/javascript" src="/js/geo_maths.js"></script>
+
+<!--FILES-->
+
+    <script type="text/javascript">
+
+        var openedInfoWindow  = null;   // First declaration for the infowindow to allow closing
+        var openedMarkerPosition = null;
+        var userMarker = null;
+        var map;
+        var myLatLng = null;
+
+        window.onload = function(){
+            initMap();
+        }
+
+        function updateDistanceBearing() {
+            var distString = '';
+            if ((openedMarkerPosition) && (myLatLng)) {
+                var distance = getDistance(new Point(myLatLng.lat, myLatLng.lng), new Point(openedMarkerPosition.lat, openedMarkerPosition.lng));
+                var bearing = getBearing(new Point(myLatLng.lat, myLatLng.lng), new Point(openedMarkerPosition.lat, openedMarkerPosition.lng));
+
+                var distString = 'Distance: ';
+                if (distance > 1){
+                    distString = distString + distance.toFixed(2) + 'km'
+                }else{
+                    distString = distString + (distance * 1000).toFixed(0) + 'm'
+                }
+                distString = distString + '<br/>Bearing: ' + bearing.toFixed(1) + '°';
+            }
+
+            var contentString = openedInfoWindow.getContent();
+            var n = contentString.indexOf("<div id=\"dist\">") + 15;
+            contentString = contentString.substring(0, n) + distString + contentString.substring(contentString.indexOf("</div>", n));
+            openedInfoWindow.setContent(contentString);
+        }
+
+        function createMarkerIcon(point, text, pin, map) {  // From GCA
+            // Define the icon image to display
+            var iconimage = "/img/gmap_" + pin + ".png";
+            // Create the image
+            var customIcon = L.Icon.extend({
+                options: {
+                    iconUrl: iconimage,
+                    iconAnchor:   [10, 34],
+                    popupAnchor:  [0, -34]
+                }
+            });
+
+            var image = new customIcon();
+            // Create the marker at point on map with icon image
+            var marker = L.marker(point, {icon: image});
+            // Info (popup) window with cache details
+            marker.bindPopup(text);
+            marker.on("popupopen", function (event) {
+                openedInfoWindow = event.popup;
+                openedMarkerPosition = point;
+                updateDistanceBearing();
+            });
+            marker.on("popupclose", function (event) {
+                openedInfoWindow = null;
+            });
+            // Add marker to map
+            marker.addTo(map);
+
+            // Send the marker details back to add to the array
+            return marker;
+        }
+
+        function initMap() {
+            //make layers
+            var osm_layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            });
+
+            var ocm_layer = L.tileLayer('https://tile.thunderforest.com/cycle/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenCycleMap, ' + 'Map data ' + '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            });
+
+            var google_layer = L.gridLayer.googleMutant({
+                type: 'roadmap' // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
+            });
+
+            var satellite_layer = L.gridLayer.googleMutant({
+                type: 'satellite' // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
+            });
+
+            var terrain_layer = L.gridLayer.googleMutant({
+                type: 'terrain' // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
+            });
+
+            var hybrid_layer = L.gridLayer.googleMutant({
+                type: 'hybrid' // valid values are 'roadmap', 'satellite', 'terrain' and 'hybrid'
+            });
+
+            //make map
+            map = L.map('map').setView([-34.88, 138.58], 10);
+
+            //make layer controls
+            var baseMaps = {
+                "OSM": osm_layer,
+                "OCM": ocm_layer,
+                "Google Maps": google_layer,
+                "Satellite": satellite_layer,
+                "Terrain": terrain_layer,
+                "Hybrid": hybrid_layer
+            };
+            L.control.layers(baseMaps).addTo(map);
+            osm_layer.addTo(map);
+
+            //add game zone outline (kml)
+            if (kml_src.length > 0){
+                var customLayer = L.geoJson(null, {
+                    style: function(feature) {
+                        return { fillColor: "#FF000000" };
+                    }
+                });
+                var game_kml = omnivore.kml(kml_src, null, customLayer).addTo(map);
+                game_kml.on('ready', function() {
+                    map.fitBounds(game_kml.getBounds())
+                });
+            };
+
+            //add caches to map
+            if (gpx_src.length > 0){
+            downloadUrl(gpx_src, 'true',
+             function(data, responseCode) {
+             //parser = new DOMParser();
+             //var documentElement = xmlParse(data);
+                var caches = data.documentElement.getElementsByTagName("wpt");
+                for (var i=0; i<caches.length; i++) {
+                    var point = new L.latLng(parseFloat(caches[i].getAttribute("lat")),parseFloat(caches[i].getAttribute("lon")));
+                    var code, name, owner, type;
+                    for (var j=0; j<caches[i].childNodes.length; j++) {
+                        if (caches[i].childNodes[j].nodeName == 'name'){
+                            code = caches[i].childNodes[j].textContent;
+                        };
+                        if (caches[i].childNodes[j].nodeName == 'groundspeak:cache'){
+                            for (var k=0; k<caches[i].childNodes[j].childNodes.length; k++) {
+                                if (caches[i].childNodes[j].childNodes[k].nodeName == 'groundspeak:name'){
+                                    name = caches[i].childNodes[j].childNodes[k].textContent;
+                                };
+                                if (caches[i].childNodes[j].childNodes[k].nodeName == 'groundspeak:placed_by'){
+                                    owner = caches[i].childNodes[j].childNodes[k].textContent;
+                                };
+                                if (caches[i].childNodes[j].childNodes[k].nodeName == 'groundspeak:type'){
+                                    type = caches[i].childNodes[j].childNodes[k].textContent;
+                                };
+                            };
+                        };
+                    };
+
+                    var text = '<p>Cache: ' + code + ' - ' + name + '<br/>By: ' + owner + '</p><p><div id="dist"></div></p>';
+                    var pin = 't';
+                    //if (owner == 'JLWE'){
+                    //    pin = 't_blue';
+                    //};
+                    if (type == 'Earthcache' || type == 'Virtual'){
+                        pin = 'v';
+                    };
+                    if (type == 'Unknown Cache' || type == 'Multi'){
+                        pin = 'u';
+                    };
+                    var tempMarker = new createMarkerIcon(point,text,pin,map);
+                };
+            });
+            };
+
+            // blue dot for current location
+            var wpid = navigator.geolocation.watchPosition(geo_success, geo_error, geo_options);
+        }
+
+        function geo_success(position) {
+            myLatLng = new L.latLng(position.coords.latitude, position.coords.longitude);
+            if (userMarker){
+                userMarker.setLatLng(myLatLng);
+            }else{
+                var customIcon = L.Icon.extend({
+                    options: {
+                        iconUrl: "/img/bluedot.png",
+                        iconAnchor:   [7, 7]
+                    }
+                });
+                var image = new customIcon();
+                userMarker = L.marker(myLatLng, {icon: image, zIndexOffset: 1000});
+                userMarker.addTo(map);
+            }
+
+            if (openedInfoWindow) {
+                updateDistanceBearing();
+            }
+
+        }
+
+        function geo_error() {
+        }
+
+        var geo_options = {
+          enableHighAccuracy: true,
+          maximumAge        : 30000,
+          timeout           : 27000
+        };
+    </script>
+
+    <title>June LWE game map</title>
+  </head>
+  <body>
+    <div id="map"></div>
+  </body>
+</html>

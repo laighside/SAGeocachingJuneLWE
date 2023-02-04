@@ -1,0 +1,282 @@
+<!--
+Cache hide form
+
+This file is part of the SA Geocaching JLWE website, full details (including licence) can be found on Github.
+https://github.com/laighside/SAGeocachingJuneLWE
+-->
+
+<!--NAME=Hide cache form-->
+<!--NO_NOTE-->
+<h1>June LWE cache hide form</h1>
+
+<form id="hideForm" action="/cgi-bin/hide_cache.cgi" method="POST">
+
+<!-- One "tab" for each step in the form: -->
+<div class="formTab"><p>Fill out the form below to submit your cache hide.</p>
+  <p>Team name:</p><div class="margin"><input type="text" name="team_name" id="team_name" placeholder="Team name..." oninput="this.className = ''"></div>
+  <p>Phone number: (we will use this to contact you if there are any issues with your cache)</p><div class="margin"><input type="tel" name="phone_number" id="phone_number" placeholder="Phone..." oninput="this.className = ''"></div>
+  <p>Cache number:</p><div class="margin"><input type="number" name="cache_number" id="cache_number" min="0" max="100" oninput="this.className = ''"></div>
+  <p>Cache name:</p><div class="margin"><input type="text" name="cache_name" id="cache_name" placeholder="Cache name..." oninput="this.className = ''"></div>
+  <p>Public hint:</p><div class="margin"><textarea name="public_hint" rows="3" cols="35" placeholder="This hint will appear on everyones phones and GPSs" oninput="this.className = ''"></textarea></div>
+  <p>Private hint:</p><div class="margin"><textarea name="private_hint" rows="3" cols="35" placeholder="This hint is only visible to the organisers - it is used to check if your cache goes missing" oninput="this.className = ''"></textarea></div>
+</div>
+
+<div class="formTab"><h3>Coordinates:</h3>
+  <p>Please enter and verify the coordinates of your cache:</p>
+  <div style="width: 100%;display:table;padding-top:10px;">
+  <div style="display:table-cell;"><div style="margin-right:10px;"><input type="text" id="coordinates" style="width:100%" onchange="coordinatesChanged()" /></div></div> <div style="width: 100px;display:table-cell;"><input type="button" onclick="updateCoords(true)" value="Verify" style="width:100%;" /></div>
+  </div>
+  <div id="map_area" style="height:300px;width:100%;margin:10px 0px 10px 0px;"></div>
+</div>
+
+<div class="formTab"><h3>Cache Details</h3>
+  <p>If your cache requires a walk, how far is it from the nearest road? (leave as 0 if your cache is a drive-by)</p>
+  <div class="margin"><input type="number" name="actual_distance" id="actual_distance" min="0" max="100000" step="10" value="0"> meters</div>
+  <p style="margin-top: 20px;">Cache attributes:</p>
+  <div class="margin"><p style="line-height: 2em;"><span class="checkbox_container"><label>This is a creative and/or camouflaged cache
+    <input type="checkbox" name="camo" value="true" />
+    <span class="checkmark"></span>
+  </label></span><br />
+  <span class="checkbox_container"><label>This cache will become a permanent cache after the game
+    <input type="checkbox" name="perm" value="true" />
+    <span class="checkmark"></span>
+  </label></span><br />
+  <span class="checkbox_container"><label>This cache is on private property (with permission)
+    <input type="checkbox" name="private" value="true" />
+    <span class="checkmark"></span>
+  </label></span></p></div>
+</div>
+
+<div class="formTab"><h3>Review &amp; Submit</h3>
+  <p>Team: <span id="summary_team_name"></span><br />
+  Phone: <span id="summary_phone"></span></p>
+
+  <p>Cache number <span id="summary_cache_number"></span>: <span id="summary_cache_name"></span></p>
+  <p>Coordinates: <span id="summary_coords" style="font-weight:bold;"></span><br />
+  &nbsp;&nbsp;Zone bonus points: <span id="summary_zone_bonus"></span><br />
+  &nbsp;&nbsp;Walking distance: <span id="summary_road_distance"></span>m</p>
+
+  <p>Review the details above and if they are all correct, press submit below</p>
+</div>
+
+<!-- Hidden fields that get set by JS and then submitted with the form-->
+<div>
+  <input type="hidden" id="lat_submit" name="lat" value="0" />
+  <input type="hidden" id="lon_submit" name="lon" value="0" />
+  <input type="hidden" id="distance_submit" name="osm_distance" value="0" />
+  <input type="hidden" id="zone_points_submit" name="zone_points" value="0" />
+</div>
+
+<div>
+  <ul id="formMessages" class="formMessages">
+  </ul>
+</div>
+
+<div class="progress_buttons">
+  <div>
+    <div>
+    <div><input type="button" id="prevBtn" onclick="nextPrev(-1)" value="Previous" /></div>
+    </div><div>
+    <div><input type="button" id="nextBtn" onclick="nextPrev(1)" value="Next" /></div>
+    </div>
+  </div>
+</div>
+
+</form>
+
+
+<script type="text/javascript" src="/cgi-bin/js_files.cgi"></script>
+<script type="text/javascript" src="/js/utils.js"></script>
+<script type="text/javascript" src="/js/geo_maths.js"></script>
+<script type="text/javascript" src="/js/form_tools.js"></script>
+<script type="text/javascript" src="/js/maps.js"></script>
+<script type="text/javascript" src="/js/ext/coordinate-parser/coordinate-number.js"></script>
+<script type="text/javascript" src="/js/ext/coordinate-parser/coordinates.js"></script>
+<script type="text/javascript" src="/js/ext/coordinate-parser/validator.js"></script>
+
+<!-- Leaflet JS -->
+<link rel="stylesheet" href="/css/leaflet.css" />
+<script type="text/javascript" src="/js/ext/leaflet.js"></script>
+<!-- For KML files -->
+<script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js'></script>
+
+<!-- For Google maps -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDI4Sojm2qDipIgzO2jVNv95u4HxkjLcNI&callback=onPageLoad"></script>
+
+
+<script>
+var currentTab = 0; // Current tab is set to be the first tab (0)
+var summary_page = 3;
+showTab(currentTab); // Display the current tab
+
+function validateForm() {
+
+  if (currentTab == 1) {
+    if (verified_coordinates == false) {
+      removeFormMessages();
+      setFormMessagesColor("red");
+      addFormMessage("Coordinates:", "Please enter and verify the coordinates of your cache");
+    }
+    if (valid_coordinates) {
+      removeFormMessages();
+      setFormMessagesColor("red");
+    }
+    return valid_coordinates;
+  }
+
+  removeFormMessages();
+  var valid = true;
+
+  if (currentTab == 0) {
+    var element = document.getElementById("team_name");
+    if (element.value == "") {
+      element.className += " invalid";
+      addFormMessage("Team Name:", "Please enter your team name");
+      valid = false;
+    }
+
+    element = document.getElementById("phone_number");
+    if (element.value == "") {
+      element.className += " invalid";
+      addFormMessage("Phone Number:", "Please enter a valid phone number");
+      valid = false;
+    }
+
+    element = document.getElementById("cache_number");
+    if (element.value == "" || isNaN(parseInt(element.value)) || parseInt(element.value) <= 0 || parseInt(element.value) > 100) {
+      element.className += " invalid";
+      addFormMessage("Cache Number:", "Please enter a valid cache number (between 1 and 100)");
+      valid = false;
+    }
+
+    // Cache name is optional
+    /*element = document.getElementById("cache_name");
+    if (element.value == "") {
+      element.className += " invalid";
+      addFormMessage("Cache Name:", "Please enter a cache name");
+      valid = false;
+    }*/
+  }
+
+  if (currentTab == 2) {
+    // nothing to check
+  }
+
+  return valid;
+}
+
+function leavingTab(n) {
+  if (n == 0) {
+    invalidateMapSize(map);
+    setMapZoom(map, 16);
+    updateCoords(false);
+  }
+
+  if (n == 1) {
+    document.getElementById("lat_submit").value = latitude;
+    document.getElementById("lon_submit").value = longitude;
+    document.getElementById("zone_points_submit").value = zone_bonus_points;
+    document.getElementById("distance_submit").value = osm_distance;
+  }
+}
+
+function updateSummary() {
+  if (document.getElementById("cache_name").value == "") {
+    document.getElementById("cache_name").value = document.getElementById("cache_number").value.toString();
+  }
+
+  document.getElementById("summary_team_name").innerText = document.getElementById("team_name").value;
+  document.getElementById("summary_phone").innerText = document.getElementById("phone_number").value;
+  document.getElementById("summary_cache_number").innerText = document.getElementById("cache_number").value;
+  document.getElementById("summary_cache_name").innerText = document.getElementById("cache_name").value;
+  document.getElementById("summary_coords").innerText = makeCoordString(latitude, longitude);
+  document.getElementById("summary_zone_bonus").innerText = zone_bonus_points.toString();
+  document.getElementById("summary_road_distance").innerText = document.getElementById("actual_distance").value;
+}
+
+function submitForm() {
+  // save cookies
+  localStorage.setItem('teamname', document.getElementById("team_name").value);
+  localStorage.setItem('phone', document.getElementById("phone_number").value);
+
+  document.getElementById("hideForm").submit();
+}
+
+var latitude = 0;
+var longitude = 0;
+var zone_bonus_points = 0;
+var osm_distance = 0;
+var valid_coordinates = false;
+var verified_coordinates = false;
+
+var map_marker;
+var map;
+
+function onPageLoad() {
+    document.getElementById("coordinates").value = default_coordinates;
+    document.getElementById("team_name").value = localStorage.getItem("teamname");
+    document.getElementById("phone_number").value = localStorage.getItem("phone");
+
+    map = loadMap('map_area', kml_file_current, 'satellite');
+    map_marker = addMarker(map);
+}
+
+function updateCoords(clicked){
+    try {
+        var position = new Coordinates(document.getElementById("coordinates").value);
+
+        latitude = position.getLatitude();
+        longitude = position.getLongitude();
+        moveMarker(map, map_marker, latitude, longitude);
+
+        if (clicked) {
+            downloadUrl('/cgi-bin/get_coord_info.cgi?lat=' + latitude.toString() + '&lon=' + longitude.toString(), null,
+            function(data, responseCode) {
+
+                zone_bonus_points = 0;
+                osm_distance = 0;
+                valid_coordinates = false;
+                verified_coordinates = true;
+                removeFormMessages();
+                setFormMessagesColor("red");
+
+                if (responseCode === 200){
+                    var jsonObj = JSON.parse(data);
+
+                    if (jsonObj.in_playing_field != null){
+                        if (jsonObj.in_playing_field == true){
+                            addFormMessage("Coordinates:", "Cache is inside playing field. Check the satellite image above to make sure you haven't made any typos.");
+                            setFormMessagesColor("green");
+                            valid_coordinates = true;
+
+                            if (jsonObj.zone_name != null){
+                                zone_bonus_points = jsonObj.zone_points;
+                                addFormMessage("Bonus:", "Cache is in bouns zone: " + jsonObj.zone_name + " (" + jsonObj.zone_points + " points)");
+                                }
+                            if (jsonObj.from_osm_road != null){
+                                osm_distance = jsonObj.from_osm_road;
+                            }
+                        }else{
+                            addFormMessage("Coordinates:", "Your cache is not in the playing field");
+                            valid_coordinates = false;
+                        }
+                    }else{
+                        addFormMessage("Error:", jsonObj.error);
+                    }
+                }else{
+                    addFormMessage("HTTP Error:", responseCode.toString());
+                }
+            });
+        }
+
+    } catch (error) {
+        alert('Invalid Coords: ' + error);
+    }
+}
+
+function coordinatesChanged(){
+    valid_coordinates = false;
+    verified_coordinates = false;
+}
+
+</script>

@@ -1,0 +1,207 @@
+/**
+  @file    desktop.css
+  @author  Ben <admin@laighside.com>
+  @version 1.0
+
+  @section DESCRIPTION
+  CSS that is used on the desktop version of the website
+
+  This file is part of the SA Geocaching JLWE website, full details (including licence) can be found on Github.
+  https://github.com/laighside/SAGeocachingJuneLWE
+ */
+
+body {
+	color: #000000;
+	font-family: Arial, Helvetica, sans-serif;
+        font-size: 16px;
+	margin: 0;
+	min-width: 976px;
+	padding: 0;
+}
+
+p a:hover {
+	color: #66a143;
+}
+#page {
+        background: #4FAE27;
+	margin: 0 auto;
+	padding: 0 20px;
+	width: 976px;
+}
+#header {
+	background: #ffffff;
+}
+#header #login {
+	background: #4FAE27;
+	height: 20px;
+	line-height: 20px;
+	text-align: right;
+}
+#header #login p {
+        margin: 0;
+}
+#header #login a {
+	color: #000000;
+}
+#header #banner img {
+	display: block;
+        /*margin: 0 auto;*/
+}
+#header #menu > ul {
+	background: #ffffff;
+	color: #000000;
+        /*float: left;*/
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	width: 976px;
+}
+#header #menu > ul > li {
+	background: #4FAE27;
+        /*float: left;*/
+	position: relative;
+        /*width: 33.33%;*/
+        width: 25%;
+        text-align: center;
+        display: inline-block;
+}
+#header #menu > ul > li > a {
+	color: #000000;
+	font-size: 20px;
+	display: block;
+        line-height: 49px;
+	text-decoration: none;
+}
+#header #menu ul li a:hover {
+        background: #71D645;
+}
+
+#header #menu > ul > li > ul {
+        display: none;
+        position: absolute;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        background: #4FAE27;
+        width: 100%;
+        text-align: center;
+        z-index: 1;
+}
+
+#header #menu > ul > li > ul > li > a {
+        color: #000000;
+        font-size: 20px;
+        display: block;
+        font-size: 16px;
+        line-height: 29px;
+        text-decoration: none;
+}
+
+#header #menu > ul > li:hover ul {
+        display: block;
+}
+
+#body div.header div {
+	position: relative;
+}
+#body div.header div a img,
+#body div.header ul li a.figure img,
+#body div.body ul li a img {
+	display: block;
+        filter: alpha(opacity=100);/* Needed for IE8 and old versions */
+	opacity: 1;
+}
+#body div.header div a img:hover,
+#body div.header ul li a.figure img:hover,
+#body div.body ul li a img:hover {
+        filter: alpha(opacity=90);/* Needed for IE8 and old versions */
+	opacity: 0.9;
+}
+#admin_menu > ul {
+        background: #ffffff;
+        color: #000000;
+        float: left;
+        list-style: none;
+        margin: 0;
+        width: 976px;
+        padding-bottom: 20px;
+        padding-top: 10px;
+        padding-left: 0;
+        padding-right: 0;
+}
+#admin_menu > ul > li {
+        background: #4FAE27;
+        float: left;
+        position: relative;
+        /*width: 156px;*/
+        width: 16%;
+}
+#admin_menu > ul > li > a {
+        color: #000000;
+        font-size: 16px;
+        display: block;
+        line-height: 35px;
+        text-align: center;
+        text-decoration: none;
+}
+#admin_menu > ul > li.current > a,
+#admin_menu > ul > li.current > a:hover,
+#admin_menu ul li ul li.current a,
+#admin_menu ul li ul li.current a:hover {
+        background: #71D645;
+}
+#admin_menu ul li a:hover {
+        background: #71D645;
+}
+#body div#content {
+	overflow: hidden;
+	padding: 20px 20px;
+}
+#body div#content h1 {
+        font-size: 24px;
+	letter-spacing: 0.028em;
+	margin: 0;
+	text-transform: uppercase;
+}
+#body div#content h2 {
+        font-size: 20px;
+}
+#body div#content h3 {
+        font-size: 18px;
+        font-weight: bold;
+}
+#body div#content h3.first {
+        padding: 12px 0 0;
+}
+#body div#content p {
+        /*padding: 10px 0 0;*/
+        padding: 0;
+        font-size: 16px;
+}
+#body div#content ul {
+        font-size: 16px;
+}
+#body div#content ol {
+        font-size: 16px;
+}
+
+/* Style the input fields */
+input {
+  padding: 10px;
+  /*width: 90%;*/
+  font-size: 17px;
+  border: 1px solid #aaaaaa;
+}
+
+input:not([type]), input[type='text'], input[type='email'], input[type='password'], input[type='tel'] {
+  width: 400px;
+}
+
+/*textarea {
+  width: 100%;
+}*/
+
+/* Set the height of the slideshow images */
+.ss-container {
+  padding-top: 60%; /* height = 60% of the width */
+}

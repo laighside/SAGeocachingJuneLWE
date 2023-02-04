@@ -1,0 +1,21 @@
+Redirect permanent /email /email_signup.html
+Redirect permanent /gmap /gmap.html
+Redirect permanent /hide /hide.html
+
+RewriteEngine on
+
+RewriteRule "^files\/" "/cgi-bin/download_file.cgi"   [PT,L]
+
+RewriteRule "^register" "/cgi-bin/registration/registration_form.cgi"   [PT,L]
+RewriteRule "^camping" "/cgi-bin/registration/registration_form.cgi"   [PT,L]
+RewriteRule "^dinner" "/cgi-bin/registration/registration_form.cgi"   [PT,L]
+
+RewriteRule "^gpx($|\.)" "/cgi-bin/gpx.cgi"   [PT,L]
+
+RewriteRule "^g?map" "/cgi-bin/jlwe_map.cgi"   [PT,L]
+
+RewriteRule "[0-9]{4}\.html$" "/cgi-bin/jlwe_year.cgi"   [PT,L]
+
+RewriteCond %{REQUEST_URI} !^/h5ai/
+RewriteRule "^[^\/\\]*\.html?$" "/cgi-bin/jlwe.cgi"
+

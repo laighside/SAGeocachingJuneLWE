@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="description" content="The official website of the SA Geocaching June LWE events. GPX files, game zones and mailing list signup."/>
+    <meta name="keywords" content="SA Geocaching,June LWE Event,JLWE,Email signup"/>
+    <meta name="author" content="SA Geocaching"/>
+    <meta name="google-site-verification" content="gkPaf_hyjrm4feVKS53tVX-UAx5PavDLJ3Ym1nk0Hdc" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>**TITLE**</title>
+    <link rel="stylesheet" type="text/css" href="/css/common.css"/>
+    <link rel="stylesheet" type="text/css" href="/css/mobile.css"/>
+    <link rel="stylesheet" type="text/css" href="/css/lightbox.css"/>
+</head>
+<script>
+function toggleMenu() {
+  var x = document.getElementById("page_menu");
+  if (x.style.display === "block") {
+    x.style.display = "none";
+  } else {
+    x.style.display = "block";
+  }
+}
+function toggleSubMenu(id) {
+  var x = document.getElementById(id);
+  if (x.style.display === "block") {
+    x.style.display = "none";
+    document.getElementById(id + "_arrow").innerHTML = "&#9660;";
+  } else {
+    x.style.display = "block";
+    document.getElementById(id + "_arrow").innerHTML = "&#9650;";
+  }
+}
+</script>
+<body>
+    <div id="page">
+        <div class="topnav">
+            <a class="banner" href="/index.html"><img src="/img/jlwe_logo_mobile.png" alt="June LWE Geocaching" /></a>
+            **MENU**
+            <a href="javascript:void(0);" class="icon" onclick="toggleMenu()">
+                <div class="menu_bar"></div>
+                <div class="menu_bar"></div>
+                <div class="menu_bar"></div>
+            </a>
+        </div>
+        <div class="page_content">
+            <div id="body" class="body">
+                  <div id="content">
+
+                  </div>
+            </div>
+            <div id="footer">
+                <p style="margin:0;">Geocaching SA 2021</p>
+            </div>
+        </div>
+    </div>
+    <script src="/js/ext/lightbox-plus-jquery.js"></script>
+</body>
+</html>

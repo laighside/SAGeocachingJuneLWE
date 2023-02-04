@@ -1,0 +1,162 @@
+/**
+  @file    mobile.css
+  @author  Ben <admin@laighside.com>
+  @version 1.0
+
+  @section DESCRIPTION
+  CSS that is used on the mobile version of the website
+
+  This file is part of the SA Geocaching JLWE website, full details (including licence) can be found on Github.
+  https://github.com/laighside/SAGeocachingJuneLWE
+ */
+
+body {
+        color: #000000;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        margin: 0;
+        padding: 0;
+}
+
+/* Style the navigation menu */
+.topnav {
+  overflow: hidden;
+  background-color: #4FAE27;
+  width: 100%;
+  position: fixed;
+  z-index: 5;
+}
+
+/* Hide the links inside the navigation menu (except for logo/home) */
+.topnav #page_menu {
+  display: none;
+  z-index: 10;
+}
+.topnav #page_menu > div {
+  display: none;
+  z-index: 10;
+  border-bottom: 1px solid #FFFFFF;
+}
+
+/* Style navigation menu links */
+.banner {
+  color: white;
+  text-decoration: none;
+  display: block;
+  height: 60px;
+}
+
+/* Style the hamburger menu*/
+.topnav a.icon {
+  display: block;
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: auto;
+  padding: 10px 15px 11px;
+}
+
+/* Add a grey background color on mouse-over */
+.icon:hover {
+  background-color: #71D645;
+  color: black;
+}
+.topnav #page_menu > a:hover {
+  background-color: #71D645;
+  color: black;
+}
+
+.topnav #page_menu > a {
+    height: 20px;
+    vertical-align: middle;
+    font-size: 20px;
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 10px;
+}
+
+.topnav #page_menu > div > a {
+    height: 20px;
+    vertical-align: middle;
+    font-size: 18px;
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 10px;
+}
+
+.topnav #page_menu > div > a:hover {
+    background-color: #71D645;
+    color: black;
+}
+
+.menu_bar {
+  width: 35px;
+  height: 5px;
+  background-color: white;
+  margin: 6px 0;
+}
+
+.page_content {
+    padding-top: 60px;
+}
+
+#body > div.note {
+        background: #0BA8B4;
+        float: center;
+        margin: 10px;
+        position: relative;
+        font-size: 16px;
+        display: block;
+        text-align: center;
+        padding: 10px;
+}
+
+#body #content {
+        overflow: hidden;
+        padding: 20px 20px;
+}
+#body div#content h1 {
+        font-size: 20px;
+        letter-spacing: 0.028em;
+        margin: 0;
+        text-transform: uppercase;
+}
+#body div#content h3 {
+        font-size: 16px;
+        font-weight: bold;
+        letter-spacing: 0.028em;
+        line-height: 24px;
+        margin: 0;
+        padding: 30px 0 0;
+}
+#body div#content h3.first {
+        padding: 12px 0 0;
+}
+#content p {
+        padding: 10px 0 0;
+        font-size: 16px;
+}
+
+input:not([type]), input[type='text'], input[type='email'], input[type='tel'], input[type='password'] {
+  width: 100%;
+}
+
+textarea {
+  width: 100%;
+}
+
+/* Set the height of the slideshow images */
+.ss-container {
+  padding-top: 120%; /* height = 120% of the width */
+}
+
+/* Mark input boxes that gets an error on validation: */
+input.invalid {
+  background-color: #ffdddd;
+}
+
+img {
+  max-width: 100%;
+}

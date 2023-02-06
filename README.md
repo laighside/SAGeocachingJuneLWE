@@ -91,8 +91,16 @@ make
 ### Apache config
 The Apache config varies depending on how the server is setup. The following things are required for the JLWE website:
 - CGI must be enabled (`mod_cgi`)
+- `mod_rewrite` must be enabled
 - `DocumentRoot` set
 - `ScriptAlias` set for /cgi-bin/ (for example: `ScriptAlias /cgi-bin/ /usr/lib/cgi-bin/`)
+
+### Website login
+The default username is `admin` and the default password is `password`. This password should be changed immediately. The change password link is in the top right of every webpage (when logged in).
+
+On the first use, you also need to reset the number of game caches to a non-zero value (which also populates the cache handout table). This should be done by going to `/cgi-bin/admin/admin_tools.cgi`
+
+There are also many other variables to configure at `/cgi-bin/settings/settings.cgi`
 
 ## Changelog
 - 2017 *(First year with website)*

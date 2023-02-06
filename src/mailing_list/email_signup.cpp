@@ -17,6 +17,7 @@
 #include "../core/CgiEnvironment.h"
 #include "../core/Encoder.h"
 #include "../core/HtmlTemplate.h"
+#include "../core/HttpRequest.h"
 #include "../core/JlweCore.h"
 #include "../core/JlweUtils.h"
 #include "../core/PostDataParser.h"
@@ -43,13 +44,35 @@ int main () {
         }
         postData.parseUrlEncodedForm();
 
+        bool blocked = false;
         std::string email = postData.getValue("email");
         std::string result = "Something has gone wrong. Please let us know at " + std::string(jlwe.config.at("adminEmail"));
 
-        if (EmailTemplates::addEmailtoMailingList(email, &jlwe, &result) == 0) {
-            result = "A confirmation email has been sent to " + Encoder::htmlEntityEncode(email) + "</br>Please click the verification link provided in the email. If you do not verify your email, you will not receive the GPX file.";
+        // Verify recaptcha
+        std::string g_recaptcha_response = postData.getValue("g-recaptcha-response");
+        std::string captchaPost = "secret=" + std::string(jlwe.config.at("recaptcha").at("key")) + "&response=" + g_recaptcha_response + "&remoteip=" + jlwe.getCurrentUserIP();
+        std::string captchaResponse = "{}";
+        HttpRequest request(jlwe.config.at("recaptcha").at("url"));
+        if (request.post(captchaPost, "application/x-www-form-urlencoded")) {
+            captchaResponse = request.responseAsString();
         } else {
-            result = Encoder::htmlEntityEncode(result);
+            blocked = true;
+            result = "Unable to verify CAPTCHA, please try again later or contact " + std::string(jlwe.config.at("adminEmail"));
+        }
+        nlohmann::json captchaResponseJson = nlohmann::json::parse(captchaResponse);
+
+        if (captchaResponseJson.value("success", false) == false) {
+            blocked = true;
+            result = "CAPTCHA fail, please try again or contact " + std::string(jlwe.config.at("adminEmail"));
+        }
+
+        // Add the email to the mailing list if not blocked
+        if (blocked == false) {
+            if (EmailTemplates::addEmailtoMailingList(email, &jlwe, &result) == 0) {
+                result = "A confirmation email has been sent to " + Encoder::htmlEntityEncode(email) + "</br>Please click the verification link provided in the email. If you do not verify your email, you will not receive the GPX file.";
+            } else {
+                result = Encoder::htmlEntityEncode(result);
+            }
         }
 
         // HTML output

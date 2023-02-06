@@ -16,7 +16,7 @@ add_executable(send_email.cgi send_email.cpp)
 target_link_libraries(send_email.cgi email jlwecore ${MYSQLCPPCONN_LIBRARY})
 
 add_executable(email_signup.cgi email_signup.cpp)
-target_link_libraries(email_signup.cgi email jlwecore ${MYSQLCPPCONN_LIBRARY})
+target_link_libraries(email_signup.cgi email jlwecore ${MYSQLCPPCONN_LIBRARY} httprequest)
 
 add_executable(manage_subscription.cgi manage_subscription.cpp)
 target_link_libraries(manage_subscription.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})

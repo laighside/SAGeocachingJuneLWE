@@ -10,6 +10,12 @@
   https://github.com/laighside/SAGeocachingJuneLWE
  */
 
+:root {
+    --main-color: #0B88B4;
+    --second-color: #92DFF8;
+    --menu-text-color: #000000;
+}
+
 a {
         outline: none;
 }
@@ -35,8 +41,8 @@ p {
         padding: 0;
 }
 #footer p {
-        background: #4FAE27;
-        color: #ffffff;
+        background: var(--main-color);
+        color: var(--menu-text-color);
         height: 37px;
         line-height: 37px;
         text-align: center;
@@ -83,7 +89,7 @@ textarea {
 
 /* Style buttons */
 input:not([type]), input[type='button'], input[type='submit'] {
-  background-color: #4FAE27;
+  background-color: var(--main-color);
   padding:0.5em 1em;
   border:0;
   font-size: 16px;
@@ -92,10 +98,10 @@ input:not([type]), input[type='button'], input[type='submit'] {
 }
 
 input[type='button']:hover {
-  background-color:#71D645;
+  background-color: var(--second-color);
 }
 input[type='submit']:hover {
-  background-color:#71D645;
+  background-color: var(--second-color);
 }
 
 input:not([type]):disabled, input[type='button']:disabled, input[type='submit']:disabled {
@@ -614,7 +620,7 @@ user-select: none;
 
 /* Style the buttons inside the tab */
 .pageTabs button {
-  background-color: #4FAE27;
+  background-color: var(--main-color);
   float: left;
   border-top: 0;
   border-bottom: 0;
@@ -629,12 +635,12 @@ user-select: none;
 
 /* Change background color of buttons on hover */
 .pageTabs button:hover {
-  background-color: #71D645;
+  background-color: var(--second-color);
 }
 
 /* Create an active/current tablink class */
 .pageTabs button.active {
-  background-color: #71D645;
+  background-color: var(--second-color);
 }
 
 /* Style the tab content */

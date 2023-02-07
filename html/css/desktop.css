@@ -14,50 +14,60 @@ body {
 	color: #000000;
 	font-family: Arial, Helvetica, sans-serif;
         font-size: 16px;
-	margin: 0;
-	min-width: 976px;
+        margin: auto;
+        min-width: 1000px;
 	padding: 0;
 }
 
-p a:hover {
-	color: #66a143;
+#body {
+        margin: auto;
+        max-width: 1000px;
 }
-#page {
-        background: #4FAE27;
-	margin: 0 auto;
-	padding: 0 20px;
-	width: 976px;
-}
+
+/*p a:hover {
+        color: #66a143;
+}*/
+
 #header {
-	background: #ffffff;
+        background: var(--second-color);
 }
 #header #login {
-	background: #4FAE27;
+        background: var(--main-color);
 	height: 20px;
 	line-height: 20px;
 	text-align: right;
 }
+#header #login > div {
+        margin: auto;
+        width: 1000px;
+}
 #header #login p {
         margin: 0;
+        color: var(--menu-text-color);
 }
 #header #login a {
-	color: #000000;
+        color: var(--menu-text-color);
 }
 #header #banner img {
-	display: block;
-        /*margin: 0 auto;*/
+        display: block;
+        margin: auto;
+        width: 1000px;
 }
-#header #menu > ul {
-	background: #ffffff;
-	color: #000000;
-        /*float: left;*/
+#header #menu {
+        background: var(--main-color);
+}
+#header #menu > div {
+        margin: auto;
+        width: 1000px;
+}
+#header #menu > div > ul {
 	list-style: none;
 	margin: 0;
 	padding: 0;
-	width: 976px;
+        width: 1000px;
 }
-#header #menu > ul > li {
-	background: #4FAE27;
+#header #menu > div > ul > li {
+        background: var(--main-color);
         /*float: left;*/
 	position: relative;
         /*width: 33.33%;*/
@@ -65,31 +75,31 @@ p a:hover {
         text-align: center;
         display: inline-block;
 }
-#header #menu > ul > li > a {
-	color: #000000;
+#header #menu > div > ul > li > a {
+        color: var(--menu-text-color);
 	font-size: 20px;
 	display: block;
         line-height: 49px;
 	text-decoration: none;
 }
-#header #menu ul li a:hover {
-        background: #71D645;
+#header #menu > div ul li a:hover {
+        background: var(--second-color);
 }
 
-#header #menu > ul > li > ul {
+#header #menu > div > ul > li > ul {
         display: none;
         position: absolute;
         list-style: none;
         margin: 0;
         padding: 0;
-        background: #4FAE27;
+        background: var(--main-color);
         width: 100%;
         text-align: center;
         z-index: 1;
 }
 
-#header #menu > ul > li > ul > li > a {
-        color: #000000;
+#header #menu > div > ul > li > ul > li > a {
+        color: var(--menu-text-color);
         font-size: 20px;
         display: block;
         font-size: 16px;
@@ -97,7 +107,7 @@ p a:hover {
         text-decoration: none;
 }
 
-#header #menu > ul > li:hover ul {
+#header #menu > div > ul > li:hover ul {
         display: block;
 }
 
@@ -119,7 +129,7 @@ p a:hover {
 }
 #admin_menu > ul {
         background: #ffffff;
-        color: #000000;
+        color: var(--menu-text-color);
         float: left;
         list-style: none;
         margin: 0;
@@ -130,14 +140,14 @@ p a:hover {
         padding-right: 0;
 }
 #admin_menu > ul > li {
-        background: #4FAE27;
+        background: var(--main-color);
         float: left;
         position: relative;
         /*width: 156px;*/
         width: 16%;
 }
 #admin_menu > ul > li > a {
-        color: #000000;
+        color: var(--menu-text-color);
         font-size: 16px;
         display: block;
         line-height: 35px;
@@ -148,10 +158,10 @@ p a:hover {
 #admin_menu > ul > li.current > a:hover,
 #admin_menu ul li ul li.current a,
 #admin_menu ul li ul li.current a:hover {
-        background: #71D645;
+        background: var(--second-color);
 }
 #admin_menu ul li a:hover {
-        background: #71D645;
+        background: var(--second-color);
 }
 #body div#content {
 	overflow: hidden;

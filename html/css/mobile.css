@@ -21,7 +21,7 @@ body {
 /* Style the navigation menu */
 .topnav {
   overflow: hidden;
-  background-color: #4FAE27;
+  background-color: var(--main-color);
   width: 100%;
   position: fixed;
   z-index: 5;
@@ -46,6 +46,10 @@ body {
   height: 60px;
 }
 
+.banner > img {
+  padding: 5px;
+}
+
 /* Style the hamburger menu*/
 .topnav a.icon {
   display: block;
@@ -58,11 +62,11 @@ body {
 
 /* Add a grey background color on mouse-over */
 .icon:hover {
-  background-color: #71D645;
+  background-color: var(--second-color);
   color: black;
 }
 .topnav #page_menu > a:hover {
-  background-color: #71D645;
+  background-color: var(--second-color);
   color: black;
 }
 
@@ -87,7 +91,7 @@ body {
 }
 
 .topnav #page_menu > div > a:hover {
-    background-color: #71D645;
+    background-color: var(--second-color);
     color: black;
 }
 

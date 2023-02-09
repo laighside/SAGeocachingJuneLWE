@@ -117,6 +117,21 @@ END$$
 DELIMITER ;
 
 /**
+ * clearEmailList This clears the email_list table
+ */
+DROP FUNCTION IF EXISTS clearEmailList;
+DELIMITER $$
+CREATE FUNCTION clearEmailList(userIP VARCHAR(50), usernameIn VARCHAR(100)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    DECLARE dummy INT;
+    SET dummy = log_user_event(userIP, usernameIn, CONCAT("Table email_list was cleared"));
+    DELETE FROM email_list;
+    RETURN 0;
+END$$
+DELIMITER ;
+
+/**
  * clearCacheHandoutList This clears and resets the cache_handout table
  */
 DROP FUNCTION IF EXISTS clearCacheHandoutList;
@@ -139,6 +154,23 @@ BEGIN
         END IF;
     END LOOP createLoop;
 
+    RETURN 0;
+END$$
+DELIMITER ;
+
+/**
+ * clearRegistrations This clears the event_registrations, camping, sat_dinner tables
+ */
+DROP FUNCTION IF EXISTS clearRegistrations;
+DELIMITER $$
+CREATE FUNCTION clearRegistrations(userIP VARCHAR(50), usernameIn VARCHAR(100)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    DECLARE dummy INT;
+    SET dummy = log_user_event(userIP, usernameIn, CONCAT("Tables event_registrations, camping, sat_dinner were cleared"));
+    DELETE FROM event_registrations;
+    DELETE FROM camping;
+    DELETE FROM sat_dinner;
     RETURN 0;
 END$$
 DELIMITER ;
@@ -828,7 +860,7 @@ BEGIN
     DECLARE dummy INT;
     SET result = (SELECT COUNT(*) FROM email_list WHERE unsub_token = token_unsub);
     IF (result = 1) THEN
-        UPDATE email_list SET unsubscribed = 1 WHERE unsub_token = token_unsub;
+        UPDATE email_list SET unsubscribed = 1, verify = 0 WHERE unsub_token = token_unsub;
         SET dummy = log_user_event(userIP, username, CONCAT("Email was unsubscribed (token: ",  token_unsub, " )"));
     END IF;
     RETURN result;

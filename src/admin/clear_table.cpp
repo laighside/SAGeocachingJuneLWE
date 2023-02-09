@@ -76,7 +76,6 @@ int main () {
                         prep_stmt->setString(2, jlwe.getCurrentUsername());
                         prep_stmt->setInt(3, cache_count);
                         res = prep_stmt->executeQuery();
-                        //res->next()
                         delete res;
                         delete prep_stmt;
 
@@ -91,11 +90,32 @@ int main () {
                     prep_stmt->setString(1, jlwe.getCurrentUserIP());
                     prep_stmt->setString(2, jlwe.getCurrentUsername());
                     res = prep_stmt->executeQuery();
-                    //res->next()
                     delete res;
                     delete prep_stmt;
 
                     std::cout << JsonUtils::makeJsonSuccess("Team list successfully cleared");
+
+                } else if (table_name == "email_list") {
+
+                    prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT clearEmailList(?,?);");
+                    prep_stmt->setString(1, jlwe.getCurrentUserIP());
+                    prep_stmt->setString(2, jlwe.getCurrentUsername());
+                    res = prep_stmt->executeQuery();
+                    delete res;
+                    delete prep_stmt;
+
+                    std::cout << JsonUtils::makeJsonSuccess("Mailing list successfully cleared");
+
+                } else if (table_name == "registrations") {
+
+                    prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT clearRegistrations(?,?);");
+                    prep_stmt->setString(1, jlwe.getCurrentUserIP());
+                    prep_stmt->setString(2, jlwe.getCurrentUsername());
+                    res = prep_stmt->executeQuery();
+                    delete res;
+                    delete prep_stmt;
+
+                    std::cout << JsonUtils::makeJsonSuccess("Registration lists successfully cleared");
 
                 } else {
                     std::cout << JsonUtils::makeJsonError("Invalid table name");

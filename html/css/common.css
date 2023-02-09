@@ -60,6 +60,13 @@ p {
     padding: 5px;
 }
 
+.red_button {
+  background-color: #ff0000 !important;
+}
+.red_button:hover {
+  background-color: #ff6767 !important;
+}
+
 .no_border th, .no_border td, .no_border tr {
   border: none;
   border-collapse: collapse;

@@ -115,6 +115,13 @@ public:
      */
     bool getPermissionValue(const std::string &permissionName) const;
 
+    /*!
+     * \brief Returns the filename of the config file
+     *
+     * \return The filename
+     */
+    std::string getConfigFilename() const;
+
 private:
     struct permission {
         std::string name;

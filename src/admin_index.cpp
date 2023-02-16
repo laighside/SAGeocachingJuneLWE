@@ -19,6 +19,8 @@
 #include "core/JlweUtils.h"
 #include "ext/md4c/md4c-html.h"
 
+#define SOURCE_CODE_URL "https://github.com/laighside/SAGeocachingJuneLWE"
+
 // This function takes the output from the markdown parser and appends it to a string
 static void md4c_process_output(const MD_CHAR* text, MD_SIZE size, void* userdata)
 {
@@ -35,7 +37,7 @@ int main () {
         if (!html.outputHeader(&jlwe, "JLWE Admin area", false))
             return 0;
 
-        if (jlwe.isLoggedIn()){ // if logged in
+        if (jlwe.isLoggedIn()) { // if logged in
 
             html.outputAdminMenu();
 
@@ -67,7 +69,9 @@ int main () {
             std::cout << "Server name: " << CgiEnvironment::getServerName() << "<br />\n";
             std::cout << "MySQL version: " << mysql_version << "<br />\n";
             std::cout << "Database name: " << std::string(jlwe.config.at("mysql").at("database")) << "<br />\n";
-            std::cout << "JLWE Software Build: " << __DATE__ << "</p>\n";
+            std::cout << "Config file: " << jlwe.getConfigFilename() << "<br />\n";
+            std::cout << "JLWE Software Build: " << __DATE__ << "<br />\n";
+            std::cout << "Source code: <a href=\"" << SOURCE_CODE_URL << "\">" << SOURCE_CODE_URL << "</a></p>\n";
 
             // Links to log files
             std::cout << "<p style=\"text-align:center;\"><a href=\"/cgi-bin/log/sendmail.cgi\">View sendmail log</a></p>";

@@ -137,6 +137,10 @@ bool JlweCore::getPermissionValue(const std::string &permissionName) const {
     return false;
 }
 
+std::string JlweCore::getConfigFilename() const {
+    return CONFIG_FILE;
+}
+
 std::string JlweCore::getGlobalVar(const std::string& name) const {
     std::string result = "";
     sql::PreparedStatement *prep_stmt = this->mysqlCon->prepareStatement("SELECT value FROM vars WHERE name = ?;");

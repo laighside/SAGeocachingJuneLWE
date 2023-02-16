@@ -14,6 +14,7 @@
 #include <string>
 
 #include "../core/Encoder.h"
+#include "../core/FormElements.h"
 #include "../core/HtmlTemplate.h"
 #include "../core/JlweCore.h"
 
@@ -62,26 +63,56 @@ int main () {
 
             std::cout << "<h2 style=\"text-align:center\">Email list</h2>\n";
             std::cout << "<p>Don't share the email list publicly. Some people have complained in the past about their email addresses been shared.</p>";
-            std::cout << "<p><table align=\"center\"><tr>\n";
-            std::cout << "<th>Email</th><th>Verified</th><th></th>\n";
+            std::cout << "<p><table  id=\"emailTable\" class=\"reg_table\" align=\"center\"><tr>\n";
+            std::cout << "<th>Email</th><th>Verified</th><th>Subscribed</th><th></th>\n";
             std::cout << "</tr>\n";
 
+            std::cout << "<p style=\"text-align:right;\">Show subscribed addresses only: " << FormElements::htmlSwitch("subscribedToggleCB", true) << "</p>\n";
+
+            int rowId = 0;
+
             stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT email,verify FROM email_list WHERE unsubscribed = 0;");
+            res = stmt->executeQuery("SELECT email,verify,unsubscribed FROM email_list;");
             while (res->next()) {
-                std::cout << "<tr>\n";
+                bool subscribed = (res->getInt(3) == 0);
+                std::cout << "<tr" << (subscribed ? "" : " class=\"not_s\" style=\"background-color: #ba8866;\"") <<">\n";
                 std::cout << "<td>" << Encoder::htmlEntityEncode(res->getString(1)) << "</td>\n";
                 if (res->getInt(2)) {
                     std::cout << "<td>Yes</td>\n";
                 } else {
                     std::cout << "<td>No</td>\n";
                 }
-                std::cout << "<td><button onclick=\"resendEmail('" << Encoder::javascriptAttributeEncode(res->getString(1)) << "')\" type=\"button\">Resend verification email</button></td>\n";
+                if (subscribed) {
+                    std::cout << "<td>Yes</td>\n";
+                } else {
+                    std::cout << "<td>No</td>\n";
+                }
+
+                std::vector<FormElements::dropDownMenuItem> menuItems;
+                menuItems.push_back({"resendEmail('" + Encoder::javascriptAttributeEncode(res->getString(1)) + "')", "Resend verification email", subscribed});
+                std::cout << "<td>" << FormElements::dropDownMenu(rowId, menuItems) << "</tr>\n";
+
+                rowId++;
+
                 std::cout << "</tr>\n";
             }
             delete res;
             delete stmt;
             std::cout << "</table></p>\n";
+
+            std::cout << FormElements::includeJavascript("/js/menu.js");
+            std::cout << "<script>\n";
+            std::cout << "function toggleSubscribed(e) {\n";
+            std::cout << "    var new_display = e.currentTarget.checked ? \"none\" : \"table-row\";\n";
+            std::cout << "    var rows = document.getElementsByClassName(\"not_s\");\n";
+            std::cout << "    for(var i = 0; i < rows.length; i++) {\n";
+            std::cout << "        rows[i].style.display = new_display;\n";
+            std::cout << "    }\n";
+            std::cout << "}\n";
+            std::cout << "toggleSubscribed({currentTarget:document.getElementById(\"subscribedToggleCB\")});\n";
+            std::cout << "document.getElementById(\"subscribedToggleCB\").addEventListener('change', toggleSubscribed);\n";
+
+            std::cout << "</script>\n";
 
         } else {
             if (jlwe.isLoggedIn()) {

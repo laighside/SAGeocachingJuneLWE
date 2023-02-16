@@ -43,10 +43,23 @@ int main () {
             std::string email_address = jsonDocument.value("email", "");
 
             if (email_address.size()) {
-                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT verify_token, unsub_token FROM email_list WHERE email = ?;");
+                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT verify_token, unsub_token FROM email_list WHERE email = ? AND unsubscribed = 0;");
                 prep_stmt->setString(1, email_address);
                 res = prep_stmt->executeQuery();
                 if (res->next()) {
+
+                    // write to user log
+                    sql::PreparedStatement *prep_stmt_2;
+                    sql::ResultSet *res_2;
+                    prep_stmt_2 = jlwe.getMysqlCon()->prepareStatement("SELECT log_user_event(?,?,?);");
+                    prep_stmt_2->setString(1, jlwe.getCurrentUserIP());
+                    prep_stmt_2->setString(2, jlwe.getCurrentUsername());
+                    prep_stmt_2->setString(3, "Mailing list verification email resent to \"" + email_address + "\"");
+                    res_2 = prep_stmt_2->executeQuery();
+                    res_2->next();
+                    delete res_2;
+                    delete prep_stmt_2;
+
                     if (EmailTemplates::sendMailingListSignupEmail(email_address, res->getString(1), res->getString(2), &jlwe) == 0) {
                         std::cout << JsonUtils::makeJsonSuccess("The verification email has been sent to \"" + email_address + "\" successfully.");
                     } else {

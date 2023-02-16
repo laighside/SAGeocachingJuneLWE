@@ -29,7 +29,7 @@ int main () {
             std::cout << "Content-Disposition: attachment; filename=email_list.txt\r\n\r\n";
 
             stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT email FROM email_list WHERE verify = 1;");
+            res = stmt->executeQuery("SELECT email FROM email_list WHERE verify = 1 AND unsubscribed = 0;");
             while (res->next()) {
                 std::cout << res->getString(1) << ";";
             }

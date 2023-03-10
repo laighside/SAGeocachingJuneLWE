@@ -118,6 +118,22 @@ CREATE TABLE `camping` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
 --
+-- Table structure for table `contact_form`
+--
+
+DROP TABLE IF EXISTS `contact_form`;
+CREATE TABLE `contact_form` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `ip_address` varchar(50) DEFAULT NULL,
+  `timestamp` datetime DEFAULT NULL,
+  `from_name` text,
+  `email_address` varchar(500) NOT NULL,
+  `message` text,
+  `status` char(1) NOT NULL DEFAULT 'P',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+--
 -- Table structure for table `csp_reports`
 --
 

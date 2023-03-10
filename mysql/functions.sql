@@ -308,6 +308,19 @@ END$$
 DELIMITER ;
 
 /**
+ * insertContactForm This adds an entry to the contact_form table
+ */
+DROP FUNCTION IF EXISTS insertContactForm;
+DELIMITER $$
+CREATE FUNCTION insertContactForm(from_nameIn TEXT, email_addressIn VARCHAR(100), messageIn TEXT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    INSERT INTO contact_form (ip_address, timestamp, from_name, email_address, message, status) VALUES (userIP, NOW(), from_nameIn, email_addressIn, messageIn, 'O');
+    RETURN 1;
+END$$
+DELIMITER ;
+
+/**
  * insertDinner This adds an entry to the sat_dinner table
  */
 DROP FUNCTION IF EXISTS insertDinner;
@@ -513,6 +526,21 @@ BEGIN
         RETURN 0;
     END IF;
     RETURN 1;
+END$$
+DELIMITER ;
+
+/**
+ * setContactFormStatus This sets the status for a given message ID in the contact_form table
+ */
+DROP FUNCTION IF EXISTS setContactFormStatus;
+DELIMITER $$
+CREATE FUNCTION setContactFormStatus(messageId VARCHAR(100), newStatus CHAR(1), userIP VARCHAR(50), username VARCHAR(100)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM contact_form WHERE id = messageId)) THEN
+        UPDATE contact_form SET contact_form.status = newStatus WHERE id = messageId;
+    END IF;
+    RETURN 0;
 END$$
 DELIMITER ;
 

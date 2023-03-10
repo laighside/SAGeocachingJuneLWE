@@ -5,7 +5,7 @@
 
   @section DESCRIPTION
   When a user fills in the "Contact Us" from on the public website, this handles the response.
-  Currently the user's question gets sent to an email address, would be better if it was stored in the database due to large amount of spam.
+  The user's message gets saved in the contact_from table in the database. Due to large amount of spam they don't get sent to an email address.
 
   This file is part of the SA Geocaching JLWE website, full details (including licence) can be found on Github.
   https://github.com/laighside/SAGeocachingJuneLWE
@@ -106,22 +106,22 @@ int main () {
         }
 
         // send the email if the user isn't blocked
-        if (blocked == false){
+        if (blocked == false) {
 
-            std::string ip_country = JlweUtils::getGeoIPCountry(jlwe.getCurrentUserIP(), jlwe.config.value("mmdbFilename", ""));
-
-            std::string to_email = jlwe.getGlobalVar("contact_email");
-            std::string subject = from_name + " contacting you from " + std::string(jlwe.config.at("websiteDomain"));
             std::string userMessage = postData.getValue("message");
-            //std::string htmlContent = "<html><body><p>User IP: " + Encoder::htmlEntityEncode(jlwe.getCurrentUserIP() + ((ip_country.size() > 0) ? (" (" + ip_country + ")") : "")) + "</p>\n<p>" + Encoder::htmlEntityEncode(userMessage) + "</p></body></html>";
-            std::string plainContent = "User IP: " + jlwe.getCurrentUserIP() + ((ip_country.size() > 0) ? (" (" + ip_country + ")") : "") + "\n\n" + Encoder::htmlEntityEncode(userMessage) + "\n\n";
 
-            Email makeEmail;
-            //makeEmail.setHtml(htmlContent);
-            makeEmail.setPlainText(plainContent);
-            if (makeEmail.sendEmail(to_email, email, subject, jlwe.config.at("mailerAddress"), from_name) == 0) {
+            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT insertContactForm(?,?,?,?,?);");
+            prep_stmt->setString(1, from_name);
+            prep_stmt->setString(2, email);
+            prep_stmt->setString(3, userMessage);
+            prep_stmt->setString(4, jlwe.getCurrentUserIP());
+            prep_stmt->setString(5, jlwe.getCurrentUsername());
+            res = prep_stmt->executeQuery();
+            if (res->next() && res->getInt(1)) {
                 result = "Thankyou for your email. We will get back to you as soon as possible.";
             }
+            delete res;
+            delete prep_stmt;
         }
 
         //start of html output

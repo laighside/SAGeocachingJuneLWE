@@ -82,6 +82,7 @@ add_subdirectory(settings)
 add_subdirectory(password)
 add_subdirectory(log)
 add_subdirectory(users)
+add_subdirectory(contact_form)
 
 add_executable(jlwe.cgi jlwe.cpp)
 target_link_libraries(jlwe.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})

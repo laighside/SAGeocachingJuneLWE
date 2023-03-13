@@ -185,6 +185,7 @@ void HtmlTemplate::outputAdminMenu() {
     std::cout << "<li><a href=\"/cgi-bin/email_forward/email_forward.cgi\">Email Forwarding</a></li>\n";
     std::cout << "<li><a href=\"/cgi-bin/notes/notes.cgi\">Notes</a></li>\n";
     std::cout << "<li><a href=\"/cgi-bin/users/users.cgi\">Users</a></li>\n";
+    std::cout << "<li><a href=\"/cgi-bin/contact_form/contact_form.cgi\">Contact Form</a></li>\n";
     std::cout << "</ul>\n</div>\n";
     std::cout << "<p style=\"color:red;text-align:center;\"><noscript>You need javascript enabled to use the admin tools on this site.</noscript></p>\n";
 }

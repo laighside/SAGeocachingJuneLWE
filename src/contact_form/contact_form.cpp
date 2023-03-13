@@ -63,7 +63,7 @@ int main () {
             std::cout << "<p id=\"page_note\" style=\"color:red;text-align:center;\"></p>";
 
             std::cout << "<h2 style=\"text-align:center\">Contact Form</h2>\n";
-            std::cout << "<p>These are the messages that have been submitted through the form on the contact page. Respond to them or mark them as spam.</p>";
+            std::cout << "<p>These are the messages that have been submitted through the form on the contact page. Respond to them or mark them as spam. Coordinate with other admins so each (non-spam) message is only responded to once, then mark the message as \"Resolved\" once complete.</p>";
 
             std::cout << "<h2 style=\"text-align:center\">Message list</h2>\n";
             std::cout << "<p><table id=\"messageTable\" class=\"reg_table\" align=\"center\"><tr>\n";
@@ -83,14 +83,14 @@ int main () {
                 std::cout << "<td>" << Encoder::htmlEntityEncode(res->getString(4)) << "</td>\n";
                 std::string message = res->getString(5);
                 message = JlweUtils::replaceString(message, "\n", " ");
-                if (message.length() > 20)
-                    message = message.substr(0, 20) + "...";
+                if (message.length() > 40)
+                    message = message.substr(0, 37) + "...";
                 std::cout << "<td>" << Encoder::htmlEntityEncode(message) << "</td>\n";
                 std::cout << "<td>" << Encoder::htmlEntityEncode(statusToString(res->getString(6)->at(0))) << "</td>\n";
 
                 std::vector<FormElements::dropDownMenuItem> menuItems;
-                menuItems.push_back({"location.href='/cgi-bin/contact_form/view_message.cgi?id=" + Encoder::javascriptAttributeEncode(Encoder::urlEncode(res->getString(1))) + "'", "View message", true});
-                menuItems.push_back({"markAsSpam('" + Encoder::javascriptAttributeEncode(res->getString(1)) + "')", "Mark as spam", true});
+                menuItems.push_back({"location.href='/cgi-bin/contact_form/view_message.cgi?id=" + std::to_string(res->getInt(1)) + "'", "View message", true});
+                menuItems.push_back({"markAsSpam(" + std::to_string(res->getInt(1)) + ")", "Mark as spam", true});
                 std::cout << "<td>" << FormElements::dropDownMenu(rowId, menuItems) << "</tr>\n";
 
                 rowId++;

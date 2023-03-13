@@ -15,3 +15,6 @@ target_link_libraries(view_message.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 add_executable(set_message_status.cgi set_message_status.cpp)
 target_link_libraries(set_message_status.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 
+add_executable(forward_message.cgi forward_message.cpp)
+target_link_libraries(forward_message.cgi email jlwecore ${MYSQLCPPCONN_LIBRARY})
+

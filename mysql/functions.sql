@@ -342,10 +342,10 @@ DELIMITER ;
  */
 DROP FUNCTION IF EXISTS insertPayment;
 DELIMITER $$
-CREATE FUNCTION insertPayment(userKeyIn VARCHAR(100), timestampIn INT, amount_receivedIn INT, typeIn VARCHAR(100)) RETURNS INT
+CREATE FUNCTION insertPayment(userKeyIn VARCHAR(100), timestampIn INT, amount_receivedIn INT, typeIn VARCHAR(100), userIP VARCHAR(50), userId INT) RETURNS INT
     NOT DETERMINISTIC
 BEGIN
-    INSERT INTO payment_log (user_key, timestamp, amount_received, payment_type) VALUES (userKeyIn, timestampIn, amount_receivedIn, typeIn);
+    INSERT INTO payment_log (user_key, timestamp, amount_received, payment_type, source_user) VALUES (userKeyIn, timestampIn, amount_receivedIn, typeIn, userId);
     RETURN 1;
 END$$
 DELIMITER ;

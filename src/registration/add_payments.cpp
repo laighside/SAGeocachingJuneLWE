@@ -62,11 +62,13 @@ int main () {
                     } catch (...) {}
 
                     if (payment_type == "bank" || payment_type == "cash") {
-                        prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT insertPayment(?,?,?,?);");
+                        prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT insertPayment(?,?,?,?,?,?);");
                         prep_stmt->setString(1, userid);
                         prep_stmt->setInt64(2, time(nullptr));
                         prep_stmt->setInt(3, payment_amount);
                         prep_stmt->setString(4, payment_type);
+                        prep_stmt->setString(5, jlwe.getCurrentUserIP());
+                        prep_stmt->setInt(6, jlwe.getCurrentUserId());
                         res = prep_stmt->executeQuery();
                         if (res->next() && res->getInt(1) == 1) {
                             postMessage = "Payment of " + PaymentUtils::currencyToString(payment_amount) + " for " + gc_user + " has been successfully recorded.";

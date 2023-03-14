@@ -348,6 +348,7 @@ CREATE TABLE `payment_log` (
   `timestamp` int NOT NULL,
   `amount_received` int NOT NULL DEFAULT '0',
   `payment_type` varchar(10) DEFAULT NULL,
+  `source_user` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;

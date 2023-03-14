@@ -18,6 +18,7 @@
 
 #include "../core/CgiEnvironment.h"
 #include "../core/Encoder.h"
+#include "../core/FormElements.h"
 #include "../core/HtmlTemplate.h"
 #include "../core/KeyValueParser.h"
 #include "../core/JlweCore.h"
@@ -50,10 +51,10 @@ int main () {
             bool livemode;
             std::string payment_type;
             std::string status;
-            std::string timestamp;
+            time_t timestamp = 0;
             std::string ip_address;
 
-            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT email_address,gc_username,phone_number,livemode,payment_type,status,timestamp,ip_address FROM event_registrations WHERE idempotency = ?;");
+            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT email_address,gc_username,phone_number,livemode,payment_type,status,UNIX_TIMESTAMP(timestamp),ip_address FROM event_registrations WHERE idempotency = ?;");
             prep_stmt->setString(1, userKey);
             res = prep_stmt->executeQuery();
             if (res->next()) {
@@ -63,14 +64,14 @@ int main () {
                 livemode = res->getInt(4);
                 payment_type = res->getString(5);
                 status = res->getString(6);
-                timestamp = res->getString(7);
+                timestamp = res->getInt64(7);
                 ip_address = res->getString(8);
             }
             delete res;
             delete prep_stmt;
 
             if (!gc_username.size()) {
-                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT email_address,gc_username,phone_number,livemode,payment_type,status,timestamp,ip_address FROM camping WHERE idempotency = ?;");
+                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT email_address,gc_username,phone_number,livemode,payment_type,status,UNIX_TIMESTAMP(timestamp),ip_address FROM camping WHERE idempotency = ?;");
                 prep_stmt->setString(1, userKey);
                 res = prep_stmt->executeQuery();
                 if (res->next()) {
@@ -80,7 +81,7 @@ int main () {
                     livemode = res->getInt(4);
                     payment_type = res->getString(5);
                     status = res->getString(6);
-                    timestamp = res->getString(7);
+                    timestamp = res->getInt64(7);
                     ip_address = res->getString(8);
                 }
                 delete res;
@@ -88,7 +89,7 @@ int main () {
             }
 
             if (!gc_username.size()) {
-                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT email_address,gc_username,phone_number,livemode,payment_type,status,timestamp,ip_address FROM sat_dinner WHERE idempotency = ?;");
+                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT email_address,gc_username,phone_number,livemode,payment_type,status,UNIX_TIMESTAMP(timestamp),ip_address FROM sat_dinner WHERE idempotency = ?;");
                 prep_stmt->setString(1, userKey);
                 res = prep_stmt->executeQuery();
                 if (res->next()) {
@@ -98,7 +99,7 @@ int main () {
                     livemode = res->getInt(4);
                     payment_type = res->getString(5);
                     status = res->getString(6);
-                    timestamp = res->getString(7);
+                    timestamp = res->getInt64(7);
                     ip_address = res->getString(8);
                 }
                 delete res;
@@ -106,7 +107,7 @@ int main () {
             }
 
             if (!gc_username.size()) {
-                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT email_address,gc_username,phone_number,livemode,payment_type,status,timestamp,ip_address FROM merch_orders WHERE idempotency = ?;");
+                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT email_address,gc_username,phone_number,livemode,payment_type,status,UNIX_TIMESTAMP(timestamp),ip_address FROM merch_orders WHERE idempotency = ?;");
                 prep_stmt->setString(1, userKey);
                 res = prep_stmt->executeQuery();
                 if (res->next()) {
@@ -116,7 +117,7 @@ int main () {
                     livemode = res->getInt(4);
                     payment_type = res->getString(5);
                     status = res->getString(6);
-                    timestamp = res->getString(7);
+                    timestamp = res->getInt64(7);
                     ip_address = res->getString(8);
                 }
                 delete res;
@@ -141,7 +142,7 @@ int main () {
                 std::cout << "<p>Email: " << Encoder::htmlEntityEncode(email_address) << "<br />\n";
                 std::cout << "Phone: " << Encoder::htmlEntityEncode(phone_number) << "<br />\n";
                 std::cout << "Payment type: " << Encoder::htmlEntityEncode(payment_type) << "<br />\n";
-                std::cout << "Time received: " << Encoder::htmlEntityEncode(timestamp) << "<br />\n";
+                std::cout << "Time received: <span class=\"date_time\" data-value=\"" << timestamp << "\"></span><br />\n";
                 if (ip_country.size())
                     std::cout << "IP address country: " << Encoder::htmlEntityEncode(ip_country) << "<br />\n";
                 std::cout << "Order status: " << Encoder::htmlEntityEncode(status) << "</p>\n";
@@ -189,7 +190,7 @@ int main () {
 
 
                 std::cout << "<p><span style=\"font-weight:bold;\">Payment History</span><br />\n";
-                std::cout << "Time is in Adelaide time (no daylight savings). The time for bank and cash payments is only approximate.</p>\n";
+                std::cout << "The time for bank and cash payments is only approximate.</p>\n";
 
                 std::cout << "<table class=\"reg_table\" align=\"center\"><tr>\n";
                 std::cout << "<th>ID</th><th>Date/Time</th><th>Payment amount</th><th>Payment type</th>\n";
@@ -203,14 +204,7 @@ int main () {
 
                     std::cout << "<tr>\n";
                     std::cout << "<td>" << Encoder::htmlEntityEncode(table.at(i).id) << "</td>\n";
-
-                    time_t local_time = table.at(i).timestamp + 9 * 60 * 60 + 30 * 60; // hack to get Adelaide time from server in UTC timezone
-                    struct tm * timeinfo;
-                    timeinfo = gmtime(&local_time);
-                    char buffer[100];
-                    strftime (buffer, 100, "%e %b %Y %r",timeinfo);
-
-                    std::cout << "<td>" << Encoder::htmlEntityEncode(std::string(buffer)) << "</td>\n";
+                    std::cout << "<td class=\"date_time\" data-value=\"" << table.at(i).timestamp << "\"></td>\n";
                     std::cout << "<td>" << PaymentUtils::currencyToString(table.at(i).payment_amount) << "</td>\n";
                     std::cout << "<td>" << Encoder::htmlEntityEncode(table.at(i).payment_type) << "</td>\n";
                     std::cout << "</tr>\n";
@@ -226,6 +220,8 @@ int main () {
                 std::cout << "<h2 style=\"text-align:center\">Payment History</h2>\n";
                 std::cout << "<p>User not found.</p>\n";
             }
+
+            std::cout << FormElements::includeJavascript("/js/format_date_time.js");
 
         } else {
             if (jlwe.isLoggedIn()) {

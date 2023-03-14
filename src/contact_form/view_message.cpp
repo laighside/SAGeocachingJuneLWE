@@ -18,6 +18,7 @@
 
 #include "../core/CgiEnvironment.h"
 #include "../core/Encoder.h"
+#include "../core/FormElements.h"
 #include "../core/HtmlTemplate.h"
 #include "../core/KeyValueParser.h"
 #include "../core/JlweCore.h"
@@ -84,15 +85,15 @@ int main () {
             std::string email_address;
             std::string from_name;
             std::string message;
-            std::string timestamp;
+            time_t timestamp = 0;
             std::string status;
 
-            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT ip_address,timestamp,from_name,email_address,message,status FROM contact_form WHERE id = ?;");
+            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT ip_address,UNIX_TIMESTAMP(timestamp),from_name,email_address,message,status FROM contact_form WHERE id = ?;");
             prep_stmt->setInt(1, messageId);
             res = prep_stmt->executeQuery();
             if (res->next()) {
                 ip_address = res->getString(1);
-                timestamp = res->getString(2);
+                timestamp = res->getInt64(2);
                 from_name = res->getString(3);
                 email_address = res->getString(4);
                 message = res->getString(5);
@@ -101,7 +102,7 @@ int main () {
             delete res;
             delete prep_stmt;
 
-            if (timestamp.size()) {
+            if (timestamp) {
 
                 std::cout << "<h2 style=\"text-align:center\">Message from " << Encoder::htmlEntityEncode(from_name) << "</h2>\n";
 
@@ -111,7 +112,7 @@ int main () {
 
                 std::cout << "<p>From: " << Encoder::htmlEntityEncode(from_name) << "<br />\n";
                 std::cout << "Email: " << Encoder::htmlEntityEncode(email_address) << "<br />\n";
-                std::cout << "Time received: " << Encoder::htmlEntityEncode(timestamp) << "<br />\n";
+                std::cout << "Time received: <span class=\"date_time\" data-value=\"" << timestamp << "\"></span><br />\n";
                 std::cout << "IP address: " << Encoder::htmlEntityEncode(ip_address);
                 if (ip_country.size())
                     std::cout << " (" << Encoder::htmlEntityEncode(ip_country) << ")";
@@ -131,6 +132,8 @@ int main () {
             } else {
                 std::cout << "<p>Message not found.</p>\n";
             }
+
+            std::cout << FormElements::includeJavascript("/js/format_date_time.js");
 
         } else {
             if (jlwe.isLoggedIn()) {

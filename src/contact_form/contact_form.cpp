@@ -75,10 +75,10 @@ int main () {
             int rowId = 0;
 
             stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT id,timestamp,from_name,email_address,message,status FROM contact_form ORDER BY timestamp DESC;;");
+            res = stmt->executeQuery("SELECT id,UNIX_TIMESTAMP(timestamp),from_name,email_address,message,status FROM contact_form ORDER BY timestamp DESC;;");
             while (res->next()) {
                 std::cout << "<tr" << ((res->getString(6) == "O") ? "" : " class=\"not_s\"") << ">\n";
-                std::cout << "<td>" << Encoder::htmlEntityEncode(res->getString(2)) << "</td>\n";
+                std::cout << "<td class=\"date_time\" data-value=\"" << res->getInt64(2) << "\"></td>\n";
                 std::cout << "<td>" << Encoder::htmlEntityEncode(res->getString(3)) << "</td>\n";
                 std::cout << "<td>" << Encoder::htmlEntityEncode(res->getString(4)) << "</td>\n";
                 std::string message = res->getString(5);
@@ -102,6 +102,8 @@ int main () {
             std::cout << "</table></p>\n";
 
             std::cout << "<p style=\"padding:20px\"></p>\n";
+
+            std::cout << FormElements::includeJavascript("/js/format_date_time.js");
 
             std::cout << FormElements::includeJavascript("/js/menu.js");
             std::cout << "<script>\n";

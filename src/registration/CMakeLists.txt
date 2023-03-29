@@ -24,6 +24,9 @@ target_link_libraries(add_payments.cgi email jlwecore ${MYSQLCPPCONN_LIBRARY})
 add_executable(get_details.cgi get_details.cpp)
 target_link_libraries(get_details.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 
+add_executable(get_form_content.cgi get_form_content.cpp)
+target_link_libraries(get_form_content.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
+
 add_executable(payment_history.cgi payment_history.cpp)
 target_link_libraries(payment_history.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 
@@ -35,4 +38,7 @@ target_link_libraries(cancel.cgi email jlwecore ${MYSQLCPPCONN_LIBRARY})
 
 add_executable(download_event_registrations.cgi download_event_registrations.cpp RegistrationXLS.cpp)
 target_link_libraries(download_event_registrations.cgi jlwecore ${MYSQLCPPCONN_LIBRARY} OpenXLSX::OpenXLSX pugixml)
+
+add_executable(download_dinner_orders.cgi download_dinner_orders.cpp DinnerOrderXLS.cpp)
+target_link_libraries(download_dinner_orders.cgi jlwecore ${MYSQLCPPCONN_LIBRARY} OpenXLSX::OpenXLSX)
 

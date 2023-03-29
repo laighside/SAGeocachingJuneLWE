@@ -15,7 +15,11 @@
 #include "../ext/nlohmann/json.hpp"
 
 std::string JsonUtils::makeJsonHeader() {
-    return "Content-type:application/json\r\n\r\n";
+    std::string headers = "";
+    // We mostly use JSON for API-style requests that interact with the database, so make sure responses are never cached
+    headers += "Cache-Control: no-store\r\n";
+    headers += "Content-type:application/json\r\n\r\n";
+    return headers;
 }
 
 std::string JsonUtils::makeJsonSuccess(const std::string &success_message) {

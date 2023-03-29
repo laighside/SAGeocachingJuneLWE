@@ -44,7 +44,8 @@ int main () {
             std::cout << "<h2 style=\"text-align:center\">JLWE Event Registrations</h2>\n";
             std::cout << "<p style=\"text-align:center;\">\n";
             std::cout << "<a class=\"admin_button\" style=\"height:95px;\" href=\"/cgi-bin/registration/download_event_registrations.cgi\"><span>Download Spreadsheet<br/><span style=\"font-size:16px;\">(full)</span></span></a>\n";
-            std::cout << "<a class=\"admin_button\" style=\"height:95px;\" href=\"/cgi-bin/registration/download_event_registrations.cgi?simple=true\"><span>Download Spreadsheet<br/><span style=\"font-size:16px;\">(simple)</span></span></a>\n";
+            std::cout << "<a class=\"admin_button\" style=\"height:95px;\" href=\"/cgi-bin/registration/download_event_registrations.cgi?simple=true\"><span>Download Spreadsheet<br/><span style=\"font-size:16px;\">(simple)</span></span></a><br/>\n";
+            std::cout << "<a class=\"admin_button\" style=\"height:95px;\" href=\"/cgi-bin/registration/download_dinner_orders.cgi\"><span>Download Dinner Orders</span></a>\n";
             std::cout << "<a class=\"admin_button\" href=\"/cgi-bin/registration/add_payments.cgi\"><span>Add Payments</span></a>\n";
             std::cout << "</p>\n";
 

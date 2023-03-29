@@ -316,7 +316,7 @@ void RegistrationXLS::makeDinnerSheet(OpenXLSX::XLWorksheet &sheet, sql::Connect
     }
 
     colID++;
-    sheet.cell(1, colID++).value() = "Adult Op1 (Chicken Schnitzel)";
+    /*sheet.cell(1, colID++).value() = "Adult Op1 (Chicken Schnitzel)";
     sheet.cell(1, colID++).value() = "Adult Op2 (Beef Schnitzel)";
     sheet.cell(1, colID++).value() = "Adult Op3 (Beer Battered fish)";
     sheet.cell(1, colID++).value() = "Child Op1 (Chicken Schnitzel)";
@@ -324,12 +324,12 @@ void RegistrationXLS::makeDinnerSheet(OpenXLSX::XLWorksheet &sheet, sql::Connect
     sheet.cell(1, colID++).value() = "Child Op3 (6 Nuggets)";
     sheet.cell(1, colID++).value() = "Dessert Op1 (Chocolate mousse)";
     sheet.cell(1, colID++).value() = "Dessert Op2 (Eton Mess)";
-    sheet.cell(1, colID++).value() = "Dessert Op3 (Fruit salad)";
+    sheet.cell(1, colID++).value() = "Dessert Op3 (Fruit salad)";*/
 
 
     int rowID = 2;
     sql::Statement *stmt = con->createStatement();
-    sql::ResultSet *res = stmt->executeQuery("SELECT UNIX_TIMESTAMP(timestamp),IP_address,registration_id,idempotency,email_address,gc_username,phone_number,number_adults,number_children,dinner_comment,payment_type,stripe_session_id, number_adults_op1, number_adults_op2, number_adults_op3, number_children_op1, number_children_op2, number_children_op3, number_dessert_op1, number_dessert_op2, number_dessert_op3 FROM sat_dinner WHERE status = 'S';");
+    sql::ResultSet *res = stmt->executeQuery("SELECT UNIX_TIMESTAMP(timestamp),IP_address,registration_id,idempotency,email_address,gc_username,phone_number,number_adults,number_children,dinner_comment,payment_type,stripe_session_id, dinner_options_adults, dinner_options_children FROM sat_dinner WHERE status = 'S';");
     while (res->next()){
         std::string userKey = res->getString(4);
         int cost_total = PaymentUtils::getUserCost(con, userKey);
@@ -385,7 +385,7 @@ void RegistrationXLS::makeDinnerSheet(OpenXLSX::XLWorksheet &sheet, sql::Connect
         }
 
         colID++;
-        sheet.cell(rowID, colID++).value() = res->getInt(13);
+        /*sheet.cell(rowID, colID++).value() = res->getInt(13);
         sheet.cell(rowID, colID++).value() = res->getInt(14);
         sheet.cell(rowID, colID++).value() = res->getInt(15);
         sheet.cell(rowID, colID++).value() = res->getInt(16);
@@ -393,7 +393,7 @@ void RegistrationXLS::makeDinnerSheet(OpenXLSX::XLWorksheet &sheet, sql::Connect
         sheet.cell(rowID, colID++).value() = res->getInt(18);
         sheet.cell(rowID, colID++).value() = res->getInt(19);
         sheet.cell(rowID, colID++).value() = res->getInt(20);
-        sheet.cell(rowID, colID++).value() = res->getInt(21);
+        sheet.cell(rowID, colID++).value() = res->getInt(21);*/
 
         rowID++;
     }

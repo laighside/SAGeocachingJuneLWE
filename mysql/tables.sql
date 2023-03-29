@@ -149,6 +149,41 @@ CREATE TABLE `csp_reports` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
 --
+-- Table structure for table `dinner_menu`
+--
+
+CREATE TABLE `dinner_menu` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `name_plural` varchar(100) NOT NULL,
+  `price` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `dinner_menu`
+--
+
+LOCK TABLES `dinner_menu` WRITE;
+INSERT INTO `dinner_menu` VALUES (1, 'Adult meal', 'Adult meals', 0),(2, 'Child meal', 'Child meals', 0);
+UNLOCK TABLES;
+
+--
+-- Table structure for table `dinner_menu_options`
+--
+
+CREATE TABLE `dinner_menu_options` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `menu_item_id` int NOT NULL,
+  `display_order` int NOT NULL DEFAULT '1',
+  `name` varchar(100) NOT NULL,
+  `question` varchar(100) NOT NULL,
+  `option_type` varchar(50) DEFAULT NULL,
+  `option_values` text,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+--
 -- Table structure for table `email_forwarders`
 --
 
@@ -393,15 +428,8 @@ CREATE TABLE `sat_dinner` (
   `payment_type` varchar(10) NOT NULL DEFAULT 'cash',
   `stripe_session_id` varchar(200) DEFAULT NULL,
   `status` char(1) NOT NULL DEFAULT 'P',
-  `number_adults_op1` int NOT NULL DEFAULT '0',
-  `number_adults_op2` int NOT NULL DEFAULT '0',
-  `number_adults_op3` int NOT NULL DEFAULT '0',
-  `number_children_op1` int NOT NULL DEFAULT '0',
-  `number_children_op2` int NOT NULL DEFAULT '0',
-  `number_children_op3` int NOT NULL DEFAULT '0',
-  `number_dessert_op1` int NOT NULL DEFAULT '0',
-  `number_dessert_op2` int NOT NULL DEFAULT '0',
-  `number_dessert_op3` int NOT NULL DEFAULT '0',
+  `dinner_options_adults` text,
+  `dinner_options_children` text,
   PRIMARY KEY (`registration_id`),
   UNIQUE KEY `idempotency_UNIQUE` (`idempotency`),
   UNIQUE KEY `registration_id_UNIQUE` (`registration_id`)

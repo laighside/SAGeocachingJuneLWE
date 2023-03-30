@@ -22,6 +22,23 @@
 #define LOGO_IMAGE_NAME "jlwe_logo.png"
 #define LOGO_IMAGE_TYPE "image/png"
 
+#include "../ext/nlohmann/json.hpp"
+
+std::string dinnerOptionsToString(std::string options) {
+    std::string output = "";
+    nlohmann::json option_array = nlohmann::json::parse(options);
+    for (nlohmann::json::iterator it = option_array.begin(); it != option_array.end(); ++it) {
+        nlohmann::json meal = it.value();
+        output += "<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+        for (nlohmann::json::iterator it2 = meal.begin(); it2 != meal.end(); ++it2) {
+            if (it2.value().is_string())
+                output += std::string(it2.value()) + ", ";
+        }
+        output = output.substr(0, output.size() - 2);
+    }
+    return output;
+}
+
 JlweHtmlEmail::JlweHtmlEmail() {
     // do nothing
 }
@@ -93,6 +110,9 @@ void JlweHtmlEmail::addCostTable(std::string userKey, sql::Connection *con) {
         if (res->getString(2) == "powered") {
             description = "Powered site, " + std::to_string(number_people) + " people, " + std::to_string(camping_nights) + " night" + (camping_nights > 1 ? "s" : "") + " (June " + JlweUtils::numberToOrdinal(arrive_date) + " to " + JlweUtils::numberToOrdinal(leave_date) + ")";
         }
+        if (res->getString(2) == "generator") {
+            description = "Generator site, " + std::to_string(number_people) + " people, " + std::to_string(camping_nights) + " night" + (camping_nights > 1 ? "s" : "") + " (June " + JlweUtils::numberToOrdinal(arrive_date) + " to " + JlweUtils::numberToOrdinal(leave_date) + ")";
+        }
         this->inner_html += "      <tr>\n";
         this->inner_html += "        <td style=\"border-bottom:0px;\">Camping<br />\n";
         this->inner_html += "        <span>&nbsp;&nbsp;&nbsp;" + description + "</span></td>\n";
@@ -103,7 +123,7 @@ void JlweHtmlEmail::addCostTable(std::string userKey, sql::Connection *con) {
     delete prep_stmt;
 
     int dinner_cost = 0;
-    prep_stmt = con->prepareStatement("SELECT number_adults, number_children FROM sat_dinner WHERE idempotency = ?;");
+    prep_stmt = con->prepareStatement("SELECT number_adults, number_children, dinner_options_adults, dinner_options_children FROM sat_dinner WHERE idempotency = ?;");
     prep_stmt->setString(1, userKey);
     res = prep_stmt->executeQuery();
     if (res->next()){
@@ -113,7 +133,8 @@ void JlweHtmlEmail::addCostTable(std::string userKey, sql::Connection *con) {
 
         this->inner_html += "      <tr>\n";
         this->inner_html += "        <td>Saturday dinner<br />\n";
-        this->inner_html += "        <span>&nbsp;&nbsp;&nbsp;" + std::to_string(dinner_number_adults) + " Adult meals, " + std::to_string(dinner_number_children) + " Child meals</span></td>\n";
+        this->inner_html += "        <span>&nbsp;&nbsp;&nbsp;" + std::to_string(dinner_number_adults) + " Adult meals" + dinnerOptionsToString(res->getString(3)) + "<br/>\n";
+        this->inner_html += "        &nbsp;&nbsp;&nbsp;" + std::to_string(dinner_number_children) + " Child meals" + dinnerOptionsToString(res->getString(4)) + "</span></td>\n";
         this->inner_html += "        <td class=\"currency_cell\">" + PaymentUtils::currencyToString(dinner_cost) + "</td>\n";
         this->inner_html += "      </tr>\n";
     }

@@ -25,18 +25,20 @@
 #include "../core/JlweCore.h"
 #include "../core/JlweUtils.h"
 
-void outputEventTab(const std::string &event_registration_html, time_t camping_cutoff, time_t dinner_cutoff, time_t time_now) {
+void outputEventTab(const std::string &event_registration_html, time_t camping_cutoff, time_t dinner_cutoff, time_t time_now, bool dinner_form_enabled) {
     std::cout << "<div class=\"formTab\" id=\"eventTab\">\n";
 
-    //std::cout << "<p>This form allows to register for the event, book camping and order Saturday night's dinner in one transaction. However, camping and dinner can still be booked separately at a later date if you are unsure of your plans at this stage. <a href=\"/camping\">Click here to book <span style=\"font-weight:bold;\">camping</span> separately.</a> <a href=\"/dinner\">Click here to book <span style=\"font-weight:bold;\">dinner</span> separately.</a><br />\n";
-    std::cout << "<p>This form allows to register for the event and book camping in one transaction. However, camping can still be booked separately at a later date if you are unsure of your plans at this stage. <a href=\"/camping\">Click here to book <span style=\"font-weight:bold;\">camping</span> separately.</a><br />\n";
-    std::cout << "Camping must be booked by " << FormElements::timeToDateString(camping_cutoff) << " at the latest.</p>\n";
-    //std::cout << "Dinner bookings close on " << FormElements::timeToDateString(dinner_cutoff) << ".</p>\n";
+    std::cout << "<p>This form allows to register for the event, book camping and order Saturday night's dinner in one transaction. However, camping and dinner can still be booked separately at a later date if you are unsure of your plans at this stage. <a href=\"/camping\">Click here to book <span style=\"font-weight:bold;\">camping</span> separately.</a> <a href=\"/dinner\">Click here to book <span style=\"font-weight:bold;\">dinner</span> separately.</a></p>\n";
+    //std::cout << "<p>This form allows to register for the event and book camping in one transaction. However, camping can still be booked separately at a later date if you are unsure of your plans at this stage. <a href=\"/camping\">Click here to book <span style=\"font-weight:bold;\">camping</span> separately.</a></p>\n";
 
+    std::cout << "<p>Camping must be booked by " << FormElements::timeToDateString(camping_cutoff) << " at the latest.</p>\n";
     if (camping_cutoff < time_now)
         std::cout << "<p style=\"color:red;font-weight:bold;\">Camping bookings have now closed.</p>\n";
-    //if (dinner_cutoff < time_now)
-    //    std::cout << "<p style=\"color:red;font-weight:bold;\">Dinner bookings have now closed.</p>\n";
+
+    if (dinner_form_enabled)
+        std::cout << "<p>Dinner bookings close on " << FormElements::timeToDateString(dinner_cutoff) << ".</p>\n";
+    if (dinner_cutoff < time_now && dinner_form_enabled)
+        std::cout << "<p style=\"color:red;font-weight:bold;\">Dinner bookings have now closed.</p>\n";
 
     std::cout << "<p>The cost is $<span id=\"display_price_event_adult\"></span> per player. 10 years and under can participate for free.<br/>\n";
     //std::cout << "<p>The cost is $<span id=\"display_price_event_adult\"></span> per adult and $<span id=\"display_price_event_child\"></span> per child (children under 5 years are free).<br/>\n";
@@ -55,7 +57,8 @@ void outputEventTab(const std::string &event_registration_html, time_t camping_c
     //std::cout << FormElements::radioButtons("lanyard", "Do you have a June LWE lanyard? (you should if you were at the 2018 or 2019 events)", {{"lanyard_yes", "Yes (please bring it with you to this year's event)", "yes", "setRadioClass(this.name, '');", false, false}, {"lanyard_no", "No", "no", "setRadioClass(this.name, '');", false, false}});
 
     std::cout << FormElements::radioButtons("camping", "Would you like to book a camping site?", {{"camping_yes", "Yes, I wish to reserve a camping site", "yes", "setRadioClass(this.name, '');", false, false}, {"camping_no", "No, I will be saying offsite or sharing with someone else", "no", "setRadioClass(this.name, '');", false, false}});
-    //std::cout << FormElements::radioButtons("dinner", "Will you be attending the dinner event on Saturday night?", {{"dinner_yes", "Yes, I would like to order a meal", "yes", "setRadioClass(this.name, '');", false, false}, {"dinner_no", "No/Unsure", "no", "setRadioClass(this.name, '');", false, false}});
+    if (dinner_form_enabled)
+        std::cout << FormElements::radioButtons("dinner", "Will you be attending the dinner event on Saturday night?", {{"dinner_yes", "Yes, I would like to order a meal", "yes", "setRadioClass(this.name, '');", false, false}, {"dinner_no", "No/Unsure", "no", "setRadioClass(this.name, '');", false, false}});
 
     std::cout << "</div>\n";
 }
@@ -76,8 +79,9 @@ void outputCampingTab(const std::string &camping_registration_html, bool camping
     if (camping_only)
         std::cout << FormElements::emailUsernamePhoneBoxes(false);
 
-    std::cout << FormElements::numberInput("number_people_camping", "Number of people sharing your campsite:", 0, 0, 20);
-    std::cout << FormElements::radioButtons("camping_type", "What camping site would you like?", {{"camping_powered", "Powered Site", "powered", "setRadioClass(this.name, '');", false, false}, {"camping_unpowered", "Unpowered Site", "unpowered", "setRadioClass(this.name, '');", false, false}});
+    std::cout << FormElements::numberInput("number_people_camping", "Number of people sharing your campsite:", 0, 0, 5);
+    //std::cout << FormElements::radioButtons("camping_type", "What camping site would you like?", {{"camping_powered", "Powered Site", "powered", "setRadioClass(this.name, '');", false, false}, {"camping_unpowered", "Unpowered Site", "unpowered", "setRadioClass(this.name, '');", false, false}});
+    std::cout << FormElements::radioButtons("camping_type", "What camping site would you like?", {{"camping_powered", "Powered Site", "powered", "setRadioClass(this.name, '');", false, false}, {"camping_generator", "Unpowered site (I'll be bringing a generator)", "generator", "setRadioClass(this.name, '');", false, false}, {"camping_unpowered", "Unpowered site (no generators)", "unpowered", "setRadioClass(this.name, '');", false, false}});
 
     std::vector<FormElements::dropDownOption> arrive_dates;
     arrive_dates.push_back({std::to_string(saturday_date - 1), "Friday " + JlweUtils::numberToOrdinal(saturday_date - 1), true});
@@ -91,7 +95,7 @@ void outputCampingTab(const std::string &camping_registration_html, bool camping
     leave_dates.push_back({std::to_string(saturday_date + 2), "Monday " + JlweUtils::numberToOrdinal(saturday_date + 2), true});
     std::cout << FormElements::dropDownList("camping_leave", "What day will you be leaving?", leave_dates);
 
-    std::cout << FormElements::textArea("camping_comments", "Comments:");
+    std::cout << FormElements::textArea("camping_comments", "Comments: (let us know if you're bringing a caravan, camper-trailer, tent/swag, etc.)");
 
     std::cout << "</div>\n";
 }
@@ -111,20 +115,13 @@ void outputDinnerTab(const std::string &dinner_registration_html, bool dinner_on
     if (dinner_only)
         std::cout << FormElements::emailUsernamePhoneBoxes(false);
 
-    std::cout << "<p style=\"font-weight:bold;\">Adult dinner orders:</p>\n";
-    std::cout << FormElements::numberInput("dinner_number_adults_op1", "How many Chicken Schnitzels:", 0, 0, 20);
-    std::cout << FormElements::numberInput("dinner_number_adults_op2", "How many Beef Schnitzels:", 0, 0, 20);
-    std::cout << FormElements::numberInput("dinner_number_adults_op3", "How many Beer Battered fish:", 0, 0, 20);
-    std::cout << "<p><span style=\"font-weight:bold;\">Kids dinner orders:</span> (12 years and under)</p>\n";
-    std::cout << FormElements::numberInput("dinner_number_children_op1", "How many 1/2 Chicken Schnitzels:", 0, 0, 20);
-    std::cout << FormElements::numberInput("dinner_number_children_op2", "How many 1/2 Beef Schnitzels:", 0, 0, 20);
-    std::cout << FormElements::numberInput("dinner_number_children_op3", "How many 6 Nugget meals:", 0, 0, 20);
-    std::cout << "<p><span style=\"font-weight:bold;\">Dessert orders:</span></p>\n";
-    std::cout << FormElements::numberInput("dinner_number_dessert_op1", "How many chocolate mousses:", 0, 0, 20);
-    std::cout << FormElements::numberInput("dinner_number_dessert_op2", "How many Eton Messes:", 0, 0, 20);
-    std::cout << FormElements::numberInput("dinner_number_dessert_op3", "How many Fruit salads:", 0, 0, 20);
+    std::cout << "<div id=\"dinner_items_block\" style=\"margin-top:30px;\"></div>\n";
 
     std::cout << FormElements::textArea("dinner_comments", "Comments/Questions:");
+
+    std::cout << "<script type=\"text/javascript\">\n";
+    std::cout << "loadDinnerItems(\"/cgi-bin/registration/get_form_content.cgi\", \"dinner_items_block\");\n";
+    std::cout << "</script>\n";
 
     std::cout << "</div>\n";
 }
@@ -174,10 +171,10 @@ void outputSummaryTab() {
     std::cout << "</p>\n";
 
     std::cout << "<p id=\"card_surcharge_note\" style=\"font-size:16px;font-weight:bold;\">Please note that there is a surcharge of 1.75% + $0.30 on card payments to cover the card payment processing fee.</p>\n";
-    std::cout << "<p id=\"payment_note\" style=\"font-size:16px;font-weight:bold;\">Note that camping is not reserved until payment is received. Hence paying by cash at the event is not possible for camping reservations.<br/>\n";
-    //std::cout << "<p id=\"payment_note\" style=\"font-size:16px;font-weight:bold;\">Note that dinner and camping is not reserved until payment is received. Hence paying by cash at the event is not possible for dinner and camping reservations.<br/>\n";
-    std::cout << "Camping fees are non-refundable if you don't attend the event.</p>\n";
-    //std::cout << "Dinner and camping fees are non-refundable if you don't attend the event.</p>\n";
+    //std::cout << "<p id=\"payment_note\" style=\"font-size:16px;font-weight:bold;\">Note that camping is not reserved until payment is received. Hence paying by cash at the event is not possible for camping reservations.<br/>\n";
+    std::cout << "<p id=\"payment_note\" style=\"font-size:16px;font-weight:bold;\">Note that dinner and camping is not reserved until payment is received. Hence paying by cash at the event is not possible for dinner and camping reservations.<br/>\n";
+    //std::cout << "Camping fees are non-refundable if you don't attend the event.</p>\n";
+    std::cout << "Dinner and camping fees are non-refundable if you don't attend the event.</p>\n";
 
     std::cout << "</div>\n";
 
@@ -228,12 +225,20 @@ int main () {
             }
         }
 
+        bool dinner_form_enabled = (jlwe.getGlobalVar("dinner_form_enabled") == "1");
+        // Can't have a dinner only order if there is no dinner
+        if (!dinner_form_enabled && dinner_form) {
+            std::cout << "<p style=\"color:red;text-align:center;fsont-weight:bold;\">Error: dinner_form_enabled is set to false. Please contact us on " << std::string(jlwe.config.at("adminEmail")) << "</p>\n";
+            html.outputFooter();
+            return 0;
+        }
 
         std::cout << FormElements::includeJavascript("https://js.stripe.com/v3/");
         std::cout << FormElements::includeJavascript("/cgi-bin/stripe_keys.cgi");
         std::cout << FormElements::includeJavascript("/js/utils.js");
         std::cout << FormElements::includeJavascript("/js/form_tools.js");
-        std::cout << FormElements::includeJavascript("/js/registration_form.js");
+        std::cout << FormElements::includeJavascript("/js/registration_form.js?v=2023");
+        std::cout << FormElements::includeJavascript("/js/dinner.js?v=2023v2");
         std::cout << FormElements::includeJavascript("/js/uuid.js");
 
         if (jlwe.config.at("stripe").value("testMode", false)) {
@@ -246,10 +251,6 @@ int main () {
             std::cout << "<h1>Camping Registration</h1>\n";
             std::cout << "<p style=\"font-weight:bold;\">This form is for booking camping only. If you have already booked camping as part of your event registration, you do not need to fill out this form.</p>\n";
         } else if (dinner_form) {
-            std::cout << "<p>Dinner form is inactive</p>";
-            html.outputFooter();
-            return 0;
-
             std::cout << "<h1>Saturday Dinner Registration</h1>\n";
             std::cout << "<p style=\"font-weight:bold;\">This form is for dinner orders only. If you have already ordered dinner as part of your event registration, you do not need to fill out this form.</p>\n";
         } else {
@@ -316,11 +317,11 @@ int main () {
         std::cout << "<form id=\"regForm\">\n";
 
         if (!camping_form && !dinner_form)
-            outputEventTab(event_registration_html, camping_cutoff, dinner_cutoff, time_now);
+            outputEventTab(event_registration_html, camping_cutoff, dinner_cutoff, time_now, dinner_form_enabled);
         if (!dinner_form)
             outputCampingTab(camping_registration_html, camping_form, camping_cutoff, time_now, saturday_date);
-        //if (!camping_form)
-        //    outputDinnerTab(dinner_registration_html, dinner_form, dinner_cutoff, time_now);
+        if (!camping_form && dinner_form_enabled)
+            outputDinnerTab(dinner_registration_html, dinner_form, dinner_cutoff, time_now);
         outputSummaryTab();
 
         std::cout << FormElements::formMessages();
@@ -333,10 +334,11 @@ int main () {
 
         std::cout << "var camping = " << (camping_form ? "true" : "false") << ";\n";
         std::cout << "var dinner = " << (dinner_form ? "true" : "false") << ";\n";
+        std::cout << "var dinner_form_enabled = " << (dinner_form_enabled ? "true" : "false") << ";\n";
         if (camping_form || dinner_form) {
             std::cout << "var summary_page = 1;\n";
         } else {
-            std::cout << "var summary_page = 2;\n"; // index of the summary of costs page (3 with dinner, 2 dinner disabled)
+            std::cout << "var summary_page = " << (dinner_form_enabled ? "3" : "2") << ";\n"; // index of the summary of costs page (3 with dinner, 2 dinner disabled)
         }
 
         if (!camping_form && !dinner_form)

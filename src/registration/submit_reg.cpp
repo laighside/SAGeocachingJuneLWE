@@ -78,15 +78,8 @@ int main () {
         int dinner_number_adults = 0;
         int dinner_number_children = 0;
         std::string dinner_comment = "";
-        int dinner_number_adults_op1 = 0;
-        int dinner_number_adults_op2 = 0;
-        int dinner_number_adults_op3 = 0;
-        int dinner_number_children_op1 = 0;
-        int dinner_number_children_op2 = 0;
-        int dinner_number_children_op3 = 0;
-        int dinner_number_dessert_op1 = 0;
-        int dinner_number_dessert_op2 = 0;
-        int dinner_number_dessert_op3 = 0;
+        nlohmann::json dinner_options_adults = nlohmann::json::array();
+        nlohmann::json dinner_options_children = nlohmann::json::array();
 
         std::string camping_type = "unpowered";
         std::string camping_comment = "";
@@ -108,22 +101,33 @@ int main () {
                 dinner = true;
                 nlohmann::json dinnerObject = jsonDocument.at("dinner");
 
-                dinner_number_adults_op1 = dinnerObject.value("dinner_number_adults_op1", 0);
-                dinner_number_adults_op2 = dinnerObject.value("dinner_number_adults_op2", 0);
-                dinner_number_adults_op3 = dinnerObject.value("dinner_number_adults_op3", 0);
-                dinner_number_children_op1 = dinnerObject.value("dinner_number_children_op1", 0);
-                dinner_number_children_op2 = dinnerObject.value("dinner_number_children_op2", 0);
-                dinner_number_children_op3 = dinnerObject.value("dinner_number_children_op3", 0);
-                dinner_number_dessert_op1 = dinnerObject.value("dinner_number_dessert_op1", 0);
-                dinner_number_dessert_op2 = dinnerObject.value("dinner_number_dessert_op2", 0);
-                dinner_number_dessert_op3 = dinnerObject.value("dinner_number_dessert_op3", 0);
+                // Check that the meal options are vaild and remove any extra objects that might be in the JSON
+                // This can probably be done better
+                if (dinnerObject.contains("dinner_options_adults") && dinnerObject["dinner_options_adults"].is_array()) {
+                    for (nlohmann::json::iterator it = dinnerObject["dinner_options_adults"].begin(); it != dinnerObject["dinner_options_adults"].end(); ++it) {
+                        nlohmann::json meal;
+                        meal["11"] = it.value()["11"];
+                        meal["12"] = it.value()["12"];
+                        meal["13"] = it.value()["13"];
+                        meal["14"] = it.value()["14"];
+                        dinner_options_adults.push_back(meal);
+                    }
+                }
+                if (dinnerObject.contains("dinner_options_children") && dinnerObject["dinner_options_children"].is_array()) {
+                    for (nlohmann::json::iterator it = dinnerObject["dinner_options_children"].begin(); it != dinnerObject["dinner_options_children"].end(); ++it) {
+                        nlohmann::json meal;
+                        meal["21"] = it.value()["21"];
+                        meal["22"] = it.value()["22"];
+                        meal["23"] = it.value()["23"];
+                        meal["24"] = it.value()["24"];
+                        dinner_options_children.push_back(meal);
+                    }
+                }
 
-                /*if (dinnerObject.HasMember("dinner_number_adults") && dinnerObject["dinner_number_adults"].IsInt())
-                    dinner_number_adults = dinnerObject["dinner_number_adults"].GetInt();
-                if (dinnerObject.HasMember("dinner_number_children") && dinnerObject["dinner_number_children"].IsInt())
-                    dinner_number_children = dinnerObject["dinner_number_children"].GetInt();*/
-                dinner_number_adults = dinner_number_adults_op1 + dinner_number_adults_op2 + dinner_number_adults_op3;
-                dinner_number_children = dinner_number_children_op1 + dinner_number_children_op2 + dinner_number_children_op3;
+                if (dinnerObject.contains("dinner_number_adults") && dinnerObject["dinner_number_adults"].is_number_integer())
+                    dinner_number_adults = dinnerObject["dinner_number_adults"];
+                if (dinnerObject.contains("dinner_number_children") && dinnerObject["dinner_number_children"].is_number_integer())
+                    dinner_number_children = dinnerObject["dinner_number_children"];
 
                 dinner_comment = dinnerObject.value("dinner_comment", "");
 
@@ -236,9 +240,13 @@ int main () {
                 error_message = "Number of dinners ordered must not be negative";
             }
 
-            if (dinner_number_adults + dinner_number_children < dinner_number_dessert_op1 + dinner_number_dessert_op2 + dinner_number_dessert_op3) {
+            if (dinner_number_adults != dinner_options_adults.size()) {
                 isValid = false;
-                error_message = "You can't order more desserts than main meals";
+                error_message = "Number of adult meals does not match number of meal choices";
+            }
+            if (dinner_number_children != dinner_options_children.size()) {
+                isValid = false;
+                error_message = "Number of child meals does not match number of meal choices";
             }
 
             if ((time(nullptr) > dinner_cutoff)) {
@@ -249,7 +257,7 @@ int main () {
 
         // check camping
         if (camping) {
-            if (camping_type != "unpowered" && camping_type != "powered") {
+            if (camping_type != "unpowered" && camping_type != "powered" && camping_type != "generator") {
                 isValid = false;
                 error_message = "Invalid camping type: " + camping_type;
             }
@@ -267,6 +275,11 @@ int main () {
             if (number_people < 1) {
                 isValid = false;
                 error_message = "There needs to be at least one person to book a camping site.";
+            }
+
+            if (number_people > 5) {
+                isValid = false;
+                error_message = "There is a maximum of 5 people per camping site.";
             }
 
             if ((time(nullptr) > camping_cutoff)) {
@@ -343,7 +356,7 @@ int main () {
 
             bool saveDinner = false;
             if (dinner) {
-                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT insertDinner(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT insertDinner(?,?,?,?,?,?,?,?,?,?,?,?,?);");
                 prep_stmt->setString(1, idempotencySafe);
                 prep_stmt->setString(2, email);
                 prep_stmt->setString(3, gc_username);
@@ -355,15 +368,8 @@ int main () {
                 prep_stmt->setString(9, isFullEvent ? "event" : payment_type);
                 prep_stmt->setString(10, jlwe.getCurrentUserIP());
                 prep_stmt->setString(11, jlwe.getCurrentUsername());
-                prep_stmt->setInt(12, dinner_number_adults_op1);
-                prep_stmt->setInt(13, dinner_number_adults_op2);
-                prep_stmt->setInt(14, dinner_number_adults_op3);
-                prep_stmt->setInt(15, dinner_number_children_op1);
-                prep_stmt->setInt(16, dinner_number_children_op2);
-                prep_stmt->setInt(17, dinner_number_children_op3);
-                prep_stmt->setInt(18, dinner_number_dessert_op1);
-                prep_stmt->setInt(19, dinner_number_dessert_op2);
-                prep_stmt->setInt(20, dinner_number_dessert_op3);
+                prep_stmt->setString(12, dinner_options_adults.dump());
+                prep_stmt->setString(13, dinner_options_children.dump());
                 res = prep_stmt->executeQuery();
                 if (res->next() && res->getInt(1))
                     saveDinner = true;
@@ -396,6 +402,9 @@ int main () {
                         }
                         if (camping_type == "powered") {
                             description = "Powered+site,+" + std::to_string(number_people) + "+people,+" + std::to_string(camping_nights) + "+nights";
+                        }
+                        if (camping_type == "generator") {
+                            description = "Generator+site,+" + std::to_string(number_people) + "+people,+" + std::to_string(camping_nights) + "+nights";
                         }
                         if (payment_camping_total > 0) {
                             post_data += "&line_items[][name]=Camping&line_items[][description]=" + description + "&line_items[][images][]=https://jlwe.org/img/camping_icon.png&line_items[][amount]=" + std::to_string(payment_camping_total) + "&line_items[][currency]=aud&line_items[][quantity]=1";

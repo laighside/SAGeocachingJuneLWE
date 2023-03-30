@@ -83,6 +83,7 @@ make
 
 ### MySQL
 1. Create a new database
+   - Make sure the charset is `utf8mb4` and the collation is `utf8mb4_0900_ai_ci` (this allows full unicode support)
 2. Import the contents of `tables.sql` and `functions.sql` into this new database
 3. Create a user in MySQL to be used by Apache to access the database
 4. Grant this user `SELECT` and `EXECUTE` privileges for the database

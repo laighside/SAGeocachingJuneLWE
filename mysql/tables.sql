@@ -17,7 +17,7 @@ CREATE TABLE `admin_notes` (
   `user_id` int NOT NULL,
   `markdown` longtext NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `best_caches`
@@ -32,7 +32,7 @@ CREATE TABLE `best_caches` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`),
   UNIQUE KEY `dsp_order_UNIQUE` (`dsp_order`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `best_caches`
@@ -51,7 +51,7 @@ CREATE TABLE `blocked_ips` (
   `ip` varchar(50) NOT NULL,
   PRIMARY KEY (`ip`),
   UNIQUE KEY `ip_UNIQUE` (`ip`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `cache_handout`
@@ -65,7 +65,7 @@ CREATE TABLE `cache_handout` (
   `team_id` int NOT NULL DEFAULT '-1',
   PRIMARY KEY (`cache_number`),
   UNIQUE KEY `id_UNIQUE` (`cache_number`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `caches`
@@ -88,7 +88,7 @@ CREATE TABLE `caches` (
   `actual_distance` int NOT NULL DEFAULT '-1',
   PRIMARY KEY (`cache_number`),
   UNIQUE KEY `cache_number_UNIQUE` (`cache_number`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `camping`
@@ -115,7 +115,7 @@ CREATE TABLE `camping` (
   PRIMARY KEY (`registration_id`),
   UNIQUE KEY `idempotency_UNIQUE` (`idempotency`),
   UNIQUE KEY `registration_id_UNIQUE` (`registration_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `contact_form`
@@ -131,7 +131,7 @@ CREATE TABLE `contact_form` (
   `message` text,
   `status` char(1) NOT NULL DEFAULT 'P',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `csp_reports`
@@ -146,7 +146,7 @@ CREATE TABLE `csp_reports` (
   `content` longtext,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `dinner_menu`
@@ -158,7 +158,7 @@ CREATE TABLE `dinner_menu` (
   `name_plural` varchar(100) NOT NULL,
   `price` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `dinner_menu`
@@ -181,7 +181,7 @@ CREATE TABLE `dinner_menu_options` (
   `option_type` varchar(50) DEFAULT NULL,
   `option_values` text,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `email_forwarders`
@@ -192,7 +192,7 @@ CREATE TABLE `email_forwarders` (
   `source` varchar(500) NOT NULL,
   `destination` varchar(500) NOT NULL,
   PRIMARY KEY (`source`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `email_forwarders`
@@ -217,7 +217,7 @@ CREATE TABLE `email_list` (
   UNIQUE KEY `email_UNIQUE` (`email`),
   UNIQUE KEY `verify_token_UNIQUE` (`verify_token`),
   UNIQUE KEY `unsub_token_UNIQUE` (`unsub_token`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `event_registrations`
@@ -247,7 +247,7 @@ CREATE TABLE `event_registrations` (
   PRIMARY KEY (`registration_id`),
   UNIQUE KEY `idempotency_UNIQUE` (`idempotency`),
   UNIQUE KEY `registration_id_UNIQUE` (`registration_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `files`
@@ -264,7 +264,7 @@ CREATE TABLE `files` (
   `public` tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY (`filename`),
   UNIQUE KEY `filename_UNIQUE` (`filename`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `game_teams`
@@ -278,7 +278,7 @@ CREATE TABLE `game_teams` (
   `competing` tinyint NOT NULL DEFAULT '1',
   `final_score` int DEFAULT NULL,
   PRIMARY KEY (`team_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `login_attempts`
@@ -290,7 +290,7 @@ CREATE TABLE `login_attempts` (
   `ip_address` varchar(100) NOT NULL,
   `username` varchar(100) NOT NULL,
   `correct` int NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `merch_groups`
@@ -303,7 +303,7 @@ CREATE TABLE `merch_groups` (
   `description` longtext NOT NULL,
   `images` longtext NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `merch_item_options`
@@ -318,7 +318,7 @@ CREATE TABLE `merch_item_options` (
   `option_type` varchar(100) NOT NULL,
   `option_values` varchar(1000) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `merch_items`
@@ -335,7 +335,7 @@ CREATE TABLE `merch_items` (
   `logo_url` varchar(500) NOT NULL,
   `cost` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `merch_order_items`
@@ -348,7 +348,7 @@ CREATE TABLE `merch_order_items` (
   `item_id` int NOT NULL,
   `item_options_str` varchar(1000) NOT NULL,
   PRIMARY KEY (`order_item_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `merch_orders`
@@ -370,7 +370,7 @@ CREATE TABLE `merch_orders` (
   PRIMARY KEY (`order_id`),
   UNIQUE KEY `idempotency_UNIQUE` (`idempotency`),
   UNIQUE KEY `registration_id_UNIQUE` (`order_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `payment_log`
@@ -386,7 +386,7 @@ CREATE TABLE `payment_log` (
   `source_user` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `permission_list`
@@ -398,7 +398,7 @@ CREATE TABLE `permission_list` (
   `permission_name` varchar(100) NOT NULL,
   PRIMARY KEY (`permission_id`),
   UNIQUE KEY `permission_id_UNIQUE` (`permission_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `permission_list`
@@ -433,7 +433,7 @@ CREATE TABLE `sat_dinner` (
   PRIMARY KEY (`registration_id`),
   UNIQUE KEY `idempotency_UNIQUE` (`idempotency`),
   UNIQUE KEY `registration_id_UNIQUE` (`registration_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `stripe_card_fees`
@@ -445,7 +445,7 @@ CREATE TABLE `stripe_card_fees` (
   `fee` int NOT NULL,
   PRIMARY KEY (`idempotency`),
   UNIQUE KEY `idempotency_UNIQUE` (`idempotency`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `stripe_event_log`
@@ -465,7 +465,7 @@ CREATE TABLE `stripe_event_log` (
   `message` varchar(1000) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `user_hidden_caches`
@@ -493,7 +493,7 @@ CREATE TABLE `user_hidden_caches` (
   `IP_address` varchar(50) NOT NULL,
   PRIMARY KEY (`id_number`),
   UNIQUE KEY `id_number_UNIQUE` (`id_number`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `user_log`
@@ -504,8 +504,8 @@ CREATE TABLE `user_log` (
   `timestamp` int NOT NULL,
   `userIP` varchar(50) NOT NULL,
   `username` varchar(50) NOT NULL DEFAULT '',
-  `action` varchar(200) NOT NULL
-) ENGINE=CSV DEFAULT CHARSET=latin1;
+  `action` text NOT NULL
+) ENGINE=CSV DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `user_permissions`
@@ -517,7 +517,7 @@ CREATE TABLE `user_permissions` (
   `permission` varchar(100) NOT NULL,
   `value` tinyint NOT NULL,
   PRIMARY KEY (`user`,`permission`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `user_permissions`
@@ -540,7 +540,7 @@ CREATE TABLE `user_preferences` (
   `email_merch_every` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `user_id_UNIQUE` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `user_preferences`
@@ -562,7 +562,7 @@ CREATE TABLE `user_tokens` (
   `expire_time` datetime NOT NULL,
   PRIMARY KEY (`token`),
   UNIQUE KEY `token_UNIQUE` (`token`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `users`
@@ -579,7 +579,7 @@ CREATE TABLE `users` (
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `username_UNIQUE` (`username`),
   UNIQUE KEY `user_id_UNIQUE` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 --
@@ -602,7 +602,7 @@ CREATE TABLE `vars` (
   `comment` varchar(500) DEFAULT NULL,
   PRIMARY KEY (`name`),
   UNIQUE KEY `name_UNIQUE` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `vars`
@@ -643,7 +643,7 @@ CREATE TABLE `webpage_history` (
   `page_name` varchar(100) NOT NULL,
   `html` longtext NOT NULL,
   PRIMARY KEY (`page_id`,`timestamp`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `webpage_images`
@@ -657,7 +657,7 @@ CREATE TABLE `webpage_images` (
   `date_uploaded` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`filename`),
   UNIQUE KEY `filename_UNIQUE` (`filename`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Table structure for table `webpage_menu`
@@ -671,7 +671,7 @@ CREATE TABLE `webpage_menu` (
   `menu_order` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`link_text`),
   UNIQUE KEY `link_text_UNIQUE` (`link_text`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `webpage_menu`
@@ -697,7 +697,7 @@ CREATE TABLE `webpages` (
   PRIMARY KEY (`page_id`),
   UNIQUE KEY `path_UNIQUE` (`path`),
   UNIQUE KEY `page_id_UNIQUE` (`page_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `webpages`
@@ -736,7 +736,7 @@ CREATE TABLE `zones` (
   `name` varchar(100) NOT NULL DEFAULT '',
   `points` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`kml_file`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 ---
 --- End of Tables

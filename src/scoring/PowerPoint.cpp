@@ -12,6 +12,7 @@
   https://github.com/laighside/SAGeocachingJuneLWE
  */
 #include "PowerPoint.h"
+#include <algorithm>
 #include <cstdlib>
 #include <cstdio>
 #include <stdexcept>
@@ -20,6 +21,27 @@
 #include "../core/JlweUtils.h"
 
 #define PPT_TEMPLATE_DIR "/var/www/ooxml/powerpoint/template/"
+
+// trim from start (in place)
+static inline void ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }));
+}
+
+// trim from end (in place)
+static inline void rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }).base(), s.end());
+}
+
+// trim from both ends (in place)
+// This removes any leading or trailing whitespaces, new lines, etc. from a string
+static inline void trim(std::string &s) {
+    ltrim(s);
+    rtrim(s);
+}
 
 PowerPoint::PowerPoint() {
 
@@ -411,13 +433,45 @@ void PowerPoint::addSlideFromContentTextBox(std::string title, std::string conte
 
 void PowerPoint::addGenericSlide(const std::string &title, const std::string &text) {
     std::string pageText = "";
-    pageText += "     <a:p>\n";
-    pageText += "      <a:r>\n";
-    pageText += "       <a:rPr lang=\"en-AU\" dirty=\"0\" smtClean=\"0\"/>\n";
-    pageText += "       <a:t>" + Encoder::htmlEntityEncode(text) + "</a:t>\n";
-    pageText += "      </a:r>\n";
-    pageText += "     </a:p>\n";
-    addSlideFromContentTextBox(title, pageText);
+    std::vector<int> timing = {0};
+    std::vector<std::string> lines = JlweUtils::splitString(text, '\n');
+    for (unsigned int i = 0; i < lines.size(); i++) {
+        std::string line = lines.at(i);
+        trim(line);
+        if (line.size()) {
+            if (line.at(0) == '-') { // is sub-line
+                line = line.substr(1); // remove the '-'
+                trim(line);
+                if (line.size()) {
+                    pageText += "     <a:p>\n";
+                    pageText += "      <a:pPr lvl=\"1\"/>\n";
+                    pageText += "      <a:r>\n";
+                    pageText += "       <a:rPr lang=\"en-AU\" dirty=\"0\" smtClean=\"0\"/>\n";
+                    pageText += "       <a:t>" + Encoder::htmlEntityEncode(line) + "</a:t>\n";
+                    pageText += "      </a:r>\n";
+                    pageText += "     </a:p>\n";
+                }
+            } else {
+                pageText += "     <a:p>\n";
+                pageText += "      <a:r>\n";
+                pageText += "       <a:rPr lang=\"en-AU\" dirty=\"0\" smtClean=\"0\"/>\n";
+                pageText += "       <a:t>" + Encoder::htmlEntityEncode(line) + "</a:t>\n";
+                pageText += "      </a:r>\n";
+                pageText += "     </a:p>\n";
+                if (i > 0) {
+                    timing.push_back(i - 1);
+                    timing.push_back(i);
+                }
+            }
+        }
+    }
+    timing.push_back(static_cast<int>(lines.size()) - 1);
+
+    if (pageText.size()) {
+        addSlideFromContentTextBox(title, pageText, timing);
+    } else {
+        addSlideFromContentTextBox(title, pageText);
+    }
 }
 
 void PowerPoint::addJlwePlacesSlide(std::vector<PowerPoint::teamScore> places) {

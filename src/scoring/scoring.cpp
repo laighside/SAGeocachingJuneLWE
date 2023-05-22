@@ -40,28 +40,13 @@ int main () {
             std::cout << FormElements::includeJavascript("/js/utils.js");
             std::cout << FormElements::includeJavascript("/js/page_tab_tools.js");
 
+            std::cout << FormElements::includeJavascript("/js/form_elements.js");
             std::cout << FormElements::includeJavascript("/js/scoring.js");
-
-            /*std::cout << "<script>\n";
-
-            std::cout << "function setBestCache(title){\n";
-            std::cout << "    var jsonObj = {\n";
-            std::cout << "        \"title\":title,\n";
-            std::cout << "        \"cache_name\":document.getElementById(title + \"_textbox\").value\n";
-            std::cout << "    };\n";
-
-            std::cout << "    postUrl('set_best_cache.cgi', JSON.stringify(jsonObj), null,\n";
-            std::cout << "            function(data, responseCode) {\n";
-            std::cout << "                httpResponseHandler(data, responseCode, false, null, null);\n";
-            std::cout << "         }, httpErrorResponseHandler);\n";
-            std::cout << "}\n\n";
-
-            std::cout << "</script>\n";*/
-
+            std::cout << FormElements::includeJavascript("/js/scoring_powerpoint.js");
 
             std::cout << "<h2 style=\"text-align:center\">JLWE Scoring and Powerpoint builder</h2>\n";
 
-            std::cout << FormElements::pageTabs({{"team_list", "Team List"}, {"team_scores", "Team Scores"}, {"ppt_builder", "Powerpoint"}});
+            std::cout << FormElements::pageTabs({{"team_list", "Team List"}, {"team_scores", "Team Scores"}, {"leaderboard", "Leaderboard"}, {"ppt_builder", "Powerpoint"}});
 
 
             std::cout << "<div id=\"team_list\" class=\"pageTabContent\">\n";
@@ -134,45 +119,34 @@ int main () {
 
             std::cout << "</div>\n";
 
-            std::cout << "<div id=\"ppt_builder\" class=\"pageTabContent\">\n";
-
-            std::cout << "<p style=\"text-align:center;\">\n";
-            //std::cout << "<a class=\"admin_button\" href=\"/edit_scores.html\"><span>Edit Scores</span></a>\n";
-            std::cout << "<a class=\"admin_button\" href=\"download_ppt.cgi\"><span>Download Powerpoint</span></a>\n";
-            std::cout << "</p>\n";
-
-            std::cout << "<p>Proof-read the presentation after downloading! Some of the slides require further input. The order of the slides may also need adjusting depending on the number of teams.</p>\n";
-            std::cout << "<p>If there is a tie for any of the podium positions or the NAGA, the presentation will not be correct! Ties elsewhere in the leaderboard may also cause issues.</p>\n";
-
+            std::cout << "<div id=\"leaderboard\" class=\"pageTabContent\">\n";
 
             std::cout << "<h2 style=\"text-align:center\">Scoreboard</h2>\n";
             std::cout << "<table id=\"scoreboard_table\" align=\"center\">\n";
             std::cout << "<tr><th>Position</th><th>Score</th><th>Team Name</th><th>Team Members</th></tr>\n";
             std::cout << "</table>\n";
 
+            std::cout << "</div>\n";
 
-            std::cout << "<h2 style=\"text-align:center\">Best Caches</h2>\n";
-            std::cout << "<p>Don't just write \"Number 91\", go outside, have a look at what cache 91 is and then write \"91 - Giant Anchor\". This makes the presentation a lot less confusing for the audience!</p>\n";
-            std::cout << "<table align=\"center\"><tr>\n";
-            std::cout << "<th>Award</th><th style=\"min-width:300px;\" >Winning Cache</th>\n";
-            std::cout << "</tr>\n";
+            std::cout << "<div id=\"ppt_builder\" class=\"pageTabContent\">\n";
 
-            stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT id,title,cache FROM best_caches ORDER BY dsp_order;");
-            while (res->next()){
-                int award_id = res->getInt(1);
-                std::string title = res->getString(2);
-                std::string award_value = res->getString(3);
-                std::cout << "<tr>\n";
-                std::cout << "<td>" << Encoder::htmlEntityEncode(title) << "</td>\n";
-                std::cout << "<td id=\"best_cache_" + std::to_string(award_id) + "\" style=\"position:relative;\" data-value=\"" << Encoder::htmlAttributeEncode(award_value) << "\">" << Encoder::htmlEntityEncode(award_value) << "<svg class=\"iconButton\" style=\"float:right;\" onclick=\"editBestCache(" + std::to_string(award_id) + ")\" width=\"20\" height=\"20\"><image xlink:href=\"/img/edit.svg\" width=\"20\" height=\"20\"></image></svg></td>\n";
-                //std::cout << "<td><input type=\"text\" id=\"" << Encoder::htmlAttributeEncode(title) << "_textbox\" size=\"40\" value=\"" << Encoder::htmlAttributeEncode(res->getString(2)) << "\"></td>\n";
-                //std::cout << "<td><input type=\"button\" onclick=\"setBestCache('" << Encoder::javascriptAttributeEncode(title) << "');\" value=\"Save\" /></td>\n";
-                std::cout << "</tr>\n";
-            }
-            delete res;
-            delete stmt;
-            std::cout << "</table>\n";
+            std::cout << "<p style=\"text-align:center;\">\n";
+            std::cout << "<a class=\"admin_button\" href=\"download_ppt.cgi\"><span>Download Powerpoint</span></a>\n";
+            std::cout << "</p>\n";
+
+            std::cout << "<p>Proof-read the presentation after downloading! Some of the slides require further input. The order of the slides may also need adjusting depending on the number of teams.</p>\n";
+            std::cout << "<p>If there is a tie for any of the podium positions or the NAGA, the presentation will not be correct! Ties elsewhere in the leaderboard may also cause issues.</p>\n";
+
+            std::cout << "<h2 style=\"text-align:center\">Powerpoint slides</h2>\n";
+            std::cout << "<p>Edit the order and content of the powerpoint slides below. The slides with team scores are automatically filled in with content from the \"Team Scores\" tab.</p>\n";
+            std::cout << "<p>Adding a dash \"-\" to the start of a line will indent it on the powerpoint slide. For example:</p>\n";
+            std::cout << "<div style=\"width:100%;overflow:hidden;\">\n";
+            std::cout << "<div style=\"float:left;width:33.33%;text-align:right;\"><p style=\"text-align:left;border: 1px solid #404040;border-radius:3px;display:inline-block;padding:10px;font-family:monospace;\">Main line<br />- Sub line</p></div>\n";
+            std::cout << "<div style=\"float:left;width:33.33%;\"><p style=\"text-align:center\">will look like:</p></div>\n";
+            std::cout << "<div style=\"float:left;width:33.33%;text-align:left;\"><div style=\"text-align:left;display:inline-block;\"><ul><li>Main line<ul><li>Sub line</li></ul></li></ul></div></div>\n";
+            std::cout << "</div>\n";
+            std::cout << "<p><span style=\"margin:5px;\">" << FormElements::htmlSwitch("slideReorderToggleCB", false) << "</span> Allow drag and drop reordering</p>\n";
+            std::cout << "<div id=\"powerpoint_slides\"></div>\n";
 
             std::cout << "</div>\n";
 
@@ -182,7 +156,10 @@ int main () {
             std::cout << "document.getElementsByClassName(\"defaultPageTab\")[0].click();\n";
 
             std::cout << "document.getElementById(\"page_tab_button_team_scores\").addEventListener(\"click\", openTeamScoresTab, false);\n";
+            std::cout << "document.getElementById(\"page_tab_button_leaderboard\").addEventListener(\"click\", openLeaderboardTab, false);\n";
             std::cout << "document.getElementById(\"page_tab_button_ppt_builder\").addEventListener(\"click\", openPowerpointTab, false);\n";
+
+            std::cout << "document.getElementById(\"slideReorderToggleCB\").addEventListener('change', slideReorderChanged);\n";
 
             std::cout << "</script>\n";
 

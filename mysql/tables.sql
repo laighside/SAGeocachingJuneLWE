@@ -409,6 +409,29 @@ INSERT INTO `permission_list` VALUES ('perm_admin','Admin'),('perm_email','Send 
 UNLOCK TABLES;
 
 --
+-- Table structure for table `powerpoint_slides`
+--
+
+DROP TABLE IF EXISTS `powerpoint_slides`;
+CREATE TABLE `powerpoint_slides` (
+  `id` int NOT NULL,
+  `slide_order` int DEFAULT NULL,
+  `type` varchar(50) DEFAULT NULL,
+  `title` varchar(100) DEFAULT NULL,
+  `enabled` int DEFAULT '1',
+  `content` text,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `powerpoint_slides`
+--
+
+LOCK TABLES `powerpoint_slides` WRITE;
+INSERT INTO `powerpoint_slides` VALUES (1,1,'welcome','Welcome slide',1,NULL),(2,2,'naga','NAGA',1,NULL),(3,5,'disqualified','Disqualified',1,NULL),(4,21,'winner','Winner',1,NULL),(5,22,'runnerup','Runner-up',1,NULL),(6,23,'leaderboard','Final Leaderboard',1,NULL),(7,19,'scores','Places 3-5',1,'3-5'),(8,16,'scores','Places 6-10',1,'6-10'),(9,13,'scores','Places 11-15',1,'11-15'),(10,11,'scores','Places 16-20',1,'16-20'),(11,8,'scores','Places 21-25',1,'21-25'),(12,6,'scores','Places 26-30',1,'26-30'),(13,4,'scores','Places 31-35',1,'31-35'),(14,3,'scores','Places 36-40',1,'36-40'),(15,17,'best_caches','Best Caches',1,NULL),(16,14,'rising_star','Rising Star Award',1,NULL),(17,20,'generic','Good Samaritans',1,'Person 1\n - What they did\nPerson 2\n - What they did'),(18,9,'generic','Freddo\'s cache',1,''),(19,7,'generic','Scavenger Hunt',1,'Winner 1...\nWinner 2...'),(20,12,'generic','Everyone Stand Up...',1,''),(21,18,'generic','Other Prizes',1,'Best costume\nBest table\nAny other prizes'),(22,10,'generic','Closest to GZ',1,''),(23,15,'generic','Junior Achiever Award',1,'');
+UNLOCK TABLES;
+
+--
 -- Table structure for table `sat_dinner`
 --
 

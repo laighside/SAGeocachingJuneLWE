@@ -879,6 +879,33 @@ user-select: none;
 }
 
 
+.powerpoint_slide {
+  background: #ddf6ff;
+  padding: 15px;
+  margin: 10px;
+  border-width: 3px;
+  border-color: var(--main-color);
+  border-style: solid;
+  border-radius: 20px;
+}
+
+.powerpoint_slide_disabled {
+  background: #dddddd;
+  border-color: #808080;
+}
+
+.powerpoint_slide h3 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.powerpoint_slide .checkbox_container {
+  margin: 10px;
+}
+.powerpoint_slide textarea {
+  width: 100%;
+  height: 200px;
+}
+
 code {
   background: lightgray;
   border: 1px gray solid;

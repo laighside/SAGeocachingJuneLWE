@@ -687,6 +687,54 @@ END$$
 DELIMITER ;
 
 /**
+ * setSlideContent This sets the content and title of a slide in the powerpoint
+ */
+DROP FUNCTION IF EXISTS setSlideContent;
+DELIMITER $$
+CREATE FUNCTION setSlideContent(slide_idIn INT, titleIn TEXT, contentIn TEXT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM powerpoint_slides WHERE id = slide_idIn)) THEN
+        UPDATE powerpoint_slides SET title = titleIn, content = contentIn WHERE id = slide_idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
+END$$
+DELIMITER ;
+
+/**
+ * setSlideEnabled This sets if a slide in the powerpoint is enabled or not. Disabled slides won't be in the presentation.
+ */
+DROP FUNCTION IF EXISTS setSlideEnabled;
+DELIMITER $$
+CREATE FUNCTION setSlideEnabled(slide_idIn INT, enabledIn INT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM powerpoint_slides WHERE id = slide_idIn)) THEN
+        UPDATE powerpoint_slides SET enabled = enabledIn WHERE id = slide_idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
+END$$
+DELIMITER ;
+
+/**
+ * setSlideOrder This sets the order of a slide in the powerpoint
+ */
+DROP FUNCTION IF EXISTS setSlideOrder;
+DELIMITER $$
+CREATE FUNCTION setSlideOrder(slide_idIn INT, slide_orderIn INT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM powerpoint_slides WHERE id = slide_idIn)) THEN
+        UPDATE powerpoint_slides SET slide_order = slide_orderIn WHERE id = slide_idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
+END$$
+DELIMITER ;
+
+/**
  * setTeamFinalScore This sets the final_score for a given team_id in the game_teams table
  */
 DROP FUNCTION IF EXISTS setTeamFinalScore;

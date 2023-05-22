@@ -24,4 +24,9 @@ target_link_libraries(save_team_info.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 add_executable(get_scores.cgi get_scores.cpp)
 target_link_libraries(get_scores.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 
+add_executable(get_slides.cgi get_slides.cpp)
+target_link_libraries(get_slides.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
+
+add_executable(set_slide.cgi set_slide.cpp)
+target_link_libraries(set_slide.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 

@@ -352,10 +352,10 @@ function saveFinalScore(team_id) {
 }
 
 /**
- * Called when the powerpoint tab is opened
+ * Called when the leaderboard tab is opened
  * This downloads the list of teams/scores and displays it the team placings order
  */
-function openPowerpointTab() {
+function openLeaderboardTab() {
     downloadUrl('get_scores.cgi', null,
             function(data, responseCode) {
                 var jsonObj = JSON.parse(data);
@@ -401,45 +401,5 @@ function openPowerpointTab() {
                     row.insertCell(3).innerText = jsonTeam.team_members;
                 }
 
-         }, httpErrorResponseHandler);
-}
-
-/**
- * Starts the editing of a best cache winner, called when the user clicks a edit button
- * This just shows the text input element
- *
- * @param {Number} award_id The ID number of the award to edit
- */
-function editBestCache(award_id) {
-    var el = document.getElementById("best_cache_" + award_id.toString());
-    var editHtml = '<input id="best_cache_input_' + award_id.toString() + '" type="text" style="width:100%;" /><svg class="iconButton textboxTick" onclick="saveBestCache(' + award_id.toString() + ')" width="20" height="20"><image xlink:href="/img/tick.svg" width="20" height="20"></image></svg>';
-    el.innerHTML = editHtml;
-    document.getElementById("best_cache_input_" + award_id.toString()).value = el.dataset.value;
-}
-
-/**
- * Saves a edited best cache winner, called when the user clicks a save button
- * This sends the new best cache winner to the server and removes the text input element on success
- *
- * @param {Number} award_id The ID number of the award being edited
- */
-function saveBestCache(award_id) {
-    var newValue = document.getElementById("best_cache_input_" + award_id.toString()).value;
-
-    var jsonObj = {
-        "award_id":award_id,
-        "cache_name":newValue
-    };
-    postUrl('set_best_cache.cgi', JSON.stringify(jsonObj), null,
-            function(data, responseCode) {
-                httpResponseHandler(data, responseCode, true, function(){
-
-                    var el = document.getElementById("best_cache_" + award_id.toString());
-                    var savedHtml = '<span id="best_cache_display_' + award_id.toString() + '"></span><svg class="iconButton" style="float:right;" onclick="editBestCache(' + award_id.toString() + ')" width="20" height="20"><image xlink:href="/img/edit.svg" width="20" height="20"></image></svg>';
-                    el.innerHTML = savedHtml;
-                    el.dataset.value = newValue;
-                    document.getElementById("best_cache_display_" + award_id.toString()).innerText = newValue;
-
-                }, null);
          }, httpErrorResponseHandler);
 }

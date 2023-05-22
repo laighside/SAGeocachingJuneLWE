@@ -64,85 +64,77 @@ int main () {
             if (placesCount < 2)
                 throw std::invalid_argument("There are " + std::to_string(placesCount + 1) + " teams on the scoreboard. At least 3 team scores are required to build the PowerPoint.");
 
-            PowerPoint ppt;
-
-            // First slide is the title slide
-            ppt.addJlweTitleSlide(CgiEnvironment::getDocumentRoot() + "/img/jlwe_logo.png", JlweUtils::getCurrentYearString(), jlwe.getGlobalVar("ppt_town"));
-
-            // NAGA slide goes first
-            PowerPoint::teamScore lastPlace = places.at(places.size() - 1);
-            ppt.addJlweSinglePlaceSlide(lastPlace, "NAGA", JlweUtils::numberToOrdinal(lastPlace.position) + " Place", {3,4});
-
-            if (placesCount > 30) {
-                std::vector<PowerPoint::teamScore> slidePlaces = {places.begin() + 30, places.begin() + std::min(static_cast<unsigned long>(35), places.size() - 1)};
-                ppt.addJlwePlacesSlide(slidePlaces);
-	    }
-
-            if (disqualified.size())
-                ppt.addJlweDisqualifiedSlide(disqualified);
-
-            if (placesCount > 25) {
-                std::vector<PowerPoint::teamScore> slidePlaces = {places.begin() + 25, places.begin() + std::min(static_cast<unsigned long>(30), places.size() - 1)};
-                ppt.addJlwePlacesSlide(slidePlaces);
-	    }
-
-            ppt.addGenericSlide("Bingo/Scavenger Hunt", "(write names of winners here)");
-
-	    if (placesCount > 20) {
-                std::vector<PowerPoint::teamScore> slidePlaces = {places.begin() + 20, places.begin() + std::min(static_cast<unsigned long>(25), places.size() - 1)};
-                ppt.addJlwePlacesSlide(slidePlaces);
-	    }
-
-            ppt.addGenericSlide("Freddo's cache", "");
-
-	    if (placesCount > 15) {
-                std::vector<PowerPoint::teamScore> slidePlaces = {places.begin() + 15, places.begin() + std::min(static_cast<unsigned long>(20), places.size() - 1)};
-                ppt.addJlwePlacesSlide(slidePlaces);
-            }
-
-            ppt.addJlweOtherPrizesSlide();
-
-            ppt.addGenericSlide("Everyone Stand Up...", "");
-
-	    if (placesCount > 10) {
-                std::vector<PowerPoint::teamScore> slidePlaces = {places.begin() + 10, places.begin() + std::min(static_cast<unsigned long>(15), places.size() - 1)};
-                ppt.addJlwePlacesSlide(slidePlaces);
-	    }
-
-            ppt.addJlweRisingStarSlide(CgiEnvironment::getDocumentRoot() + "/img/carto_graphics_logo.png");
-
-            if (placesCount > 5) {
-                std::vector<PowerPoint::teamScore> slidePlaces = {places.begin() + 5, places.begin() + std::min(static_cast<unsigned long>(10), places.size() - 1)};
-                ppt.addJlwePlacesSlide(slidePlaces);
-            }
-
-            std::vector<PowerPoint::bestCache> caches;
+            // Get the list of best caches
+            std::vector<PowerPoint::bestCache> best_caches_list;
             stmt = jlwe.getMysqlCon()->createStatement();
             res = stmt->executeQuery("SELECT title,cache FROM best_caches ORDER BY dsp_order;");
             while (res->next()) {
-                caches.push_back({res->getString(1), res->getString(2)});
+                best_caches_list.push_back({res->getString(1), res->getString(2)});
             }
             delete res;
             delete stmt;
-            ppt.addJlweBestCachesSlide(caches);
 
-            if (placesCount > 3) {
-                std::vector<PowerPoint::teamScore> slidePlaces = {places.begin() + 2, places.begin() + std::min(static_cast<unsigned long>(5), places.size() - 1)};
-                ppt.addJlwePlacesSlide(slidePlaces);
-	    }
+            PowerPoint ppt;
 
-            ppt.addGenericSlide("Good Samaritans", "(write names of good samaritans here)");
+            stmt = jlwe.getMysqlCon()->createStatement();
+            res = stmt->executeQuery("SELECT type, title, content FROM powerpoint_slides WHERE enabled != 0 ORDER BY slide_order;");
+            while (res->next()) {
+                std::string slide_type = res->getString(1);
+                std::string slide_content = res->getString(3);
 
-            // Slides for the winner and runner-up
-            if (placesCount > 1) {
-                ppt.addJlweSinglePlaceSlide(places.at(0), "The winner is...", "With " + PowerPoint::scoreToString(places.at(0).score) + " points...", {0,0,3,4});
-                ppt.addJlweSinglePlaceSlide(places.at(1), "Runner Up", PowerPoint::scoreToString(places.at(1).score) + " points", {3,4});
-	    }
-
-            // Full leaderboard slide at the end, which includes the disqualified teams as well
-            places.insert(places.end(), disqualified.begin(), disqualified.end());
-            ppt.addJlweLeaderboardSlide(places);
-
+                if (slide_type == "welcome") {
+                    ppt.addJlweTitleSlide(CgiEnvironment::getDocumentRoot() + "/img/jlwe_logo.png", JlweUtils::getCurrentYearString(), jlwe.getGlobalVar("ppt_town"));
+                }
+                if (slide_type == "naga") {
+                    PowerPoint::teamScore lastPlace = places.at(places.size() - 1);
+                    ppt.addJlweSinglePlaceSlide(lastPlace, "NAGA", JlweUtils::numberToOrdinal(lastPlace.position) + " Place", {3,4});
+                }
+                if (slide_type == "disqualified") {
+                    if (disqualified.size())
+                        ppt.addJlweDisqualifiedSlide(disqualified);
+                }
+                if (slide_type == "winner") {
+                    ppt.addJlweSinglePlaceSlide(places.at(0), "The winner is...", "With " + PowerPoint::scoreToString(places.at(0).score) + " points...", {0,0,3,4});
+                }
+                if (slide_type == "runnerup") {
+                    ppt.addJlweSinglePlaceSlide(places.at(1), "Runner Up", PowerPoint::scoreToString(places.at(1).score) + " points", {3,4});
+                }
+                if (slide_type == "leaderboard") {
+                    // Full leaderboard slide at the end, which includes the disqualified teams as well
+                    std::vector<PowerPoint::teamScore> allPlaces = places;
+                    allPlaces.insert(allPlaces.end(), disqualified.begin(), disqualified.end());
+                    ppt.addJlweLeaderboardSlide(allPlaces);
+                }
+                if (slide_type == "scores") {
+                    int startIndex = -1;
+                    try {
+                        startIndex = std::stoi(slide_content.substr(0, slide_content.find('-')));
+                    } catch (...) {}
+                    int endIndex = -1;
+                    try {
+                        endIndex = std::stoi(slide_content.substr(slide_content.find('-') + 1));
+                    } catch (...) {}
+                    if (startIndex > 0 && endIndex > 0 && startIndex <= static_cast<int>(places.size()) - 1) {
+                        startIndex = std::min(startIndex, static_cast<int>(places.size()) - 1);
+                        endIndex = std::min(endIndex, static_cast<int>(places.size()) - 1);
+                        if (startIndex > 0 && endIndex > 0 && startIndex <= endIndex) {
+                            std::vector<PowerPoint::teamScore> slidePlaces = {places.begin() + startIndex - 1, places.begin() + endIndex};
+                            ppt.addJlwePlacesSlide(slidePlaces);
+                        }
+                    }
+                }
+                if (slide_type == "best_caches") {
+                    ppt.addJlweBestCachesSlide(best_caches_list);
+                }
+                if (slide_type == "rising_star") {
+                    ppt.addJlweRisingStarSlide(CgiEnvironment::getDocumentRoot() + "/img/carto_graphics_logo.png");
+                }
+                if (slide_type == "generic") {
+                    ppt.addGenericSlide(res->getString(2), slide_content);
+                }
+            }
+            delete res;
+            delete stmt;
 
             std::string ppt_file = ppt.savePowerPointFile();
 

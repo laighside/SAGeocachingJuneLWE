@@ -16,32 +16,12 @@
 
 #include "../core/CgiEnvironment.h"
 #include "../core/JlweCore.h"
+#include "../core/JlweUtils.h"
 #include "../core/JsonUtils.h"
 #include "../core/KeyValueParser.h"
 #include "../core/PostDataParser.h"
 
 #include "../ext/nlohmann/json.hpp"
-
-// trim from start (in place)
-static inline void ltrim(std::string &s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }));
-}
-
-// trim from end (in place)
-static inline void rtrim(std::string &s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }).base(), s.end());
-}
-
-// trim from both ends (in place)
-// This removes any leading or trailing whitespaces, new lines, etc. from a string
-static inline void trim(std::string &s) {
-    ltrim(s);
-    rtrim(s);
-}
 
 int main () {
     try {
@@ -65,7 +45,7 @@ int main () {
             // link cache to owner (aka. set owner)
             if (jsonDocument.contains("linkCache") && jsonDocument.at("linkCache").is_object()) {
                 std::string owner = jsonDocument.at("linkCache").value("owner", "");
-                trim(owner);
+                JlweUtils::trimString(owner);
 
                 prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT setHandoutCacheOwner(?,?,?,?);");
                 prep_stmt->setInt(1, cache_number);

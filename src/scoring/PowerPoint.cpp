@@ -22,27 +22,6 @@
 
 #define PPT_TEMPLATE_DIR "/var/www/ooxml/powerpoint/template/"
 
-// trim from start (in place)
-static inline void ltrim(std::string &s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }));
-}
-
-// trim from end (in place)
-static inline void rtrim(std::string &s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }).base(), s.end());
-}
-
-// trim from both ends (in place)
-// This removes any leading or trailing whitespaces, new lines, etc. from a string
-static inline void trim(std::string &s) {
-    ltrim(s);
-    rtrim(s);
-}
-
 PowerPoint::PowerPoint() {
 
     // make temp folder and filenames
@@ -437,11 +416,11 @@ void PowerPoint::addGenericSlide(const std::string &title, const std::string &te
     std::vector<std::string> lines = JlweUtils::splitString(text, '\n');
     for (unsigned int i = 0; i < lines.size(); i++) {
         std::string line = lines.at(i);
-        trim(line);
+        JlweUtils::trimString(line);
         if (line.size()) {
             if (line.at(0) == '-') { // is sub-line
                 line = line.substr(1); // remove the '-'
-                trim(line);
+                JlweUtils::trimString(line);
                 if (line.size()) {
                     pageText += "     <a:p>\n";
                     pageText += "      <a:pPr lvl=\"1\"/>\n";
@@ -947,4 +926,33 @@ std::string PowerPoint::makeSvgLeaderBoard(std::vector<PowerPoint::teamScore> pl
 
     result += "</svg>";
     return result;
+}
+
+void PowerPoint::getListOfTeamScores(JlweCore *jlwe, std::vector<PowerPoint::teamScore> &places, std::vector<PowerPoint::teamScore> &disqualified) {
+    sql::Statement *stmt = jlwe->getMysqlCon()->createStatement();
+    sql::ResultSet *res = stmt->executeQuery("SELECT team_name, team_members, final_score FROM game_teams WHERE competing = 1 AND final_score IS NOT NULL ORDER BY final_score DESC, team_name;");
+    int i = 1;
+    int previous_score = 0;
+    int previous_position = i;
+    while (res->next()) {
+        int score = res->getInt(3);
+        int position = i;
+        if (score == previous_score) {
+            position = previous_position;
+        } else {
+            previous_score = score;
+            previous_position = i;
+        }
+
+        PowerPoint::teamScore place = {res->getString(1).substr(0, 30), res->getString(2).substr(0, 200), score, position};
+        if (score > -1000) {
+            places.push_back(place);
+        } else {
+            disqualified.push_back(place);
+        }
+
+        i++;
+    }
+    delete res;
+    delete stmt;
 }

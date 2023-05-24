@@ -17,6 +17,8 @@
 #include <string>
 #include <vector>
 
+#include "../core/JlweCore.h"
+
 class PowerPoint
 {
 public:
@@ -63,6 +65,15 @@ public:
      * \return The score as a string
      */
     static std::string scoreToString(int score);
+
+    /*!
+     * \brief Get the list of scores for each team from the database, in order of placing
+     *
+     * \param jlwe JlweCore object
+     * \param places A vector to place the team scores in (in order of placing)
+     * \param disqualified A vector to place the disqualified teams in (if there are any)
+     */
+    static void getListOfTeamScores(JlweCore *jlwe, std::vector<teamScore> &places, std::vector<teamScore> &disqualified);
 
     /*!
      * \brief Creates a generic slide with title and text content

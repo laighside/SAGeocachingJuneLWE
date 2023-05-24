@@ -229,6 +229,23 @@ std::vector<std::string> JlweUtils::splitString(std::string subject, char delimi
     return result;
 }
 
+void JlweUtils::trimString(std::string &str) {
+    JlweUtils::trimStringLeft(str);
+    JlweUtils::trimStringRight(str);
+}
+
+void JlweUtils::trimStringLeft(std::string &str) {
+    str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }));
+}
+
+void JlweUtils::trimStringRight(std::string &str) {
+    str.erase(std::find_if(str.rbegin(), str.rend(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }).base(), str.end());
+}
+
 std::string JlweUtils::getMIMEType(const std::string &filename){
     try {
 

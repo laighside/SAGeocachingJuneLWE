@@ -173,6 +173,27 @@ public:
     static std::vector<std::string> splitString(std::string subject, char delimiter);
 
     /*!
+     * \brief Removes the whitespace/new line characters from the start and end of a string
+     *
+     * \param str The string to trim
+     */
+    static void trimString(std::string &str);
+
+    /*!
+     * \brief Removes the whitespace/new line characters from the start of a string
+     *
+     * \param str The string to trim
+     */
+    static void trimStringLeft(std::string &str);
+
+    /*!
+     * \brief Removes the whitespace/new line characters from the end of a string
+     *
+     * \param str The string to trim
+     */
+    static void trimStringRight(std::string &str);
+
+    /*!
      * \brief Gets the MIME type of a file.
      *
      * Uses the 'file' command.

@@ -60,35 +60,9 @@ int main () {
             // Get leaderboard positions
             std::vector<PowerPoint::teamScore> places;
             std::vector<PowerPoint::teamScore> disqualified;
-            stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT team_name, team_members, final_score FROM game_teams WHERE competing = 1 AND final_score IS NOT NULL ORDER BY final_score DESC, team_name;");
-            int i = 1;
-            int previous_score = 0;
-            int previous_position = i;
-            while (res->next()) {
-                int score = res->getInt(3);
-                int position = i;
-                if (score == previous_score) {
-                    position = previous_position;
-                } else {
-                    previous_score = score;
-                    previous_position = i;
-                }
+            PowerPoint::getListOfTeamScores(&jlwe, places, disqualified);
 
-                PowerPoint::teamScore place = {res->getString(1).substr(0, 30), res->getString(2).substr(0, 200), score, position};
-                if (score > -1000) {
-                    places.push_back(place);
-                } else {
-                    disqualified.push_back(place);
-                }
-
-                i++;
-            }
-            delete res;
-            delete stmt;
-
-
-
+            // Root element of the JSON to return
             nlohmann::json jsonDocument = nlohmann::json::array();
 
             stmt = jlwe.getMysqlCon()->createStatement();

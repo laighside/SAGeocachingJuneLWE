@@ -344,7 +344,11 @@ std::string PowerPoint::makeSlideContentTextboxXML(std::string paragraphs, bool 
         result += "      <a:normAutofit lnSpcReduction=\"10000\"/>\n";
     result += "     </a:bodyPr>\n";
     result += "     <a:lstStyle/>\n";
-    result += paragraphs;
+    if (paragraphs.size()) {
+        result += paragraphs;
+    } else {
+        result += "      <a:p><a:endParaRPr/></a:p>\n";
+    }
     result += "    </p:txBody>\n";
     result += "   </p:sp>\n";
 

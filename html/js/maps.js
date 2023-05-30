@@ -149,6 +149,12 @@ function loadLeafletMap(map_element, kml_file, type) {
     var ocm_layer = L.tileLayer('https://tile.thunderforest.com/cycle/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenCycleMap, ' + 'Map data ' + '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     });
+    var esri_satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; <a href="http://www.esri.com/">Esri</a> &mdash; Source: <a href="http://www.esri.com/">Esri</a>, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    });
+    var esri_street = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}.png', {
+        attribution: '&copy; <a href="http://www.esri.com/">Esri</a> Contributors & <a href="http://www.esri.com/">Esri</a>'
+    });
 
     // make map
     var map = L.map('map_area').setView([0, 0], 12);
@@ -156,10 +162,16 @@ function loadLeafletMap(map_element, kml_file, type) {
     // make layer controls
     var baseMaps = {
         "OSM": osm_layer,
-        "OCM": ocm_layer
+        "ESRI Satellite": esri_satellite,
+        "ESRI Street": esri_street,
+        "Open Cycle Map": ocm_layer
     };
     L.control.layers(baseMaps).addTo(map);
-    osm_layer.addTo(map);
+    if (type === 'satellite') {
+        esri_satellite.addTo(map);
+    } else {
+        osm_layer.addTo(map);
+    }
 
     // add kml file
     if (kml_file && kml_file.length > 0){

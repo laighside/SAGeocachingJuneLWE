@@ -169,6 +169,12 @@ int main () {
             std::cout << "<p><span style=\"font-weight: bold;\">Walking caches:</span> The automatic road distance calculation uses the OSM map which doesn't know about every single road so this distance may be incorrect. Also note that the cache hider may not be aware of the shortest route to access their cache. All caches that have walking points attached to them need to be double checked by organisers (satellite images can help with this).</p>\n";
             std::cout << "<p><span style=\"font-weight: bold;\">Hide bonus points:</span> For teams with more than 2 hides, the software will automatically choose the 2 caches that give the most points. Please <span style=\"font-weight: bold;\">do not</span> add \"Bonus\" (or similar) to the placed by names to mark the caches teams would like to take there hide bonus from. If the placed by name is different, the caches (and points) will get allocated to a different team.</p>\n";
 
+            if (map_type == "leaflet") {
+                std::cout << "<script>\n";
+                std::cout << "onPageLoad()\n";
+                std::cout << "</script>\n";
+            }
+
         } else {
             if (jlwe.isLoggedIn()) {
                 std::cout << "<p>You don't have permission to view this area.</p>";
@@ -176,10 +182,6 @@ int main () {
                 std::cout << "<p>You need to be logged in to view this area.</p>";
             }
         }
-
-        std::cout << "<script>\n";
-        std::cout << "onPageLoad()\n";
-        std::cout << "</script>\n";
 
         html.outputFooter();
 

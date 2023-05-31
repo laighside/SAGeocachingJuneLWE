@@ -168,6 +168,8 @@ function validateForm() {
 function leavingTab(n) {
   if (n == 0) {
     invalidateMapSize(map);
+    setTimeout(function(){invalidateMapSize(map);}, 200);
+
     setMapZoom(map, 16);
     updateCoords(false);
   }
@@ -227,6 +229,7 @@ function updateCoords(clicked){
 
         latitude = position.getLatitude();
         longitude = position.getLongitude();
+        invalidateMapSize(map);
         moveMarker(map, map_marker, latitude, longitude);
 
         if (clicked) {

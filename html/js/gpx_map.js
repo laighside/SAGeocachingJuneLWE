@@ -4,12 +4,15 @@
   @version 1.0
 
   @section DESCRIPTION
-  This displays a GPX file of caches on Google Maps (or Leaflet?)
+  This displays a GPX file of caches on Google Maps or Leaflet
   This is only used by the GPX builder map page, not the public map
 
   This file is part of the SA Geocaching JLWE website, full details (including licence) can be found on Github.
   https://github.com/laighside/SAGeocachingJuneLWE
  */
+
+// First declaration for the infowindow to allow closing
+var openedInfoWindow = null;
 
 // This kind of works like a class (or object with functions)
 var GPXfile = (function() {
@@ -18,18 +21,20 @@ var GPXfile = (function() {
      * Constructor
      *
      * @param {String} gpx_url The URL to fetch the GPX file from
-     * @param {Object} map The Google Maps object
-     * @param {Function} callback
+     * @param {Object} map The Google/Leaflet map object
+     * @param {String} map_type The type of map (either 'google' or 'leaflet')
      */
-    function GPXfile(gpx_url, map, callback) {
+    function GPXfile(gpx_url, map, map_type) {
         this.map = map;
-        this.openedInfoWindow = null;   // First declaration for the infowindow to allow closing
 
         // Download the GPX file
         downloadUrl(gpx_url, 'true', function(data, responseCode) {
             var caches = data.documentElement.getElementsByTagName("wpt");
             for (var i=0; i<caches.length; i++) {
-                var point = new google.maps.LatLng(parseFloat(caches[i].getAttribute("lat")),parseFloat(caches[i].getAttribute("lon")));
+                var point = {
+                    lat:parseFloat(caches[i].getAttribute("lat")),
+                    lon:parseFloat(caches[i].getAttribute("lon"))
+                };
                 var code, name, owner, type;
                 for (var j=0; j<caches[i].childNodes.length; j++) {
                     if (caches[i].childNodes[j].nodeName == 'name'){
@@ -61,18 +66,22 @@ var GPXfile = (function() {
                 if (type == 'Unknown Cache' || type == 'Multi'){
                     pin = 'u';
                 };
-                var tempMarker = new createMarkerIcon(point,text,pin,map);
+                var tempMarker = new createMarkerIcon(point,text,pin,map, map_type);
             };
         });
 
-        function createMarkerIcon(point, text, pin, map) {  // From GCA
-            // Define the icon image to display
-            var iconimage = "/img/gmap_" + pin + ".png";
+    }
+
+    function createMarkerIcon(point, text, pin, map, map_type) {  // From GCA
+        // Define the icon image to display
+        var iconimage = "/img/gmap_" + pin + ".png";
+
+        if (map_type === 'google') {
             // Create the image
             var image  = new google.maps.MarkerImage(iconimage);
             // Create the marker at point on map with icon image
             var marker = new google.maps.Marker({
-                position: point,
+                position: new google.maps.LatLng(point.lat, point.lon),
                 map: map,
                 icon: image
             });
@@ -82,18 +91,38 @@ var GPXfile = (function() {
             });
             // On click if there's an open window close it, open the clicked one, assign it so it can be closed next click
             google.maps.event.addListener(marker, 'click', function() {
-                if (this.openedInfoWindow != null) {
-                    this.openedInfoWindow.close();
+                if (openedInfoWindow != null) {
+                    openedInfoWindow.close();
                 };
                 infowindow.open(map,marker);
-                this.openedInfoWindow = infowindow;
+                openedInfoWindow = infowindow;
                 google.maps.event.addListener(infowindow, 'closeclick', function() {
-                    this.openedInfoWindow = null;
+                    openedInfoWindow = null;
                 });
             });
             // Send the marker details back to add to the array
             return marker;
         }
+        if (map_type === 'leaflet') {
+            // Create the icon
+            var customIcon = L.Icon.extend({
+                options: {
+                    iconUrl: iconimage,
+                    iconAnchor:   [10, 34],
+                    popupAnchor:  [0, -34]
+                }
+            });
+
+            var icon_image = new customIcon();
+            // Create the marker at point on map with icon image
+            var map_marker_l = L.marker(new L.latLng(point.lat, point.lon), {icon: icon_image});
+            map_marker_l.bindPopup(text);
+            // Add marker to map
+            map_marker_l.addTo(map);
+            return map_marker_l;
+
+        }
+        return null;
     }
 
     /**

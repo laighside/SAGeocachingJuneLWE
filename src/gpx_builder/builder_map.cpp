@@ -34,48 +34,48 @@ int main () {
             std::cout << FormElements::includeJavascript("/cgi-bin/js_files.cgi");
             std::cout << FormElements::includeJavascript("/js/utils.js");
             std::cout << FormElements::includeJavascript("/js/gpx_map.js");
+            std::cout << FormElements::includeJavascript("/js/maps.js");
+
+            std::string map_type = jlwe.getGlobalVar("map_type");
+            if (map_type == "leaflet") {
+                std::cout << "<!-- Leaflet JS -->\n";
+                std::cout << "<link rel=\"stylesheet\" href=\"/css/leaflet.css\" />\n";
+                std::cout << "<script type=\"text/javascript\" src=\"/js/ext/leaflet.js\"></script>\n";
+                std::cout << "<!-- For KML files -->\n";
+                std::cout << "<script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js'></script>\n";
+            }
+
+            if (map_type == "google") {
+                std::cout << "<!-- For Google maps -->\n";
+                std::cout << "<script async defer src=\"https://maps.googleapis.com/maps/api/js?key=" + std::string(jlwe.config.value("GoogleMapsApiKey", "")) + "&callback=onPageLoad\"></script>\n";
+            }
 
             std::cout << "<h2 style=\"text-align:center\">Cache Map</h2>\n";
 
-            std::cout << "<div id=\"map\" style=\"height: 500px; width: 100%; margin: 5px; position: relative; overflow: hidden;\"></div>\n";
+            std::cout << "<div id=\"map_area\" style=\"height: 500px; width: 100%; margin: 5px; position: relative; overflow: hidden;\"></div>\n";
 
             std::cout << "<script type=\"text/javascript\">\n";
 
             std::cout << "var gpx_file = '" << std::string(jlwe.config.at("http")) << std::string(jlwe.config.at("websiteDomain")) << "/cgi-bin/gpx_builder/download_gpx.cgi';\n";
+            std::cout << "var map;\n";
 
-            std::cout << "function initMap() {\n";
+            std::cout << "function onPageLoad() {\n";
+            std::cout << "    map = loadMap('map_area', kml_file_current);\n";
 
-            std::cout << "    //load man google map\n";
-            std::cout << "    map = new google.maps.Map(document.getElementById('map'), {\n";
-            std::cout << "        center: {lat: -34.88, lng: 138.58},\n";
-            std::cout << "        zoom: 10\n";
-            std::cout << "    });\n";
-
-            /*std::cout << "    //add osm roads (kml)\n";
-            std::cout << "    if (osm_roads_kml.length > 0){\n";
-            std::cout << "        var kmlRoadsLayer = new google.maps.KmlLayer(osm_roads_kml, {\n";
-            std::cout << "            map: map\n";
-            std::cout << "        });\n";
-            std::cout << "    };\n";*/
-
-            std::cout << "    //add caches (gpx)\n";
+            std::cout << "    // add caches (gpx)\n";
             std::cout << "    if (gpx_file.length > 0){\n";
-            std::cout << "        var gpxLayer = new GPXfile(gpx_file, map);\n";
-            std::cout << "    };\n";
-
-            std::cout << "    //add game zone outline (kml)\n";
-            std::cout << "    if (kml_file_current.length > 0){\n";
-            std::cout << "        var kmlLayer = new google.maps.KmlLayer(kml_file_current, {\n";
-            std::cout << "            map: map\n";
-            std::cout << "        });\n";
+            std::cout << "        var gpxLayer = new GPXfile(gpx_file, map, map_type);\n";
             std::cout << "    };\n";
 
             std::cout << "}\n";
 
-            std::cout << "        </script>\n";
+            std::cout << "</script>\n";
 
-            std::cout << "<script async defer src=\"https://maps.googleapis.com/maps/api/js?key=" + std::string(jlwe.config.value("GoogleMapsApiKey", "")) + "&callback=initMap\"></script>\n";
-
+            if (map_type == "leaflet") {
+                std::cout << "<script>\n";
+                std::cout << "onPageLoad()\n";
+                std::cout << "</script>\n";
+            }
 
         } else {
             if (jlwe.isLoggedIn()) {

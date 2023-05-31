@@ -17,8 +17,8 @@
 #include "core/CgiEnvironment.h"
 #include "core/JlweUtils.h"
 
-#define MAP_HTML_FILE "/map/google.html"
-//#define MAP_HTML_FILE "/map/leaflet.html"
+//#define MAP_HTML_FILE "/map/google.html"
+#define MAP_HTML_FILE "/map/leaflet.html"
 
 int main () {
     std::string doc_root = CgiEnvironment::getDocumentRoot();

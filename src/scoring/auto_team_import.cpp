@@ -132,32 +132,38 @@ int main () {
                     while (res->next()) {
                         std::string member = res->getString(1);
                         if (member.size()) {
+                            bool repeated_member = false;
                             for (unsigned int j = 0; j < team_members.size(); j++) {
                                 if (JlweUtils::compareTeamNames(member, team_members.at(j)))
-                                    continue;
+                                    repeated_member = true;
                             }
-                            team_members.push_back(member);
+                            if (!repeated_member)
+                                team_members.push_back(member);
                         }
                     }
                     delete res;
                     delete prep_stmt;
 
                     if (team_members.size()) {
-                        std::string team_members_str = team_members.at(0);
-                        for (unsigned int j = 1; j < team_members.size(); j++) {
-                            team_members_str += ", " + team_members.at(j);
-                        }
+                        if (team_members.size() == 1 && JlweUtils::compareTeamNames(team_members.at(0), teamList.at(i).name)) {
+                            // this means the team name is the same as the one team member, so no need to display it
+                        } else {
+                            std::string team_members_str = team_members.at(0);
+                            for (unsigned int j = 1; j < team_members.size(); j++) {
+                                team_members_str += ", " + team_members.at(j);
+                            }
 
-                        prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT setTeamMembers(?,?,?,?);");
-                        prep_stmt->setInt(1, teamList.at(i).id);
-                        prep_stmt->setString(2, team_members_str);
-                        prep_stmt->setString(3, jlwe.getCurrentUserIP());
-                        prep_stmt->setString(4, jlwe.getCurrentUsername());
-                        res = prep_stmt->executeQuery();
-                        if (res->next()) {
+                            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT setTeamMembers(?,?,?,?);");
+                            prep_stmt->setInt(1, teamList.at(i).id);
+                            prep_stmt->setString(2, team_members_str);
+                            prep_stmt->setString(3, jlwe.getCurrentUserIP());
+                            prep_stmt->setString(4, jlwe.getCurrentUsername());
+                            res = prep_stmt->executeQuery();
+                            if (res->next()) {
+                            }
+                            delete res;
+                            delete prep_stmt;
                         }
-                        delete res;
-                        delete prep_stmt;
                     }
 
                 }

@@ -79,12 +79,30 @@ int main () {
         delete res;
         delete prep_stmt;
 
+        int response_code = 200;
+
         // out an error message if something goes wrong
         if (validFile == false){
+            response_code = 404;
             std::cout << "Status:404 Not Found\r\n";
             std::cout << "Content-type:text/plain\r\n\r\n";
             std::cout << "The file " + filename + " could not be found on the server\n";
+        } else {
+            response_code = 200;
         }
+
+        // log download request
+        // ignore any errors, the users don't care about the logging
+        try {
+            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT insertFileDownloadLog(?,?,?,?);");
+            prep_stmt->setString(1, filename);
+            prep_stmt->setString(2, CgiEnvironment::getUserAgent());
+            prep_stmt->setString(3, jlwe.getCurrentUserIP());
+            prep_stmt->setInt(4, response_code);
+            res = prep_stmt->executeQuery();
+            delete res;
+            delete prep_stmt;
+        } catch (...) {}
 
     } catch (const sql::SQLException &e) {
         std::cout << "Content-type:text/plain\r\n\r\n";

@@ -78,6 +78,20 @@ int main () {
 
         delete res;
         delete prep_stmt;
+
+        // log download request
+        // ignore any errors, the users don't care about the logging
+        try {
+            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT insertFileDownloadLog(?,?,?,?);");
+            prep_stmt->setString(1, "/gpx");
+            prep_stmt->setString(2, CgiEnvironment::getUserAgent());
+            prep_stmt->setString(3, jlwe.getCurrentUserIP());
+            prep_stmt->setInt(4, validFile ? 200 : 404);
+            res = prep_stmt->executeQuery();
+            delete res;
+            delete prep_stmt;
+        } catch (...) {}
+
     } catch (const sql::SQLException &e) {
         std::cout << "Content-type:text/plain\r\n\r\n";
         std::cout << e.what() << " (MySQL error code: " << std::to_string(e.getErrorCode()) << ")\n";

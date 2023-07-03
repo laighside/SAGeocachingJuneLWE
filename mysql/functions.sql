@@ -338,6 +338,19 @@ END$$
 DELIMITER ;
 
 /**
+ * insertFileDownloadLog This adds an entry to the file_downloads table
+ */
+DROP FUNCTION IF EXISTS insertFileDownloadLog;
+DELIMITER $$
+CREATE FUNCTION insertFileDownloadLog(filenameIn TEXT, user_agentIn TEXT, user_ipIn VARCHAR(50), response_codeIn INT) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    INSERT INTO file_downloads (filename, timestamp, user_ip, user_agent, response_code) VALUES (filenameIn, NOW(), user_ipIn, user_agentIn, response_codeIn);
+    RETURN 0;
+END$$
+DELIMITER ;
+
+/**
  * insertPayment This adds an entry to the payment_log table
  */
 DROP FUNCTION IF EXISTS insertPayment;

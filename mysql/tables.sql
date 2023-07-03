@@ -250,6 +250,19 @@ CREATE TABLE `event_registrations` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
+-- Table structure for table `file_downloads`
+--
+
+DROP TABLE IF EXISTS `file_downloads`;
+CREATE TABLE `file_downloads` (
+  `filename` text NOT NULL,
+  `timestamp` datetime NOT NULL,
+  `user_ip` varchar(50) NOT NULL,
+  `user_agent` text NOT NULL,
+  `response_code` int DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
 -- Table structure for table `files`
 --
 

@@ -24,16 +24,12 @@ int main () {
     try {
         JlweCore jlwe;
 
-        sql::Statement *stmt;
-        sql::ResultSet *res;
-
         HtmlTemplate html(false);
         html.outputHttpHtmlHeader();
         if (!html.outputHeader(&jlwe, "JLWE Admin area - Scoring", false))
             return 0;
 
         if (jlwe.getPermissionValue("perm_pptbuilder")) { //if logged in
-            std::string message = "";
 
             html.outputAdminMenu();
 
@@ -42,83 +38,50 @@ int main () {
 
             std::cout << FormElements::includeJavascript("/js/form_elements.js");
             std::cout << FormElements::includeJavascript("/js/scoring.js");
+            std::cout << FormElements::includeJavascript("/js/scoring_team_list.js");
+            std::cout << FormElements::includeJavascript("/js/scoring_team_scores.js");
             std::cout << FormElements::includeJavascript("/js/scoring_powerpoint.js");
 
             std::cout << "<h2 style=\"text-align:center\">JLWE Scoring and Powerpoint builder</h2>\n";
 
             std::cout << FormElements::pageTabs({{"team_list", "Team List"}, {"team_scores", "Team Scores"}, {"leaderboard", "Leaderboard"}, {"ppt_builder", "Powerpoint"}});
 
-
+            // Team list
             std::cout << "<div id=\"team_list\" class=\"pageTabContent\">\n";
             std::cout << "<h2 style=\"text-align:center\">Game Team List</h2>\n";
 
             std::cout << "<p>The Auto Importer will attempt to use the data from the GPX builder to create a list of teams, team members and their caches. Run this after all caches are entered into the GPX builder. After the auto import has run, you can correct any errors below (drag and drop the caches to move them to different teams).</p>\n";
             std::cout << "<p style=\"text-align:center\"><input type=\"button\" onclick=\"autoTeamImport();\" value=\"Run Auto Team Import\" ></p>\n";
             //std::cout << "<p style=\"text-align:center;font-style:italic;\">(Auto import is disabled since it relies on registration data which is currently disabled)</p>\n";
+            std::cout << "<p>The team members will be shown on the Powerpoint Presentation and the caches allocated to each team are used to calculate the zone bonus points for each team. The grey rows indicate non-competing teams, these are usually the event organisers. If you wish to remove a team from the leaderboard and powerpoint, set them as non-competing.</p>\n";
 
-            std::cout << "<p>The team members will be shown on the Powerpoint Presentation and the caches allocated to each team are used to calculate the zone bonus points for each team. The grey rows indicate non-competing teams, these are usually the event organisers.</p>\n";
-
-
-            std::cout << "<table id=\"game_teams_table\" align=\"center\"><tr>\n";
+            std::cout << "<table id=\"team_list_table\" align=\"center\"><tr>\n";
             std::cout << "<th>Team Name</th><th>Team Members</th><th>Caches Hidden</th>\n";
-            std::cout << "</tr>\n";
-
-            stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT team_id,team_name,team_members,competing FROM game_teams ORDER BY team_name;");
-            while (res->next()){
-                int team_id = res->getInt(1);
-                std::cout << "<tr" + std::string(res->getInt(4) ? "" : " class=\"nonCompeteTeam\"") + ">\n";
-                std::cout << "<td id=\"team_name_" + std::to_string(team_id) + "\" style=\"position:relative;\" data-value=\"" << Encoder::htmlAttributeEncode(res->getString(2)) << "\">" << Encoder::htmlEntityEncode(res->getString(2)) << "<svg class=\"iconButton\" style=\"float:right;\" onclick=\"editTeamName(" + std::to_string(team_id) + ")\" width=\"20\" height=\"20\"><image xlink:href=\"/img/edit.svg\" width=\"20\" height=\"20\"></image></svg></td>\n";
-                std::cout << "<td id=\"team_members_" + std::to_string(team_id) + "\" style=\"position:relative;\" data-value=\"" << Encoder::htmlAttributeEncode(res->getString(3)) << "\">" << Encoder::htmlEntityEncode(res->getString(3)) << "<svg class=\"iconButton\" style=\"float:right;\" onclick=\"editTeamMembers(" + std::to_string(team_id) + ")\" width=\"20\" height=\"20\"><image xlink:href=\"/img/edit.svg\" width=\"20\" height=\"20\"></image></svg></td>\n";
-                std::cout << "<td id=\"team_caches_" + std::to_string(team_id) + "\" ondrop=\"drop(event, this)\" ondragover=\"allowDrop(event)\" data-team-id=\"" + std::to_string(team_id) + "\"></td>\n";
-
-
-                std::vector<FormElements::dropDownMenuItem> menuItems;
-                menuItems.push_back({"deleteTeam(" + std::to_string(team_id) + ")", "Delete Team", true});
-                menuItems.push_back({"setTeamCompeting(" + std::to_string(team_id) + ", this)", (res->getInt(4) ? "Set Non-Competing" : "Set Competing"), true});
-                std::cout << "<td>" + FormElements::dropDownMenu(100 + team_id, menuItems) + "</td>\n";
-
-                std::cout << "</tr>\n";
-            }
-            delete res;
-            delete stmt;
             std::cout << "</table>\n";
 
-            std::cout << "<table class=\"\" align=\"center\"><tr>\n";
-            std::cout << "<td style=\"font-style:italic;\">Unallocated caches</td><td id=\"team_caches_-1\" style=\"min-width:150px;max-width:410px;\" ondrop=\"drop(event, this)\" ondragover=\"allowDrop(event)\" data-team-id=\"-1\"></td>\n";
+            std::cout << "<table align=\"center\" style=\"margin-top:10px;\"><tr>\n";
+            std::cout << "<td style=\"font-style:italic;\">Unallocated caches</td><td id=\"team_caches_-1\" style=\"min-width:150px;max-width:410px;\" ondrop=\"dropCache(event)\" ondragover=\"allowDropCache(event)\" data-team-id=\"-1\"></td>\n";
             std::cout << "</tr></table>\n";
 
             std::cout << "<p style=\"text-align:center\"><input type=\"button\" onclick=\"addNewTeam();\" value=\"Create New Team\"></p>\n";
 
-
-            std::cout << "<script>\n";
-
-            std::cout << "var initalCacheAllocation = [";
-            stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT cache_number,team_id FROM cache_handout;");
-            while (res->next()){
-                std::cout << "{cache:" + std::to_string(res->getInt(1)) + ",team:" + std::to_string(res->getInt(2)) + "},";
-            }
-            delete res;
-            delete stmt;
-            std::cout << "{}];\n";
-
-            std::cout << "loadCaches(initalCacheAllocation);\n";
-
-            std::cout << "</script>\n";
-
             std::cout << "</div>\n";
-            std::cout << "<div id=\"team_scores\" class=\"pageTabContent\">\n";
 
+            // Team scores
+            std::cout << "<div id=\"team_scores\" class=\"pageTabContent\">\n";
 
             std::cout << "<h2 style=\"text-align:center\">Team Scores</h2>\n";
             std::cout << "<p>Copy the zone and cache return points into the Excel scoring spreadsheet. After calculating the final scores, enter then below and they will appear on the Powerpoint presentation.</p>\n";
+            std::cout << "<p>To set a team as DSQ/DNF, enter a score of minus one hundred (-100)</p>\n";
             std::cout << "<table id=\"team_scores_table\" align=\"center\">\n";
             std::cout << "<tr><th>Team</th><th>Zone Points</th><th>Return Points</th><th>Final Score</th></tr>\n";
             std::cout << "</table>\n";
 
+            std::cout << "<p id=\"team_scores_total_p\"></p>\n";
+
             std::cout << "</div>\n";
 
+            // Leaderboard
             std::cout << "<div id=\"leaderboard\" class=\"pageTabContent\">\n";
 
             std::cout << "<h2 style=\"text-align:center\">Scoreboard</h2>\n";
@@ -128,6 +91,7 @@ int main () {
 
             std::cout << "</div>\n";
 
+            // Powerpoint
             std::cout << "<div id=\"ppt_builder\" class=\"pageTabContent\">\n";
 
             std::cout << "<p style=\"text-align:center;\">\n";
@@ -155,11 +119,14 @@ int main () {
             std::cout << "<script type=\"text/javascript\">\n";
             std::cout << "document.getElementsByClassName(\"defaultPageTab\")[0].click();\n";
 
+            std::cout << "document.getElementById(\"page_tab_button_team_list\").addEventListener(\"click\", openTeamListTab, false);\n";
             std::cout << "document.getElementById(\"page_tab_button_team_scores\").addEventListener(\"click\", openTeamScoresTab, false);\n";
             std::cout << "document.getElementById(\"page_tab_button_leaderboard\").addEventListener(\"click\", openLeaderboardTab, false);\n";
             std::cout << "document.getElementById(\"page_tab_button_ppt_builder\").addEventListener(\"click\", openPowerpointTab, false);\n";
 
             std::cout << "document.getElementById(\"slideReorderToggleCB\").addEventListener('change', slideReorderChanged);\n";
+
+            std::cout << "openTeamListTab();\n";
 
             std::cout << "</script>\n";
 

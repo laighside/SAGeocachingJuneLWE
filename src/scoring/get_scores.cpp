@@ -46,6 +46,16 @@ int main () {
 
             bool include_non_compete = (urlQueries.getValue("include_non_compete") == "true");
 
+            // Check that number_game_caches is set to a valid value
+            int number_game_caches = 0;
+            try {
+                number_game_caches = std::stoi(jlwe.getGlobalVar("number_game_caches"));
+            } catch (...) {}
+            if (number_game_caches < 1)
+                throw std::invalid_argument("Invalid setting for number_game_caches = " + std::to_string(number_game_caches));
+
+            std::vector<bool> caches_allocated(static_cast<size_t>(number_game_caches), false);
+
             std::vector<cache> cache_list;
 
             stmt = jlwe.getMysqlCon()->createStatement();
@@ -81,6 +91,7 @@ int main () {
                 jsonObject["team_id"] = team_id;
                 jsonObject["team_name"] = res->getString(2);
                 jsonObject["team_members"] = res->getString(3);
+                jsonObject["competing"] = (res->getInt(4) > 0);
                 if (res->isNull(5)) {
                     jsonObject["final_score"] = nullptr;
                 } else {
@@ -112,6 +123,8 @@ int main () {
                             warning_cache_not_in_gpx = true;
 
                         jsonObject["caches"].push_back(jsonObject2);
+
+                        caches_allocated[static_cast<size_t>(c.cache_number - 1)] = true;
                     }
                 }
 
@@ -132,6 +145,12 @@ int main () {
 
             jsonDocument["warning_cache_not_in_handout"] = warning_cache_not_in_handout;
             jsonDocument["warning_cache_not_in_gpx"] = warning_cache_not_in_gpx;
+
+            jsonDocument["unallocated_caches"] = nlohmann::json::array();
+            for (unsigned int i = 0; i < caches_allocated.size(); i++) {
+                if (caches_allocated.at(i) == false)
+                    jsonDocument["unallocated_caches"].push_back(i + 1);
+            }
 
             std::cout << JsonUtils::makeJsonHeader() << jsonDocument.dump();
 

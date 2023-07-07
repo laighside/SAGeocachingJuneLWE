@@ -1,5 +1,5 @@
 /**
-  @file    scoring.js
+  @file    scoring_powerpoint.js
   @author  Ben <admin@laighside.com>
   @version 1.0
 

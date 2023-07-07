@@ -106,3 +106,92 @@ function makeCheckboxElement(id, label, checked, onChange) {
     labelElement.appendChild(checkmarkSpan);
     return checkboxContainer;
 }
+
+/**
+ * Makes a table cell with a single line text input with tick icon save button on the right
+ *
+ * @param {String} initalText The inital value to display
+ * @param {String} idStr The id of element(s)
+ * @param {Function} onEdit Function to call when the edit button is clicked
+ * @param {Function} onSave Function to call when the save button is clicked
+ */
+function makeEditableTextCell(initalText, idStr, onEdit, onSave) {
+    var valueCell = document.createElement("td");
+    valueCell.style = "position:relative;";
+    var valueCellSet = document.createElement("div");
+    valueCellSet.id = "table_cell_set_" + idStr;
+    valueCellSet.dataset.value = initalText;
+    var valueSpan = document.createElement("span");
+    valueSpan.id = "table_cell_value_span_" + idStr;
+    valueSpan.innerText = initalText;
+    valueCellSet.appendChild(valueSpan);
+    valueCellSet.appendChild(makeEditIcon(onEdit));
+    valueCell.appendChild(valueCellSet);
+
+    var valueCellEdit = makeLineEditBlock("table_cell_input_" + idStr, onSave);
+    valueCellEdit.id = "table_cell_edit_" + idStr;
+    valueCell.appendChild(valueCellEdit);
+
+    return valueCell;
+}
+
+/**
+ * Makes a three-dots icon with drop down menu the opens when clicked
+ *
+ * @param {Number} id_number A unique number to identify this menu
+ * @param {Array} menuItems A list of items to display in the menu
+ */
+function makeDropDownMenu(id_number, menuItems) {
+    var menuRoot = document.createElement("div");
+    menuRoot.id = "menu_row_" + id_number.toString();
+    var menuDropButton = document.createElement("button");
+    menuDropButton.id = "more_button_row_" + id_number.toString();
+    menuDropButton.classList.add("more_button");
+    menuDropButton.addEventListener('click', showMenu.bind(this, id_number));
+    menuDropButton.appendChild(document.createElement("span"));
+    menuDropButton.appendChild(document.createElement("span"));
+    menuDropButton.appendChild(document.createElement("span"));
+    menuRoot.appendChild(menuDropButton);
+
+    var menuDrop = document.createElement("div");
+    menuDrop.classList.add("more_menu");
+    var moreMenuCaret = document.createElement("div");
+    moreMenuCaret.classList.add("more_menu_caret");
+    var moreMenuCaretOuter = document.createElement("div");
+    moreMenuCaretOuter.classList.add("more_menu_caret_outer");
+    var moreMenuCaretInner = document.createElement("div");
+    moreMenuCaretInner.classList.add("more_menu_caret_inner");
+    moreMenuCaret.appendChild(moreMenuCaretOuter);
+    moreMenuCaret.appendChild(moreMenuCaretInner);
+    menuDrop.appendChild(moreMenuCaret);
+
+    var moreMenuItems = document.createElement("ul");
+    moreMenuItems.classList.add("more_menu_items");
+
+    for (var i = 0; i < menuItems.length; i++) {
+        moreMenuItems.appendChild(makeDropDownMenuItem(menuItems[i]));
+    }
+
+    menuDrop.appendChild(moreMenuItems);
+    menuRoot.appendChild(menuDrop);
+
+    return menuRoot;
+}
+
+/**
+ * Makes a single menu item (to be placed within a drop down menu)
+ *
+ * @param {Object} menuItem The text and onClick function for the menu item.
+ */
+function makeDropDownMenuItem(menuItem) {
+    var menuItemElement = document.createElement("li");
+    var menuItemButton = document.createElement("button");
+    if (menuItem.buttonId)
+        menuItemButton.id = menuItem.buttonId;
+    menuItemButton.classList.add("more_menu_btn");
+    menuItemButton.type = "button";
+    menuItemButton.innerText = menuItem.text;
+    menuItemButton.addEventListener('click', menuItem.onClick);
+    menuItemElement.appendChild(menuItemButton);
+    return menuItemElement;
+}

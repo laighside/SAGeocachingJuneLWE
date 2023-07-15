@@ -33,3 +33,9 @@ target_link_libraries(get_slides.cgi jlwecore powerpoint ${MYSQLCPPCONN_LIBRARY}
 add_executable(set_slide.cgi set_slide.cpp)
 target_link_libraries(set_slide.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 
+add_executable(get_points.cgi get_points.cpp)
+target_link_libraries(get_points.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
+
+add_executable(set_points.cgi set_points.cpp)
+target_link_libraries(set_points.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
+

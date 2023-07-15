@@ -38,13 +38,47 @@ int main () {
 
             std::cout << FormElements::includeJavascript("/js/form_elements.js");
             std::cout << FormElements::includeJavascript("/js/scoring.js");
+            std::cout << FormElements::includeJavascript("/js/scoring_points_setup.js");
             std::cout << FormElements::includeJavascript("/js/scoring_team_list.js");
             std::cout << FormElements::includeJavascript("/js/scoring_team_scores.js");
             std::cout << FormElements::includeJavascript("/js/scoring_powerpoint.js");
 
             std::cout << "<h2 style=\"text-align:center\">JLWE Scoring and Powerpoint builder</h2>\n";
 
-            std::cout << FormElements::pageTabs({{"team_list", "Team List"}, {"team_scores", "Team Scores"}, {"leaderboard", "Leaderboard"}, {"ppt_builder", "Powerpoint"}});
+            std::cout << FormElements::pageTabs({{"points_setup", "Points Setup"}, {"team_list", "Team List"}, {"team_scores", "Team Scores"}, {"leaderboard", "Leaderboard"}, {"ppt_builder", "Powerpoint"}});
+
+            // Points setup
+            std::cout << "<div id=\"points_setup\" class=\"pageTabContent\">\n";
+            std::cout << "<h2 style=\"text-align:center\">Game Points Setup</h2>\n";
+
+            std::cout << "<p>This page is for setting the point values for each cache.</p>\n";
+
+            std::cout << "<h3>Find points (traditional caches)</h3>\n";
+            std::cout << "<p>These are points teams get for finding the usual 100 traditional caches. For example, walking bonus points.</p>\n";
+
+            std::cout << "<table id=\"find_points_trads_table\" align=\"center\"><tr>\n";
+            std::cout << "<th>Enabled</th><th>Name</th>\n";
+            std::cout << "</table>\n";
+
+            std::cout << "<h3>Find points (extras)</h3>\n";
+            std::cout << "<p>These are points teams get for doing things on Sunday that aren't finding the usual 100 traditional caches. For example, puzzle caches, black thunder.</p>\n";
+
+            std::cout << "<table id=\"find_points_extras_table\" align=\"center\"><tr>\n";
+            std::cout << "<th>Enabled</th><th>Name</th><th>Point value</th>\n";
+            std::cout << "</table>\n";
+            std::cout << "<p style=\"text-align:center\"><input type=\"button\" onclick=\"addNewFindPointsExtra();\" value=\"Create new find points item\"></p>\n";
+
+            std::cout << "<h3>Hide points</h3>\n";
+            std::cout << "<p>These are points associated with the caches teams hid on Saturday. For example, zone bonus points.</p>\n";
+
+            std::cout << "<h4 style=\"text-align:center\">Bonus zones</h4>\n";
+            std::cout << "<p style=\"text-align:center\">Note that zone bonus points need to be set before any caches are entered into the GPX builder.</p>\n";
+            std::cout << "<table id=\"zones_table\" align=\"center\"><tr>\n";
+            std::cout << "<th>KML File</th><th>Name</th><th>Point value</th>\n";
+            std::cout << "</table>\n";
+            std::cout << "<p style=\"text-align:center\">Add a new zone: <select id=\"add_zone_kmls\"><option value=\"\"></select> <input type=\"button\" onclick=\"addNewZone();\" value=\"Create\"></p>\n";
+
+            std::cout << "</div>\n";
 
             // Team list
             std::cout << "<div id=\"team_list\" class=\"pageTabContent\">\n";
@@ -119,6 +153,7 @@ int main () {
             std::cout << "<script type=\"text/javascript\">\n";
             std::cout << "document.getElementsByClassName(\"defaultPageTab\")[0].click();\n";
 
+            std::cout << "document.getElementById(\"page_tab_button_points_setup\").addEventListener(\"click\", openPointsSetupTab, false);\n";
             std::cout << "document.getElementById(\"page_tab_button_team_list\").addEventListener(\"click\", openTeamListTab, false);\n";
             std::cout << "document.getElementById(\"page_tab_button_team_scores\").addEventListener(\"click\", openTeamScoresTab, false);\n";
             std::cout << "document.getElementById(\"page_tab_button_leaderboard\").addEventListener(\"click\", openLeaderboardTab, false);\n";
@@ -126,7 +161,7 @@ int main () {
 
             std::cout << "document.getElementById(\"slideReorderToggleCB\").addEventListener('change', slideReorderChanged);\n";
 
-            std::cout << "openTeamListTab();\n";
+            std::cout << "openPointsSetupTab();\n";
 
             std::cout << "</script>\n";
 

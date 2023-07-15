@@ -42,11 +42,24 @@ END$$
 DELIMITER ;
 
 /**
+ * addFindPointsExtrasItem This adds an entry to the game_find_points_extras table
+ */
+DROP FUNCTION IF EXISTS addFindPointsExtrasItem;
+DELIMITER $$
+CREATE FUNCTION addFindPointsExtrasItem(userIP VARCHAR(50), usernameIn VARCHAR(100)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    INSERT INTO game_find_points_extras (name, point_value, enabled) VALUES ("New Item", 1, 1);
+    RETURN LAST_INSERT_ID();
+END$$
+DELIMITER ;
+
+/**
  * addNewTeam This adds an entry to the game_teams table
  */
 DROP FUNCTION IF EXISTS addNewTeam;
 DELIMITER $$
-CREATE FUNCTION addNewTeam(team_nameIn VARCHAR(100), userIn VARCHAR(100), userIP VARCHAR(50)) RETURNS INT
+CREATE FUNCTION addNewTeam(team_nameIn VARCHAR(100), userIP VARCHAR(50), usernameIn VARCHAR(100)) RETURNS INT
     NOT DETERMINISTIC
 BEGIN
     INSERT INTO game_teams (team_name, team_members) VALUES (team_nameIn, "");
@@ -98,6 +111,21 @@ BEGIN
         INSERT INTO user_hidden_caches (team_name, phone_number, cache_number, cache_name, latitude, longitude, public_hint, detailed_hint, camo, permanent, private_property, zone_bonus, osm_distance, actual_distance, timestamp, IP_address) VALUES(team_nameIn, phone_numberIn, cache_numberIn, cache_nameIn, lat, lon, public_hintIn, detailed_hintIn, camoIn, permanentIn, private_propertyIn, zone_bonusIn, osm_distanceIn, actual_distanceIn, NOW(), userIP);
     SET dummy = log_user_event(userIP, username, CONCAT("User submitted cache number ",  CONVERT(cache_numberIn, CHAR(50)), "; id: ", CONVERT(LAST_INSERT_ID(), CHAR(50))));
         RETURN 0;
+END$$
+DELIMITER ;
+
+/**
+ * addZone This adds an entry to the zones table
+ */
+DROP FUNCTION IF EXISTS addZone;
+DELIMITER $$
+CREATE FUNCTION addZone(kml_fileIn TEXT, userIP VARCHAR(50), usernameIn VARCHAR(100)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    DECLARE dummy INT;
+    SET dummy = log_user_event(userIP, usernameIn, CONCAT("Zone ",  kml_fileIn, " was created"));
+    INSERT INTO zones (kml_file, name, points, enabled) VALUES (kml_fileIn, "New zone", 1, 1);
+    RETURN LAST_INSERT_ID();
 END$$
 DELIMITER ;
 
@@ -260,6 +288,22 @@ END$$
 DELIMITER ;
 
 /**
+ * deleteFindPointsExtrasItem This deletes an entry from the game_find_points_extras table
+ */
+DROP FUNCTION IF EXISTS deleteFindPointsExtrasItem;
+DELIMITER $$
+CREATE FUNCTION deleteFindPointsExtrasItem(idIn INT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM game_find_points_extras WHERE id = idIn)) THEN
+        DELETE FROM game_find_points_extras WHERE id = idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
+END$$
+DELIMITER ;
+
+/**
  * deleteImage This deletes an entry from the webpage_images table
  */
 DROP FUNCTION IF EXISTS deleteImage;
@@ -285,6 +329,26 @@ BEGIN
     IF (EXISTS(SELECT * FROM game_teams WHERE team_id = team_idIn)) THEN
         DELETE FROM game_teams WHERE team_id = team_idIn;
             RETURN 0;
+    END IF;
+    RETURN 1;
+END$$
+DELIMITER ;
+
+/**
+ * deleteZone This deletes an entry from the zones table
+ */
+DROP FUNCTION IF EXISTS deleteZone;
+DELIMITER $$
+CREATE FUNCTION deleteZone(idIn INT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    DECLARE dummy INT;
+    DECLARE kml_file_name TEXT;
+    IF (EXISTS(SELECT * FROM zones WHERE id = idIn)) THEN
+        SET kml_file_name = (SELECT kml_file FROM zones WHERE id = idIn);
+        DELETE FROM zones WHERE id = idIn;
+        SET dummy = log_user_event(userIP, username, CONCAT("Zone ",  kml_file_name, " was deleted"));
+        RETURN 0;
     END IF;
     RETURN 1;
 END$$
@@ -582,6 +646,70 @@ BEGIN
         END IF;
     END IF;
     RETURN 0;
+END$$
+DELIMITER ;
+
+/**
+ * setFindPointsExtrasEnabled This sets the enabled for a given id in the game_find_points_extras table
+ */
+DROP FUNCTION IF EXISTS setFindPointsExtrasEnabled;
+DELIMITER $$
+CREATE FUNCTION setFindPointsExtrasEnabled(idIn INT, enabledIn INT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM game_find_points_extras WHERE id = idIn)) THEN
+        UPDATE game_find_points_extras SET enabled = enabledIn WHERE id = idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
+END$$
+DELIMITER ;
+
+/**
+ * setFindPointsExtrasName This sets the name for a given id in the game_find_points_extras table
+ */
+DROP FUNCTION IF EXISTS setFindPointsExtrasName;
+DELIMITER $$
+CREATE FUNCTION setFindPointsExtrasName(idIn INT, nameIn TEXT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM game_find_points_extras WHERE id = idIn)) THEN
+        UPDATE game_find_points_extras SET name = nameIn WHERE id = idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
+END$$
+DELIMITER ;
+
+/**
+ * setFindPointsExtrasPoints This sets the point_value for a given id in the game_find_points_extras table
+ */
+DROP FUNCTION IF EXISTS setFindPointsExtrasPoints;
+DELIMITER $$
+CREATE FUNCTION setFindPointsExtrasPoints(idIn INT, point_valueIn INT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM game_find_points_extras WHERE id = idIn)) THEN
+        UPDATE game_find_points_extras SET point_value = point_valueIn WHERE id = idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
+END$$
+DELIMITER ;
+
+/**
+ * setFindPointsTradsEnabled This sets the enabled for a given id in the game_find_points_trads table
+ */
+DROP FUNCTION IF EXISTS setFindPointsTradsEnabled;
+DELIMITER $$
+CREATE FUNCTION setFindPointsTradsEnabled(idIn INT, enabledIn INT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM game_find_points_trads WHERE id = idIn)) THEN
+        UPDATE game_find_points_trads SET enabled = enabledIn WHERE id = idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
 END$$
 DELIMITER ;
 
@@ -906,34 +1034,34 @@ END$$
 DELIMITER ;
 
 /**
- * setZonePoints This adds, updates, or deletes an entry in the zones table
+ * setZoneName This sets the name for a given id in the zones table
+ */
+DROP FUNCTION IF EXISTS setZoneName;
+DELIMITER $$
+CREATE FUNCTION setZoneName(idIn INT, nameIn TEXT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM zones WHERE id = idIn)) THEN
+        UPDATE zones SET name = nameIn WHERE id = idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
+END$$
+DELIMITER ;
+
+/**
+ * setZonePoints This sets the points for a given id in the zones table
  */
 DROP FUNCTION IF EXISTS setZonePoints;
 DELIMITER $$
-CREATE FUNCTION setZonePoints(kml_nameIn VARCHAR(200), zone_nameIn VARCHAR(200), pointsIn INT, del INT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+CREATE FUNCTION setZonePoints(idIn INT, pointsIn INT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
     NOT DETERMINISTIC
 BEGIN
-    DECLARE dummy INT;
-    IF (EXISTS(SELECT * FROM zones WHERE kml_file = kml_nameIn)) THEN
-        IF (del = 0) THEN
-            UPDATE zones SET name = zone_nameIn, points = pointsIn WHERE kml_file = kml_nameIn;
-            SET dummy = log_user_event(userIP, username, CONCAT("Zone ",  kml_nameIn, " was updated to \"", zone_nameIn, "\" with ", CONVERT(pointsIn, CHAR(50)), " points"));
-            RETURN 1;
-        ELSE
-            DELETE FROM zones WHERE kml_file = kml_nameIn;
-            SET dummy = log_user_event(userIP, username, CONCAT("Zone ",  kml_nameIn, " was deleted"));
-            RETURN 2;
-        END IF;
-    ELSE
-        IF (del = 0) THEN
-            INSERT INTO zones (kml_file, name, points) VALUES (kml_nameIn, zone_nameIn, pointsIn);
-            SET dummy = log_user_event(userIP, username, CONCAT("Zone ",  kml_nameIn, " was created"));
-            RETURN 3;
-        ELSE
-            RETURN 0;
-        END IF;
+    IF (EXISTS(SELECT * FROM zones WHERE id = idIn)) THEN
+        UPDATE zones SET points = pointsIn WHERE id = idIn;
+        RETURN 0;
     END IF;
-    RETURN 0;
+    RETURN 1;
 END$$
 DELIMITER ;
 

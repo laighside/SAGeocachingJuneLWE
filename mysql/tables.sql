@@ -280,6 +280,39 @@ CREATE TABLE `files` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
+-- Table structure for table `game_find_points_extras`
+--
+
+DROP TABLE IF EXISTS `game_find_points_extras`;
+CREATE TABLE `game_find_points_extras` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` text NOT NULL,
+  `point_value` int NOT NULL DEFAULT '1',
+  `enabled` int NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Table structure for table `game_find_points_trads`
+--
+
+DROP TABLE IF EXISTS `game_find_points_trads`;
+CREATE TABLE `game_find_points_trads` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` text NOT NULL,
+  `enabled` int NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `game_find_points_trads`
+--
+
+LOCK TABLES `game_find_points_trads` WRITE;
+INSERT INTO `game_find_points_trads` VALUES (1,'1 point per cache', 1),(2,'Walking bonus points', 1);
+UNLOCK TABLES;
+
+--
 -- Table structure for table `game_teams`
 --
 
@@ -768,10 +801,12 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `zones`;
 CREATE TABLE `zones` (
+  `id` int NOT NULL AUTO_INCREMENT,
   `kml_file` varchar(100) NOT NULL,
   `name` varchar(100) NOT NULL DEFAULT '',
   `points` int NOT NULL DEFAULT '0',
-  PRIMARY KEY (`kml_file`)
+  `enabled` int NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 ---

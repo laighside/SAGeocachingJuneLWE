@@ -11,6 +11,16 @@
  */
 
 /**
+ * Makes a button with a delete icon
+ *
+ * @param {Function} onClick Function to call when the button is clicked
+ * @returns {Object} The element to add to the document
+ */
+function makeDeleteIcon(onClick) {
+    return makeIconButton(onClick, "/img/delete.svg");
+}
+
+/**
  * Makes a button with a edit icon
  *
  * @param {Function} onClick Function to call when the button is clicked
@@ -76,6 +86,30 @@ function makeLineEditBlock(inputId, onSave) {
 }
 
 /**
+ * Makes a number input with tick icon save button on the right
+ *
+ * @param {String} inputId The id of the text input element
+ * @param {Function} onSave Function to call when the save button is clicked
+ * @param {String} inputStep The value for the step attribute of the input element
+ * @returns {Object} The element to add to the document
+ */
+function makeNumberEditBlock(inputId, onSave, inputStep) {
+    var numberEditContainer = document.createElement("div");
+    numberEditContainer.style.display = "none";
+    var inputBox = document.createElement("input");
+    inputBox.id = inputId;
+    inputBox.type = "number";
+    if (inputStep)
+        inputBox.step = inputStep;
+    inputBox.style.width = "100px";
+    numberEditContainer.appendChild(inputBox);
+    var saveIcon = makeTickIcon(onSave);
+    saveIcon.style.float = "none";
+    numberEditContainer.appendChild(saveIcon);
+    return numberEditContainer;
+}
+
+/**
  * Makes a checkbox
  *
  * @param {String} id The id of the checkbox
@@ -108,31 +142,118 @@ function makeCheckboxElement(id, label, checked, onChange) {
 }
 
 /**
- * Makes a table cell with a single line text input with tick icon save button on the right
+ * Makes a table cell with a span to dispaly value
+ * Used to make part of an editable cell
  *
- * @param {String} initalText The inital value to display
+ * @param {String} initialValue The inital value to display
  * @param {String} idStr The id of element(s)
- * @param {Function} onEdit Function to call when the edit button is clicked
- * @param {Function} onSave Function to call when the save button is clicked
  */
-function makeEditableTextCell(initalText, idStr, onEdit, onSave) {
+function makeEditableCell(initialValue, idStr) {
     var valueCell = document.createElement("td");
     valueCell.style = "position:relative;";
     var valueCellSet = document.createElement("div");
     valueCellSet.id = "table_cell_set_" + idStr;
-    valueCellSet.dataset.value = initalText;
+    valueCellSet.dataset.value = initialValue;
     var valueSpan = document.createElement("span");
     valueSpan.id = "table_cell_value_span_" + idStr;
-    valueSpan.innerText = initalText;
+    valueSpan.innerText = initialValue;
     valueCellSet.appendChild(valueSpan);
-    valueCellSet.appendChild(makeEditIcon(onEdit));
+    valueCellSet.appendChild(makeEditIcon(startEditCell.bind(this, idStr)));
     valueCell.appendChild(valueCellSet);
 
-    var valueCellEdit = makeLineEditBlock("table_cell_input_" + idStr, onSave);
+    return valueCell;
+}
+
+/**
+ * Makes a table cell with a single line text input with tick icon save button on the right
+ *
+ * @param {String} initialText The initial value to display
+ * @param {String} idStr The id of element(s)
+ * @param {Function} saveFunction Function to call to save a new value
+ */
+function makeEditableTextCell(initialText, idStr, saveFunction) {
+    var valueCell = makeEditableCell(initialText, idStr);
+
+    var valueCellEdit = makeLineEditBlock("table_cell_input_" + idStr, saveTextEdit.bind(this, idStr, saveFunction));
     valueCellEdit.id = "table_cell_edit_" + idStr;
     valueCell.appendChild(valueCellEdit);
 
     return valueCell;
+}
+
+/**
+ * Makes a table cell with a number input with tick icon save button on the right
+ *
+ * @param {Number} initialValue The initial value to display
+ * @param {String} idStr The id of element(s)
+ * @param {Function} saveFunction Function to call to save a new value
+ * @param {Boolean} intOnly Set to true to only accept integer input
+ * @param {String} inputStep The value for the step attribute of the input element
+ */
+function makeEditableNumberCell(initialValue, idStr, saveFunction, intOnly, inputStep) {
+    var valueCell = makeEditableCell(initialValue.toString(), idStr);
+
+    var valueCellEdit = makeNumberEditBlock("table_cell_input_" + idStr, saveNumberEdit.bind(this, idStr, saveFunction, intOnly), inputStep);
+    valueCellEdit.id = "table_cell_edit_" + idStr;
+    valueCell.appendChild(valueCellEdit);
+
+    return valueCell;
+}
+
+/**
+ * Starts the editing of a input field, called when the user clicks a edit button
+ * This just shows the input element
+ *
+ * @param {String} idStr The ID (suffix) of the text edit cell
+ */
+function startEditCell(idStr) {
+    document.getElementById("table_cell_set_" + idStr).style.display = "none";
+    document.getElementById("table_cell_edit_" + idStr).style.display = "block";
+
+    var dataElement = document.getElementById("table_cell_set_" + idStr);
+    document.getElementById("table_cell_input_" + idStr).value = dataElement.dataset.value;
+}
+
+/**
+ * Saves the editing of a text input field, called when the user clicks a save button
+ *
+ * @param {String} idStr The ID (suffix) of the text edit cell
+ */
+function saveTextEdit(idStr, saveFunction) {
+    var newValue = document.getElementById("table_cell_input_" + idStr).value;
+    saveFunction(newValue, saveEditSuccess.bind(this, idStr));
+}
+
+/**
+ * Saves the editing of a number input field, called when the user clicks a save button
+ *
+ * @param {String} idStr The ID (suffix) of the text edit cell
+ */
+function saveNumberEdit(idStr, saveFunction, intOnly) {
+    var inputElement = document.getElementById("table_cell_input_" + idStr);
+    var newValue;
+    if (intOnly) {
+        newValue = parseInt(inputElement.value);
+    } else {
+        newValue = parseFloat(inputElement.value);
+    }
+    inputElement.value = newValue;
+    saveFunction(newValue, saveEditSuccess.bind(this, idStr));
+}
+
+/**
+ * Removes the input field from view, called after changes have been saved successfully
+ *
+ * @param {String} idStr The ID (suffix) of the text edit cell
+ */
+function saveEditSuccess(idStr) {
+    document.getElementById("table_cell_set_" + idStr).style.display = "block";
+    document.getElementById("table_cell_edit_" + idStr).style.display = "none";
+
+    var dataElement = document.getElementById("table_cell_set_" + idStr);
+    var newValue = document.getElementById("table_cell_input_" + idStr).value;
+    dataElement.dataset.value = newValue;
+    document.getElementById("table_cell_value_span_" + idStr).innerText = newValue;
 }
 
 /**
@@ -194,4 +315,24 @@ function makeDropDownMenuItem(menuItem) {
     menuItemButton.addEventListener('click', menuItem.onClick);
     menuItemElement.appendChild(menuItemButton);
     return menuItemElement;
+}
+
+/**
+ * This clears a table and displays a status message on it
+ * Used for showing loading/error messages
+ *
+ * @param {String} statusText The status message to show
+ * @param {String} table_id The element id of the table
+ */
+function showTableStatusRow(statusText, table_id) {
+    var table = document.getElementById(table_id);
+    while (table.rows.length > 1) {
+        table.deleteRow(-1);
+    }
+    var loadingRow = table.insertRow(-1);
+    var loadingCell = loadingRow.insertCell(0);
+    loadingCell.style.textAlign = "center";
+    loadingCell.style.fontStyle = "italic";
+    loadingCell.colSpan = table.rows[0].cells.length;
+    loadingCell.innerText = statusText;
 }

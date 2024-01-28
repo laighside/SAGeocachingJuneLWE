@@ -76,7 +76,8 @@ int main () {
             // Links to log files
             std::cout << "<p style=\"text-align:center;\"><a href=\"/cgi-bin/log/sendmail.cgi\">View sendmail log</a></p>";
             std::cout << "<p style=\"text-align:center;\"><a href=\"/cgi-bin/log/user.cgi\">View user access log</a></p>";
-            std::cout << "<p style=\"text-align:center;\"><a href=\"/cgi-bin/log/server_status.cgi\">Apache Server Status</a></p>";
+            if (jlwe.getPermissionValue("perm_admin"))
+                std::cout << "<p style=\"text-align:center;\"><a href=\"/cgi-bin/log/server_status.cgi\">Apache Server Status</a></p>";
         } else {
             std::cout << "<p>You need to be logged in to view this area.</p>";
         }

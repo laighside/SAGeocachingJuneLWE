@@ -19,7 +19,7 @@
 int main () {
     try {
         JlweCore jlwe;
-        if (jlwe.isLoggedIn()) { //if logged in
+        if (jlwe.getPermissionValue("perm_admin")) { //if logged in
 
             HttpRequest request("localhost/server-status");
             if (request.get()) {

@@ -1004,28 +1004,30 @@ DELIMITER ;
  */
 DROP FUNCTION IF EXISTS setWebpageHTML;
 DELIMITER $$
-CREATE FUNCTION setWebpageHTML(pathIn VARCHAR(100), page_nameIn VARCHAR(100), htmlIn LONGTEXT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+CREATE FUNCTION setWebpageHTML(pathIn VARCHAR(100), draft_pageIn TINYINT, page_nameIn VARCHAR(100), htmlIn LONGTEXT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
     NOT DETERMINISTIC
 BEGIN
     DECLARE dummy INT;
     DECLARE page_idIn INT;
     SET page_idIn = 0;
-    IF (EXISTS(SELECT * FROM webpages WHERE path = pathIn)) THEN
-        SET page_idIn = (SELECT page_id FROM webpages WHERE path = pathIn);
+    IF (EXISTS(SELECT * FROM webpages WHERE path = pathIn AND draft_page = draft_pageIn)) THEN
+        SET page_idIn = (SELECT page_id FROM webpages WHERE path = pathIn AND draft_page = draft_pageIn);
     ELSE
         SET page_idIn = 0;
     END IF;
     IF (page_idIn > 0) THEN
-        IF ((SELECT editable FROM webpages WHERE page_id = page_idIn) != 0) THEN
-            UPDATE webpages SET page_name = page_nameIn, html = htmlIn WHERE path = pathIn;
-            INSERT INTO webpage_history (page_id, timestamp, page_name, html) VALUES (page_idIn, NOW(), page_nameIn, htmlIn);
-            SET dummy = log_user_event(userIP, username, CONCAT("Webpage ",  pathIn, " was updated"));
+        IF ((SELECT editable FROM webpages WHERE page_id = page_idIn AND draft_page = draft_pageIn) != 0) THEN
+            UPDATE webpages SET page_name = page_nameIn, html = htmlIn WHERE path = pathIn AND draft_page = draft_pageIn;
+            IF (draft_pageIn = 0) THEN
+                INSERT INTO webpage_history (page_id, timestamp, page_name, html) VALUES (page_idIn, NOW(), page_nameIn, htmlIn);
+                SET dummy = log_user_event(userIP, username, CONCAT("Webpage ",  pathIn, " was updated"));
+            END IF;
             RETURN 1;
         ELSE
             RETURN 2;
         END IF;
     ELSE
-        INSERT INTO webpages (path, page_name, html) VALUES (pathIn, page_nameIn, htmlIn);
+        INSERT INTO webpages (path, draft_page, page_name, html) VALUES(pathIn, draft_pageIn, page_nameIn, htmlIn);
         SET dummy = log_user_event(userIP, username, CONCAT("Webpage ",  pathIn, " was created"));
         RETURN 0;
     END IF;

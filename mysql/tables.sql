@@ -763,8 +763,8 @@ CREATE TABLE `webpages` (
   `login_only` tinyint NOT NULL DEFAULT '0',
   `editable` tinyint NOT NULL DEFAULT '1',
   `special_page` tinyint NOT NULL,
+  `draft_page` tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY (`page_id`),
-  UNIQUE KEY `path_UNIQUE` (`path`),
   UNIQUE KEY `page_id_UNIQUE` (`page_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

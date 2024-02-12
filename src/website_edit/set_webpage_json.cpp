@@ -38,17 +38,26 @@ int main () {
 
             nlohmann::json jsonDocument = nlohmann::json::parse(postData.dataAsString());
 
-            std::string page_path = jsonDocument.value("path", "");
+            std::string page_request = jsonDocument.value("path", "");
+            int draft_page = 0;
+            if (page_request.substr((page_request.size() - 2)) == "_0") {
+                page_request = page_request.substr(0, page_request.size() - 2);
+            } else if (page_request.substr((page_request.size() - 2)) == "_1") {
+                draft_page = 1;
+                page_request = page_request.substr(0, page_request.size() - 2);
+            }
+
             std::string title = jsonDocument.value("title", "");
             std::string html = jsonDocument.value("html", "");
 
-            if (page_path.size()) {
-                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT setWebpageHTML(?,?,?,?,?);");
-                prep_stmt->setString(1, page_path);
-                prep_stmt->setString(2, title);
-                prep_stmt->setString(3, html);
-                prep_stmt->setString(4, jlwe.getCurrentUserIP());
-                prep_stmt->setString(5, jlwe.getCurrentUsername());
+            if (page_request.size()) {
+                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT setWebpageHTML(?,?,?,?,?,?);");
+                prep_stmt->setString(1, page_request);
+                prep_stmt->setInt(2, draft_page);
+                prep_stmt->setString(3, title);
+                prep_stmt->setString(4, html);
+                prep_stmt->setString(5, jlwe.getCurrentUserIP());
+                prep_stmt->setString(6, jlwe.getCurrentUsername());
                 res = prep_stmt->executeQuery();
                 if (res->next()) {
                     if (res->getInt(1) == 1) {

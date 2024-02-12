@@ -32,8 +32,18 @@ int main () {
 
         if (jlwe.getPermissionValue("perm_website_edit")) { //if logged in
 
-            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT html,page_name FROM webpages WHERE path = ?;");
-            prep_stmt->setString(1, urlQueries.getValue("page"));
+            std::string page_request = urlQueries.getValue("page");
+            int draft_page = 0;
+            if (page_request.substr((page_request.size() - 2)) == "_0") {
+                page_request = page_request.substr(0, page_request.size() - 2);
+            } else if (page_request.substr((page_request.size() - 2)) == "_1") {
+                draft_page = 1;
+                page_request = page_request.substr(0, page_request.size() - 2);
+            }
+
+            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT html,page_name FROM webpages WHERE path = ? AND draft_page = ?;");
+            prep_stmt->setString(1, page_request);
+            prep_stmt->setInt(2, draft_page);
             res = prep_stmt->executeQuery();
             if (res->next()) {
                 nlohmann::json jsonDocument;

@@ -150,13 +150,14 @@ int main () {
             std::cout << "<p style=\"text-align:center;\">Select page to edit: \n";
             std::cout << "<select id=\"page_select\" onchange=\"getPageHTML()\">\n";
             stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT path FROM webpages WHERE editable = 1;");
+            res = stmt->executeQuery("SELECT path, draft_page FROM webpages WHERE editable = 1;");
             while (res->next()) {
                 std::string page_path = res->getString(1);
-                if (page_path == "/index.html") {
+                bool draft_page = res->getInt(2);
+                if (page_path == "/index.html" && !draft_page) {
                     std::cout << "<option value=\"" << Encoder::htmlAttributeEncode(page_path) << "\" selected=\"true\">" << Encoder::htmlEntityEncode(page_path) << "</option>";
                 } else {
-                    std::cout << "<option value=\"" << Encoder::htmlAttributeEncode(page_path) << "\">" << Encoder::htmlEntityEncode(page_path) << "</option>";
+                    std::cout << "<option value=\"" << Encoder::htmlAttributeEncode(page_path) << "_" << draft_page << "\">" << Encoder::htmlEntityEncode(page_path) << (draft_page ? " (DRAFT)" : "") << "</option>";
                 }
             }
             delete res;

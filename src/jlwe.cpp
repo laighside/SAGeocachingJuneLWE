@@ -16,6 +16,7 @@
 #include <dirent.h>
 
 #include "core/CgiEnvironment.h"
+#include "core/Encoder.h"
 #include "core/HtmlTemplate.h"
 #include "core/JlweCore.h"
 #include "core/JlweUtils.h"
@@ -57,6 +58,8 @@ int main () {
         std::string title = "June LWE - Page not found";
         bool note = false;
         bool login_only = false;
+        bool lookForDraftPage = jlwe.isLoggedIn(); // if this is set to true, it will try to return the draft version of the page (if available)
+        bool draft_page = false;
 
         HtmlTemplate html(true);
         html.outputHttpHtmlHeader();
@@ -104,7 +107,14 @@ int main () {
         } else {
             // page is not on filesystem so look in mysql
 
-            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT page_name, html, login_only FROM webpages WHERE path = ? AND special_page = 0;");
+            // default response in case nothing is found
+            html_page = "<p>Page not found</p>";
+
+            if (lookForDraftPage) {
+                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT page_name, html, login_only, draft_page FROM webpages WHERE path = ? AND special_page = 0 ORDER BY draft_page DESC;");
+            } else {
+                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT page_name, html, login_only, draft_page FROM webpages WHERE path = ? AND special_page = 0 AND draft_page = 0;");
+            }
             prep_stmt->setString(1, page_request);
             res = prep_stmt->executeQuery();
 
@@ -112,6 +122,7 @@ int main () {
                 title = res->getString(1);
                 html_page = res->getString(2);
                 login_only = res->getInt(3);
+                draft_page = res->getInt(4);
             }
 
             delete res;
@@ -120,6 +131,15 @@ int main () {
 
         if (!html.outputHeader(&jlwe, title, note))
             return 0;
+
+        if (draft_page) {
+            if (jlwe.isLoggedIn()) {
+                std::cout << "<div class=\"note\"><p>This is a draft preview of <span style=\"font-weight:bold;\">" << Encoder::htmlEntityEncode(page_request) << "</span> that is only visible to admins.</span></p></div>\n";
+            } else {
+                std::cout << "<p>Something has gone wrong. You don't have permission to view this page.</p>";
+                return 0;
+            }
+        }
 
         if (login_only && jlwe.isLoggedIn() == false){
             std::cout << "<p>You need to be logged in to view this area.</p>";

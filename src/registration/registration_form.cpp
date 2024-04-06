@@ -63,7 +63,17 @@ void outputEventTab(const std::string &event_registration_html, time_t camping_c
     std::cout << "</div>\n";
 }
 
-void outputCampingTab(const std::string &camping_registration_html, bool camping_only, time_t camping_cutoff, time_t time_now, int saturday_date) {
+void outputCampingTab(const std::string &camping_registration_html, bool camping_only, time_t camping_cutoff, time_t time_now, int saturday_date, JlweCore * jlwe) {
+    std::vector<FormElements::radiobutton> camping_options;
+    sql::Statement *stmt = jlwe->getMysqlCon()->createStatement();
+    sql::ResultSet *res = stmt->executeQuery("SELECT id_string,display_name FROM camping_options WHERE active != 0;");
+    while (res->next()){
+        std::string id_string = res->getString(1);
+        camping_options.push_back({"camping_" + id_string, res->getString(2), id_string, "setRadioClass(this.name, '');", false, false});
+    }
+    delete res;
+    delete stmt;
+
     std::cout << "<div class=\"formTab\" id=\"campingTab\">\n";
 
     std::cout << "<p><span style=\"font-weight:bold;\">Camping fees:</span><br/>\n";
@@ -80,8 +90,7 @@ void outputCampingTab(const std::string &camping_registration_html, bool camping
         std::cout << FormElements::emailUsernamePhoneBoxes(false);
 
     std::cout << FormElements::numberInput("number_people_camping", "Number of people sharing your campsite:", 0, 0, 5);
-    //std::cout << FormElements::radioButtons("camping_type", "What camping site would you like?", {{"camping_powered", "Powered Site", "powered", "setRadioClass(this.name, '');", false, false}, {"camping_unpowered", "Unpowered Site", "unpowered", "setRadioClass(this.name, '');", false, false}});
-    std::cout << FormElements::radioButtons("camping_type", "What camping site would you like?", {{"camping_powered", "Powered Site", "powered", "setRadioClass(this.name, '');", false, false}, {"camping_generator", "Unpowered site (I'll be bringing a generator)", "generator", "setRadioClass(this.name, '');", false, false}, {"camping_unpowered", "Unpowered site (no generators)", "unpowered", "setRadioClass(this.name, '');", false, false}});
+    std::cout << FormElements::radioButtons("camping_type", "What camping site would you like?", camping_options);
 
     std::vector<FormElements::dropDownOption> arrive_dates;
     arrive_dates.push_back({std::to_string(saturday_date - 1), "Friday " + JlweUtils::numberToOrdinal(saturday_date - 1), true});
@@ -319,7 +328,7 @@ int main () {
         if (!camping_form && !dinner_form)
             outputEventTab(event_registration_html, camping_cutoff, dinner_cutoff, time_now, dinner_form_enabled);
         if (!dinner_form)
-            outputCampingTab(camping_registration_html, camping_form, camping_cutoff, time_now, saturday_date);
+            outputCampingTab(camping_registration_html, camping_form, camping_cutoff, time_now, saturday_date, &jlwe);
         if (!camping_form && dinner_form_enabled)
             outputDinnerTab(dinner_registration_html, dinner_form, dinner_cutoff, time_now);
         outputSummaryTab();

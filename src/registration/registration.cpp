@@ -164,22 +164,14 @@ int main () {
             delete stmt;
             std::cout << "</table>\n";
 
+            // Totals
             stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT COUNT(*),SUM(number_people) FROM camping WHERE camping_type = 'powered' AND status = 'S';");
-            if (res->next()){
-                std::cout << "<p>Total Powered: " << res->getInt(1) << " sites, " << res->getInt(2) << " people</p>\n";
+            res = stmt->executeQuery("SELECT camping.camping_type,camping_options.display_name,COUNT(*),SUM(camping.number_people) FROM camping INNER JOIN camping_options ON camping.camping_type=camping_options.id_string WHERE status = 'S' GROUP BY camping.camping_type ORDER BY camping.camping_type;");
+            while (res->next()) {
+                std::cout << "<p>Total " << Encoder::htmlEntityEncode(res->getString(2)) << ": " << res->getInt(3) << " sites, " << res->getInt(4) << " people</p>\n";
             }
             delete res;
             delete stmt;
-
-            stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT COUNT(*),SUM(number_people) FROM camping WHERE camping_type = 'unpowered' AND status = 'S';");
-            if (res->next()){
-                std::cout << "<p>Total Unpowered: " << res->getInt(1) << " sites, " << res->getInt(2) << " people</p>\n";
-            }
-            delete res;
-            delete stmt;
-
 
             std::cout << "<h2 style=\"text-align:center\">Dinner Registrations</h2>\n";
             std::cout << "<table class=\"reg_table\" align=\"center\" style=\"width: 100%;\"><tr>\n";

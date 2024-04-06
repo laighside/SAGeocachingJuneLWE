@@ -94,28 +94,22 @@ void JlweHtmlEmail::addCostTable(std::string userKey, sql::Connection *con) {
     delete prep_stmt;
 
     int camping_cost = 0;
-    prep_stmt = con->prepareStatement("SELECT number_people, camping_type, arrive_date, leave_date FROM camping WHERE idempotency = ?;");
+    prep_stmt = con->prepareStatement("SELECT camping.camping_type, camping_options.display_name, camping_options.price_code, camping.number_people, camping.arrive_date, camping.leave_date FROM camping INNER JOIN camping_options ON camping.camping_type=camping_options.id_string WHERE camping.idempotency = ?;");
     prep_stmt->setString(1, userKey);
     res = prep_stmt->executeQuery();
     if (res->next()){
         std::string description = "";
-        int number_people = res->getInt(1);
-        int arrive_date = res->getInt(3);
-        int leave_date = res->getInt(4);
+        std::string display_name = res->getString(2);
+        int number_people = res->getInt(4);
+        int arrive_date = res->getInt(5);
+        int leave_date = res->getInt(6);
         int camping_nights = leave_date - arrive_date;
-        camping_cost = getCampingPrice(res->getString(2), number_people, camping_nights);
-        if (res->getString(2) == "unpowered") {
-            description = "Unpowered site, " + std::to_string(number_people) + " people, " + std::to_string(camping_nights) + " night" + (camping_nights > 1 ? "s" : "") + " (June " + JlweUtils::numberToOrdinal(arrive_date) + " to " + JlweUtils::numberToOrdinal(leave_date) + ")";
-        }
-        if (res->getString(2) == "powered") {
-            description = "Powered site, " + std::to_string(number_people) + " people, " + std::to_string(camping_nights) + " night" + (camping_nights > 1 ? "s" : "") + " (June " + JlweUtils::numberToOrdinal(arrive_date) + " to " + JlweUtils::numberToOrdinal(leave_date) + ")";
-        }
-        if (res->getString(2) == "generator") {
-            description = "Generator site, " + std::to_string(number_people) + " people, " + std::to_string(camping_nights) + " night" + (camping_nights > 1 ? "s" : "") + " (June " + JlweUtils::numberToOrdinal(arrive_date) + " to " + JlweUtils::numberToOrdinal(leave_date) + ")";
-        }
+        camping_cost = getCampingPrice(res->getString(3), number_people, camping_nights);
+        description = display_name + ", " + std::to_string(number_people) + " " + (number_people > 1 ? "people" : "person") +", " + std::to_string(camping_nights) + " night" + (camping_nights > 1 ? "s" : "") + " (June " + JlweUtils::numberToOrdinal(arrive_date) + " to " + JlweUtils::numberToOrdinal(leave_date) + ")";
+
         this->inner_html += "      <tr>\n";
         this->inner_html += "        <td style=\"border-bottom:0px;\">Camping<br />\n";
-        this->inner_html += "        <span>&nbsp;&nbsp;&nbsp;" + description + "</span></td>\n";
+        this->inner_html += "        <span>&nbsp;&nbsp;&nbsp;" + Encoder::htmlEntityEncode(description) + "</span></td>\n";
         this->inner_html += "        <td class=\"currency_cell\">" + PaymentUtils::currencyToString(camping_cost) + "</td>\n";
         this->inner_html += "      </tr>\n";
     }

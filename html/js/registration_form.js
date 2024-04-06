@@ -46,16 +46,36 @@ function loadRegForm() {
 
     idempotency_key = uuid();
 
-    var powered_camping_sites_remain = powered_camping_sites - powered_camping_sites_taken;
+    camping_options.map(function (option) {
+        if (!option.available && option.available !== 0) {
+            // available not set, do nothing
+        } else if (option.available <= 0) {
+            document.getElementById("camping_" + option.id_string + "_label_text").innerHTML += " <span style=\"font-weight:bold;color:black;\">(sold out)</span>";
+            document.getElementById("camping_" + option.id_string).disabled = true;
+            document.getElementById("camping_" + option.id_string + "_label").style.color = '#cccccc';
+            document.getElementById("camping_" + option.id_string).checked = false;
+        } else if (option.available <= 10) {
+            document.getElementById("camping_" + option.id_string + "_label_text").innerHTML += " <span style=\"font-weight:bold;\">(only " + option.available.toString() + " left)</span>";
+        }
+    });
+
+    var powered_camping_sites_remain = 0;
+    camping_options.filter(function (option) {
+        return (option.price_code === "powered")
+    }).map(function (option) {
+        if (option.available && option.available > 0) {
+            powered_camping_sites_remain += option.available;
+        } else if (option.available === null) {
+            powered_camping_sites_remain += 1000;
+        }
+    });
+
     var remaining_camping_label = document.getElementById("remaining_camping_label");
     if (typeof(remaining_camping_label) != 'undefined' && remaining_camping_label != null) {
         if (powered_camping_sites_remain > 10) {
             document.getElementById("remaining_camping_label").style.display = "none";
         } else if (powered_camping_sites_remain <= 0) {
             document.getElementById("remaining_camping_label").innerHTML = "There are no powered sites remaining.";
-            document.getElementById("camping_powered").disabled = true;
-            document.getElementById("camping_powered_label").style.color = '#cccccc';
-            document.getElementById("camping_powered").checked = false;
         } else if (powered_camping_sites_remain == 1) {
             document.getElementById("remaining_camping_label").innerHTML = "There is only 1 powered site remaining. Book ASAP before we run out.";
         } else {
@@ -257,21 +277,17 @@ function updateSummary() {
         var camping_nights = parseInt(document.getElementById("camping_leave").value) - parseInt(document.getElementById("camping_arrive").value);
         var camping_desc = "";
         var camping_type = "unknown";
-        if (document.getElementById("camping_unpowered").checked)
-            camping_type = "unpowered";
-        if (document.getElementById("camping_powered").checked)
-            camping_type = "powered";
-        if (document.getElementById("camping_generator").checked)
-            camping_type = "generator";
-        camping_cost = getCampingPrice(camping_type, number_people_camping, camping_nights) / 100;
+        var camping_type_name = "Unknown Type";
+        camping_options.map(function (option) {
+            if (document.getElementById("camping_" + option.id_string).checked) {
+                camping_type = option.id_string;
+                camping_type_name = option.display_name;
+            }
+        });
 
-        if (document.getElementById("camping_unpowered").checked) {
-            camping_desc = "Unpowered site, " + number_people_camping.toString() + " " + (number_people_camping === 1 ? "person" : "people") + ", " + camping_nights.toString() + " night" + (camping_nights === 1 ? "" : "s");
-        } else if (document.getElementById("camping_powered").checked) {
-            camping_desc = "Powered site, " + number_people_camping.toString() + " " + (number_people_camping === 1 ? "person" : "people") + ", " + camping_nights.toString() + " night" + (camping_nights === 1 ? "" : "s");
-        } else if (document.getElementById("camping_generator").checked) {
-            camping_desc = "Generator site, " + number_people_camping.toString() + " " + (number_people_camping === 1 ? "person" : "people") + ", " + camping_nights.toString() + " night" + (camping_nights === 1 ? "" : "s");
-        }
+        camping_cost = getCampingPrice(camping_type, number_people_camping, camping_nights) / 100;
+        camping_desc = camping_type_name + ", " + number_people_camping.toString() + " " + (number_people_camping === 1 ? "person" : "people") + ", " + camping_nights.toString() + " night" + (camping_nights === 1 ? "" : "s");
+
         document.getElementById("summary_camping_desc").innerHTML = "Camping<br /><span>&nbsp;&nbsp;&nbsp;" + camping_desc + "</span>";
         document.getElementById("summary_camping_cost").innerHTML = "$" + camping_cost.toFixed(2);
 
@@ -351,12 +367,10 @@ function submitForm() {
     var camping_json = "no"; //document.getElementById("camping_share").checked ? "share" : "no";
     if (camping) {
         var camping_type = "unknown";
-        if (document.getElementById("camping_unpowered").checked)
-            camping_type = "unpowered";
-        if (document.getElementById("camping_powered").checked)
-            camping_type = "powered";
-        if (document.getElementById("camping_generator").checked)
-            camping_type = "generator";
+        camping_options.map(function (option) {
+            if (document.getElementById("camping_" + option.id_string).checked)
+                camping_type = option.id_string;
+        });
         camping_json = {
             camping_type: camping_type,
             number_people: parseInt(document.getElementById("number_people_camping").value),

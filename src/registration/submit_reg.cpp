@@ -20,6 +20,7 @@
 #include "../core/Encoder.h"
 #include "../core/HttpRequest.h"
 #include "../core/JlweCore.h"
+#include "../core/JlweUtils.h"
 #include "../core/JsonUtils.h"
 #include "../core/KeyValueParser.h"
 #include "../core/PostDataParser.h"
@@ -146,7 +147,7 @@ int main () {
                 camping = true;
                 nlohmann::json campingObject = jsonDocument.at("camping");
 
-                camping_type = campingObject.value("camping_type", "unpowered");
+                camping_type = campingObject.value("camping_type", "unknown");
                 arrive_date = campingObject.value("arrive_date", 0);
                 leave_date = campingObject.value("leave_date", 0);
                 camping_comment = campingObject.value("camping_comment", "");
@@ -256,11 +257,33 @@ int main () {
         }
 
         // check camping
+        int camping_total_available = 0;
+        std::string camping_display_name = "Unknown Type";
+        std::string camping_price_code = "unknown";
         if (camping) {
-            if (camping_type != "unpowered" && camping_type != "powered" && camping_type != "generator") {
+            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT display_name,price_code,total_available,active FROM camping_options WHERE id_string = ?;");
+            prep_stmt->setString(1, camping_type);
+            res = prep_stmt->executeQuery();
+            if (res->next()) {
+                camping_display_name = res->getString(1);
+                camping_price_code = res->getString(2);
+                if (res->getInt(4)) {
+                    // type ok, get total available sites
+                    if (res->isNull(3)) {
+                        camping_total_available = 1000;
+                    } else {
+                        camping_total_available = res->getInt(3);
+                    }
+                } else { // inactive type
+                    isValid = false;
+                    error_message = "Sorry, " + camping_display_name + " camping is no longer available for purchase";
+                }
+            } else {
                 isValid = false;
                 error_message = "Invalid camping type: " + camping_type;
             }
+            delete res;
+            delete prep_stmt;
 
             if (camping_nights == 0) {
                 isValid = false;
@@ -395,17 +418,12 @@ int main () {
                     }
 
                     if (camping) {
-                        int payment_camping_total = getCampingPrice(camping_type, number_people, camping_nights);
+                        int payment_camping_total = getCampingPrice(camping_price_code, number_people, camping_nights);
                         std::string description = "";
-                        if (camping_type == "unpowered") {
-                            description = "Unpowered+site,+" + std::to_string(number_people) + "+people,+" + std::to_string(camping_nights) + "+nights";
-                        }
-                        if (camping_type == "powered") {
-                            description = "Powered+site,+" + std::to_string(number_people) + "+people,+" + std::to_string(camping_nights) + "+nights";
-                        }
-                        if (camping_type == "generator") {
-                            description = "Generator+site,+" + std::to_string(number_people) + "+people,+" + std::to_string(camping_nights) + "+nights";
-                        }
+
+                        std::string camping_display_name_encoded = JlweUtils::replaceString(camping_display_name, " ", "+");
+                        description = camping_display_name_encoded + ",+" + std::to_string(number_people) + "+" + (number_people > 1 ? "people" : "person") + ",+" + std::to_string(camping_nights) + "+night" + (camping_nights > 1 ? "s" : "");
+
                         if (payment_camping_total > 0) {
                             post_data += "&line_items[][name]=Camping&line_items[][description]=" + description + "&line_items[][images][]=https://jlwe.org/img/camping_icon.png&line_items[][amount]=" + std::to_string(payment_camping_total) + "&line_items[][currency]=aud&line_items[][quantity]=1";
                             total_cost += payment_camping_total;

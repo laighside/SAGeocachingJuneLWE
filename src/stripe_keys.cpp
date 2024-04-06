@@ -10,11 +10,14 @@
   https://github.com/laighside/SAGeocachingJuneLWE
  */
 #include <iostream>
+#include <map>
 #include <string>
 
 #include "core/Encoder.h"
 #include "core/JlweCore.h"
 #include "prices.h"
+
+#include "ext/nlohmann/json.hpp"
 
 int main () {
     try {
@@ -35,23 +38,41 @@ int main () {
         std::cout << "var stripeSessionURL = '" << "/cgi-bin/registration/submit_reg.cgi" << "';\n";
         std::cout << "var stripeMerchSessionURL = '" << "/cgi-bin/merch/submit_merch.cgi" << "';\n";
 
-
-        int powered_camping_sites = 0;
-        try {
-            powered_camping_sites = std::stoi(jlwe.getGlobalVar("powered_camping_sites"));
-        } catch (...) {}
-        std::cout << "var powered_camping_sites = " << powered_camping_sites << ";\n";
-
+        // Get a list of camping sites already sold
+        std::map<std::string, int> camping_sites_taken;
         stmt = jlwe.getMysqlCon()->createStatement();
-        res = stmt->executeQuery("SELECT COUNT(*) FROM camping WHERE camping_type = 'powered' AND (status = 'S' OR status = 'P');");
-        if (res->next()){
-            std::cout << "var powered_camping_sites_taken = " << res->getInt(1) << ";\n";
-        } else {
-            // this should never happen, but assume all sites are taken if query fails
-            std::cout << "var powered_camping_sites_taken = " << powered_camping_sites << ";\n";
+        res = stmt->executeQuery("SELECT camping_type, COUNT(*) FROM camping WHERE (status = 'S' OR status = 'P') GROUP BY camping_type;");
+        while (res->next()){
+            camping_sites_taken[res->getString(1)] = res->getInt(2);
         }
         delete res;
         delete stmt;
+
+        // Make list of camping options
+        nlohmann::json camping_options = nlohmann::json::array();
+        stmt = jlwe.getMysqlCon()->createStatement();
+        res = stmt->executeQuery("SELECT id_string,display_name,price_code,total_available FROM camping_options WHERE active != 0;");
+        while (res->next()){
+            nlohmann::json jsonObject;
+            jsonObject["id_string"] = res->getString(1);
+            jsonObject["display_name"] = res->getString(2);
+            jsonObject["price_code"] = res->getString(3);
+
+            if (res->isNull(4)) {
+                jsonObject["available"] = nullptr;
+            } else {
+                int sites_taken = 0;
+                try {
+                    sites_taken = camping_sites_taken[res->getString(1)];
+                } catch (...) {}
+                jsonObject["available"] = res->getInt(4) - sites_taken;
+            }
+
+            camping_options.push_back(jsonObject);
+        }
+        delete res;
+        delete stmt;
+        std::cout << "var camping_options = " << camping_options.dump() << ";\n";
 
         // TODO: this needs to be javascript escaped
         std::cout << "var price_camping_html = \"" << Encoder::javascriptAttributeEncode(getCampingPriceHTML()) << "\";\n";

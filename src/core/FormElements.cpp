@@ -86,7 +86,8 @@ std::string FormElements::radioButtons(const std::string &name, const std::strin
 }
 
 std::string FormElements::radioButton(const std::string &id, const std::string &name, const std::string &label, const std::string &value, const std::string &oninput, bool checked, bool disabled) {
-    std::string result = "<span class=\"checkbox_container\"><label id=\"" + id + "_label\">" + label + "\n";
+    std::string result = "<span class=\"checkbox_container\"><label id=\"" + id + "_label\">\n";
+    result += "    <span id=\"" + id + "_label_text\">" + label + "</span>\n";
     result += "    <input type=\"radio\" name=\"" + name + "\" id=\"" + id + "\" value=\"" + value + "\"" + (oninput.size() > 0 ? " oninput=\"" + oninput + "\"" : "") + (checked ? " checked" : "") + (disabled ? " disabled" : "") + " />\n";
     result += "    <span class=\"radiobox\"></span>\n";
     result += "  </label></span>\n";

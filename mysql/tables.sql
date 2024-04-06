@@ -118,6 +118,30 @@ CREATE TABLE `camping` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
+-- Table structure for table `camping_options`
+--
+
+DROP TABLE IF EXISTS `camping_options`;
+CREATE TABLE `camping_options` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `id_string` varchar(20) NOT NULL,
+  `display_name` text NOT NULL,
+  `price_code` text NOT NULL,
+  `total_available` int DEFAULT NULL,
+  `active` int NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id_UNIQUE` (`id`),
+  UNIQUE KEY `id_string_UNIQUE` (`id_string`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `camping_options`
+--
+
+LOCK TABLES `camping_options` WRITE;
+INSERT INTO `camping_options` VALUES (1,'unpowered','Unpowered site','unpowered',NULL,1),(2,'powered','Powered site','powered',10,1);
+UNLOCK TABLES;
+--
 -- Table structure for table `contact_form`
 --
 

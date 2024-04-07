@@ -20,10 +20,23 @@
 #include <vector>
 
 #include "../core/CgiEnvironment.h"
+#include "../core/Encoder.h"
 #include "../core/FormElements.h"
 #include "../core/HtmlTemplate.h"
 #include "../core/JlweCore.h"
 #include "../core/JlweUtils.h"
+
+void outputCampingCutoffTime(time_t camping_cutoff, time_t time_now) {
+    std::cout << "<p>Camping must be booked by <span class=\"date_only\" data-value=\"" + std::to_string(camping_cutoff) + "\">" + FormElements::timeToDateString(camping_cutoff) + "</span> at the latest.</p>\n";
+    if (camping_cutoff < time_now)
+        std::cout << "<p style=\"color:red;font-weight:bold;\">Camping bookings have now closed.</p>\n";
+}
+
+void outputDinnerCutoffTime(time_t dinner_cutoff, time_t time_now) {
+    std::cout << "<p>Dinner bookings close on <span class=\"date_only\" data-value=\"" + std::to_string(dinner_cutoff) + "\">" + FormElements::timeToDateString(dinner_cutoff) + "</span></p>\n";
+    if (dinner_cutoff < time_now)
+        std::cout << "<p style=\"color:red;font-weight:bold;\">Dinner bookings have now closed.</p>\n";
+}
 
 void outputEventTab(const std::string &event_registration_html, time_t camping_cutoff, time_t dinner_cutoff, time_t time_now, bool dinner_form_enabled) {
     std::cout << "<div class=\"formTab\" id=\"eventTab\">\n";
@@ -31,14 +44,9 @@ void outputEventTab(const std::string &event_registration_html, time_t camping_c
     std::cout << "<p>This form allows to register for the event, book camping and order Saturday night's dinner in one transaction. However, camping and dinner can still be booked separately at a later date if you are unsure of your plans at this stage. <a href=\"/camping\">Click here to book <span style=\"font-weight:bold;\">camping</span> separately.</a> <a href=\"/dinner\">Click here to book <span style=\"font-weight:bold;\">dinner</span> separately.</a></p>\n";
     //std::cout << "<p>This form allows to register for the event and book camping in one transaction. However, camping can still be booked separately at a later date if you are unsure of your plans at this stage. <a href=\"/camping\">Click here to book <span style=\"font-weight:bold;\">camping</span> separately.</a></p>\n";
 
-    std::cout << "<p>Camping must be booked by " << FormElements::timeToDateString(camping_cutoff) << " at the latest.</p>\n";
-    if (camping_cutoff < time_now)
-        std::cout << "<p style=\"color:red;font-weight:bold;\">Camping bookings have now closed.</p>\n";
-
+    outputCampingCutoffTime(camping_cutoff, time_now);
     if (dinner_form_enabled)
-        std::cout << "<p>Dinner bookings close on " << FormElements::timeToDateString(dinner_cutoff) << ".</p>\n";
-    if (dinner_cutoff < time_now && dinner_form_enabled)
-        std::cout << "<p style=\"color:red;font-weight:bold;\">Dinner bookings have now closed.</p>\n";
+        outputDinnerCutoffTime(dinner_cutoff, time_now);
 
     std::cout << "<p>The cost is $<span id=\"display_price_event_adult\"></span> per player. 10 years and under can participate for free.<br/>\n";
     //std::cout << "<p>The cost is $<span id=\"display_price_event_adult\"></span> per adult and $<span id=\"display_price_event_child\"></span> per child (children under 5 years are free).<br/>\n";
@@ -72,7 +80,7 @@ void outputCampingTab(const std::string &camping_registration_html, bool camping
         std::string comment = "";
         if (!res->isNull(3))
             comment = res->getString(3);
-        camping_options.push_back({"camping_" + id_string, res->getString(2), id_string, "setRadioClass(this.name, '');", false, false, comment});
+        camping_options.push_back({"camping_" + id_string, Encoder::htmlEntityEncode(res->getString(2)), id_string, "setRadioClass(this.name, '');", false, false, Encoder::htmlEntityEncode(comment)});
     }
     delete res;
     delete stmt;
@@ -83,9 +91,7 @@ void outputCampingTab(const std::string &camping_registration_html, bool camping
     std::cout << "<span id=\"display_price_camping\"></span></p>\n";
     std::cout << "<p id=\"remaining_camping_label\" style=\"font-weight:bold;\"></p>\n";
 
-    std::cout << "<p>Camping must be booked by " << FormElements::timeToDateString(camping_cutoff) << " at the latest.</p>\n";
-    if (camping_cutoff < time_now)
-        std::cout << "<p style=\"color:red;font-weight:bold;\">Camping bookings have now closed.</p>\n";
+    outputCampingCutoffTime(camping_cutoff, time_now);
 
     std::cout << camping_registration_html << "\n";
 
@@ -118,9 +124,7 @@ void outputDinnerTab(const std::string &dinner_registration_html, bool dinner_on
     std::cout << "<p>Adult dinners are $<span id=\"display_price_dinner_adult\"></span> per meal.<br/>\n";
     std::cout << "Child dinners are $<span id=\"display_price_dinner_child\"></span> per meal. (up to 12 years old)</p>\n";
 
-    std::cout << "<p>Dinner bookings close on " << FormElements::timeToDateString(dinner_cutoff) << ".</p>\n";
-    if (dinner_cutoff < time_now)
-        std::cout << "<p style=\"color:red;font-weight:bold;\">Dinner bookings have now closed.</p>\n";
+    outputDinnerCutoffTime(dinner_cutoff, time_now);
 
     std::cout << dinner_registration_html << "\n";
 
@@ -228,10 +232,13 @@ int main () {
 
         // check if registration is currently open
         if (registration_open_date > time_now) {
+            std::string open_time_html = "<span class=\"date_only\" data-value=\"" + std::to_string(registration_open_date) + "\">" + FormElements::timeToDateString(registration_open_date) + "</span>";
             if (jlwe.getPermissionValue("perm_registrations")) { //if logged in
-                std::cout << "<div class=\"note\"><p><span style=\"font-weight:bold;\">The registration form is currently closed.</span> This is a preview available to admins. It will open to everyone on <span style=\"font-weight:bold;\">" << FormElements::timeToDateString(registration_open_date) << "</span></p></div>\n";
+                std::cout << "<div class=\"note\"><p><span style=\"font-weight:bold;\">The registration form is currently closed.</span> This is a preview available to admins. It will open to everyone on <span style=\"font-weight:bold;\">" << open_time_html << "</span></p></div>\n";
             } else {
-                std::cout << "<p>The registration form will be live on " << FormElements::timeToDateString(registration_open_date) << "</p>";
+                std::cout << "<p>The registration form will be live on " << open_time_html << "</p>";
+
+                std::cout << FormElements::includeJavascript("/js/format_date_time.js");
                 html.outputFooter();
                 return 0;
             }
@@ -340,6 +347,8 @@ int main () {
         std::cout << FormElements::formButtons();
 
         std::cout << "</form>\n";
+
+        std::cout << FormElements::includeJavascript("/js/format_date_time.js");
 
         std::cout << "<script type=\"text/javascript\">\n";
         std::cout << "var event_form = " << ((camping_form == false && dinner_form == false) ? "true" : "false") << ";\n";

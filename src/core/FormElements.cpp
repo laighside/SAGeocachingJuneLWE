@@ -75,7 +75,7 @@ std::string FormElements::radioButtons(const std::string &name, const std::strin
 
     for (unsigned int i = 0; i < options.size(); i++) {
         radiobutton button = options.at(i);
-        result += radioButton(button.id, name, button.label, button.value, button.onInput, button.checked, button.disabled);
+        result += radioButton(button.id, name, button.label, button.value, button.onInput, button.checked, button.disabled, button.sub_comment);
         if (i + 1 >= options.size()) {
             result += "</p>\n";
         } else {
@@ -85,9 +85,12 @@ std::string FormElements::radioButtons(const std::string &name, const std::strin
     return result;
 }
 
-std::string FormElements::radioButton(const std::string &id, const std::string &name, const std::string &label, const std::string &value, const std::string &oninput, bool checked, bool disabled) {
+std::string FormElements::radioButton(const std::string &id, const std::string &name, const std::string &label, const std::string &value, const std::string &oninput, bool checked, bool disabled, const std::string &sub_comment) {
     std::string result = "<span class=\"checkbox_container\"><label id=\"" + id + "_label\">\n";
     result += "    <span id=\"" + id + "_label_text\">" + label + "</span>\n";
+    if (sub_comment.size()) {
+        result += "    <br/><span id=\"" + id + "_label_comment\" class=\"checkbox_container_comment\">" + sub_comment + "</span>\n";
+    }
     result += "    <input type=\"radio\" name=\"" + name + "\" id=\"" + id + "\" value=\"" + value + "\"" + (oninput.size() > 0 ? " oninput=\"" + oninput + "\"" : "") + (checked ? " checked" : "") + (disabled ? " disabled" : "") + " />\n";
     result += "    <span class=\"radiobox\"></span>\n";
     result += "  </label></span>\n";

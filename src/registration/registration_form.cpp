@@ -66,10 +66,13 @@ void outputEventTab(const std::string &event_registration_html, time_t camping_c
 void outputCampingTab(const std::string &camping_registration_html, bool camping_only, time_t camping_cutoff, time_t time_now, int saturday_date, JlweCore * jlwe) {
     std::vector<FormElements::radiobutton> camping_options;
     sql::Statement *stmt = jlwe->getMysqlCon()->createStatement();
-    sql::ResultSet *res = stmt->executeQuery("SELECT id_string,display_name FROM camping_options WHERE active != 0;");
+    sql::ResultSet *res = stmt->executeQuery("SELECT id_string,display_name,display_comment FROM camping_options WHERE active != 0;");
     while (res->next()){
         std::string id_string = res->getString(1);
-        camping_options.push_back({"camping_" + id_string, res->getString(2), id_string, "setRadioClass(this.name, '');", false, false});
+        std::string comment = "";
+        if (!res->isNull(3))
+            comment = res->getString(3);
+        camping_options.push_back({"camping_" + id_string, res->getString(2), id_string, "setRadioClass(this.name, '');", false, false, comment});
     }
     delete res;
     delete stmt;

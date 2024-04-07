@@ -174,6 +174,8 @@ select {
 .checkbox_container {
 display: inline-block;
 vertical-align: middle;
+margin-top: 5px;
+margin-bottom: 5px;
 }
 
 /* Hide the browser's default checkbox */
@@ -250,6 +252,10 @@ user-select: none;
   transform: rotate(45deg);
 }
 
+.checkbox_container_comment {
+  font-size: 14px;
+  padding-left: 10px;
+}
 
 /* Create a custom radio button */
 .radiobox {

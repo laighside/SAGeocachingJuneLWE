@@ -129,6 +129,7 @@ CREATE TABLE `camping_options` (
   `price_code` text NOT NULL,
   `total_available` int DEFAULT NULL,
   `active` int NOT NULL DEFAULT '1',
+  `display_comment` text,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`),
   UNIQUE KEY `id_string_UNIQUE` (`id_string`)
@@ -141,6 +142,7 @@ CREATE TABLE `camping_options` (
 LOCK TABLES `camping_options` WRITE;
 INSERT INTO `camping_options` VALUES (1,'unpowered','Unpowered site','unpowered',NULL,1),(2,'powered','Powered site','powered',10,1);
 UNLOCK TABLES;
+
 --
 -- Table structure for table `contact_form`
 --

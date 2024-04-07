@@ -32,6 +32,7 @@ public:
         std::string onInput;
         bool checked;
         bool disabled;
+        std::string sub_comment;
     };
 
     /*!
@@ -161,9 +162,10 @@ public:
      * \param oninput The javascript to go in the oninput attribute
      * \param checked The default state of the radiobutton
      * \param disabled If set to true, the radiobutton will be disabled
+     * \param sub_comment Text displayed in a smaller font below the main label text
      * \return The HTML to go in the webpage
      */
-    static std::string radioButton(const std::string &id, const std::string &name, const std::string &label, const std::string &value, const std::string &oninput, bool checked, bool disabled);
+    static std::string radioButton(const std::string &id, const std::string &name, const std::string &label, const std::string &value, const std::string &oninput, bool checked, bool disabled, const std::string &sub_comment = "");
 
     /*!
      * \brief Creates the HTML to make a \<select\> element (a drop down combo box)

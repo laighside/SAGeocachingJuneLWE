@@ -238,7 +238,7 @@ int main () {
             } else {
                 std::cout << "<p>The registration form will be live on " << open_time_html << "</p>";
 
-                std::cout << FormElements::includeJavascript("/js/format_date_time.js");
+                std::cout << FormElements::includeJavascript("/js/format_date_time.js?v=2024");
                 html.outputFooter();
                 return 0;
             }
@@ -256,8 +256,8 @@ int main () {
         std::cout << FormElements::includeJavascript("/cgi-bin/stripe_keys.cgi");
         std::cout << FormElements::includeJavascript("/js/utils.js");
         std::cout << FormElements::includeJavascript("/js/form_tools.js");
-        std::cout << FormElements::includeJavascript("/js/registration_form.js?v=2023");
-        std::cout << FormElements::includeJavascript("/js/dinner.js?v=2023v2");
+        std::cout << FormElements::includeJavascript("/js/registration_form.js?v=2024");
+        std::cout << FormElements::includeJavascript("/js/dinner.js?v=2024");
         std::cout << FormElements::includeJavascript("/js/uuid.js");
 
         if (jlwe.config.at("stripe").value("testMode", false)) {
@@ -348,7 +348,7 @@ int main () {
 
         std::cout << "</form>\n";
 
-        std::cout << FormElements::includeJavascript("/js/format_date_time.js");
+        std::cout << FormElements::includeJavascript("/js/format_date_time.js?v=2024");
 
         std::cout << "<script type=\"text/javascript\">\n";
         std::cout << "var event_form = " << ((camping_form == false && dinner_form == false) ? "true" : "false") << ";\n";

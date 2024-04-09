@@ -117,7 +117,7 @@ int PaymentUtils::getUserCost(sql::Connection *con, const std::string &userKey) 
     delete res;
     delete prep_stmt;
 
-    prep_stmt = con->prepareStatement("SELECT number_people, camping_type, (leave_date - arrive_date) FROM camping WHERE idempotency = ?;");
+    prep_stmt = con->prepareStatement("SELECT camping.number_people, camping_options.price_code, (camping.leave_date - camping.arrive_date) FROM camping INNER JOIN camping_options ON camping.camping_type=camping_options.id_string WHERE camping.idempotency = ?;");
     prep_stmt->setString(1, userKey);
     res = prep_stmt->executeQuery();
     if (res->next()){

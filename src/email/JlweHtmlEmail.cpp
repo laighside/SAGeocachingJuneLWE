@@ -86,7 +86,7 @@ void JlweHtmlEmail::addCostTable(std::string userKey, sql::Connection *con) {
 
         this->inner_html += "      <tr>\n";
         this->inner_html += "        <td>Event<br />\n";
-        this->inner_html += "        <span>&nbsp;&nbsp;&nbsp;" + std::to_string(number_adults) + " Adult, " + std::to_string(number_children) + " Children</span></td>\n";
+        this->inner_html += "        <span>&nbsp;&nbsp;&nbsp;" + std::to_string(number_adults) + " Adult" + (number_adults == 1 ? "" : "s") + ", " + std::to_string(number_children) + (number_children == 1 ? " Child" : " Children") + "</span></td>\n";
         this->inner_html += "        <td class=\"currency_cell\">" + PaymentUtils::currencyToString(event_cost) + "</td>\n";
         this->inner_html += "      </tr>\n";
     }
@@ -127,8 +127,8 @@ void JlweHtmlEmail::addCostTable(std::string userKey, sql::Connection *con) {
 
         this->inner_html += "      <tr>\n";
         this->inner_html += "        <td>Saturday dinner<br />\n";
-        this->inner_html += "        <span>&nbsp;&nbsp;&nbsp;" + std::to_string(dinner_number_adults) + " Adult meals" + dinnerOptionsToString(res->getString(3)) + "<br/>\n";
-        this->inner_html += "        &nbsp;&nbsp;&nbsp;" + std::to_string(dinner_number_children) + " Child meals" + dinnerOptionsToString(res->getString(4)) + "</span></td>\n";
+        this->inner_html += "        <span>&nbsp;&nbsp;&nbsp;" + std::to_string(dinner_number_adults) + " Adult meal" + (dinner_number_adults == 1 ? "" : "s") + dinnerOptionsToString(res->getString(3)) + "<br/>\n";
+        this->inner_html += "        &nbsp;&nbsp;&nbsp;" + std::to_string(dinner_number_children) + " Child meal" + (dinner_number_children == 1 ? "" : "s") + dinnerOptionsToString(res->getString(4)) + "</span></td>\n";
         this->inner_html += "        <td class=\"currency_cell\">" + PaymentUtils::currencyToString(dinner_cost) + "</td>\n";
         this->inner_html += "      </tr>\n";
     }

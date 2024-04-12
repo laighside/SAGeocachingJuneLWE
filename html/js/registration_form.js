@@ -278,14 +278,16 @@ function updateSummary() {
         var camping_desc = "";
         var camping_type = "unknown";
         var camping_type_name = "Unknown Type";
+        var camping_type_price_code = "unknown";
         camping_options.map(function (option) {
             if (document.getElementById("camping_" + option.id_string).checked) {
                 camping_type = option.id_string;
                 camping_type_name = option.display_name;
+                camping_type_price_code = option.price_code;
             }
         });
 
-        camping_cost = getCampingPrice(camping_type, number_people_camping, camping_nights) / 100;
+        camping_cost = getCampingPrice(camping_type_price_code, number_people_camping, camping_nights) / 100;
         camping_desc = camping_type_name + ", " + number_people_camping.toString() + " " + (number_people_camping === 1 ? "person" : "people") + ", " + camping_nights.toString() + " night" + (camping_nights === 1 ? "" : "s");
 
         document.getElementById("summary_camping_desc").innerHTML = "Camping<br /><span>&nbsp;&nbsp;&nbsp;" + camping_desc + "</span>";

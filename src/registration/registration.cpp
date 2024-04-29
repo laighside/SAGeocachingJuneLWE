@@ -21,6 +21,22 @@
 #include "../core/JlweUtils.h"
 #include "../core/PaymentUtils.h"
 
+struct team_items {
+    std::string username;
+    int event_people;
+    int camping_people;
+    int dinner_people;
+};
+
+team_items * findTeam(std::vector<team_items> * team_list, const std::string &username) {
+    for (unsigned int i = 0; i < team_list->size(); i++) {
+        if (JlweUtils::compareTeamNames(team_list->at(i).username, username)) {
+            return &team_list->at(i);
+        }
+    }
+    return nullptr;
+}
+
 int main () {
     try {
         JlweCore jlwe;
@@ -40,6 +56,9 @@ int main () {
             }
 
             html.outputAdminMenu();
+
+            // List of what teams have bought so far
+            std::vector<team_items> team_list;
 
             std::cout << "<h2 style=\"text-align:center\">JLWE Event Registrations</h2>\n";
             std::cout << "<p style=\"text-align:center;\">\n";
@@ -92,12 +111,23 @@ int main () {
                 menuItems.push_back({"location.href='/cgi-bin/registration/payment_history.cgi?key=" + Encoder::javascriptAttributeEncode(Encoder::urlEncode(userKey)) + "'", "View details", true});
                 menuItems.push_back({"sendReminderEmail('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "')", "Send Payment Reminder", needToPay && saved && (res->getString(8) == "bank")});
                 menuItems.push_back({"cancelRegistration('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "')", "Cancel Registration", saved});
-                std::cout << "<td>" << FormElements::dropDownMenu(rowId, menuItems) << "</tr>\n";
+                std::cout << "<td>" << FormElements::dropDownMenu(rowId, menuItems) << "</td></tr>\n";
 
                 rowId++;
                 if (saved) {
                     adult_count += res->getInt(6);
                     child_count += res->getInt(7);
+
+                    team_items * this_team = findTeam(&team_list, res->getString(4));
+                    if (this_team) {
+                        if (this_team->event_people >= 0) {
+                            this_team->event_people += res->getInt(6) + res->getInt(7);
+                        } else {
+                            this_team->event_people = res->getInt(6) + res->getInt(7);
+                        }
+                    } else {
+                        team_list.push_back({res->getString(4), res->getInt(6) + res->getInt(7), -1, -1});
+                    }
                 }
             }
             delete res;
@@ -156,9 +186,22 @@ int main () {
                 menuItems.push_back({"location.href='/cgi-bin/registration/payment_history.cgi?key=" + Encoder::javascriptAttributeEncode(Encoder::urlEncode(userKey)) + "'", "View details", true});
                 menuItems.push_back({"sendReminderEmail('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "')", "Send Payment Reminder", needToPay && saved && !isEventInc && (res->getString(10) == "bank")});
                 menuItems.push_back({"cancelRegistration('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "')", "Cancel Registration", saved && !isEventInc});
-                std::cout << "<td>" << FormElements::dropDownMenu(rowId, menuItems) << "</tr>\n";
+                std::cout << "<td>" << FormElements::dropDownMenu(rowId, menuItems) << "</td></tr>\n";
 
                 rowId++;
+
+                if (saved) {
+                    team_items * this_team = findTeam(&team_list, res->getString(4));
+                    if (this_team) {
+                        if (this_team->camping_people >= 0) {
+                            this_team->camping_people += res->getInt(7);
+                        } else {
+                            this_team->camping_people = res->getInt(7);
+                        }
+                    } else {
+                        team_list.push_back({res->getString(4), -1, res->getInt(7), -1});
+                    }
+                }
             }
             delete res;
             delete stmt;
@@ -217,17 +260,65 @@ int main () {
                 menuItems.push_back({"location.href='/cgi-bin/registration/payment_history.cgi?key=" + Encoder::javascriptAttributeEncode(Encoder::urlEncode(userKey)) + "'", "View details", true});
                 menuItems.push_back({"sendReminderEmail('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "')", "Send Payment Reminder", needToPay && saved && !isEventInc && (res->getString(8) == "bank")});
                 menuItems.push_back({"cancelRegistration('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "')", "Cancel Registration", saved && !isEventInc});
-                std::cout << "<td>" << FormElements::dropDownMenu(rowId, menuItems) << "</tr>\n";
+                std::cout << "<td>" << FormElements::dropDownMenu(rowId, menuItems) << "</td></tr>\n";
 
                 rowId++;
                 if (saved) {
                     dinner_adult_count += res->getInt(6);
                     dinner_child_count += res->getInt(7);
+
+                    team_items * this_team = findTeam(&team_list, res->getString(4));
+                    if (this_team) {
+                        if (this_team->dinner_people >= 0) {
+                            this_team->dinner_people += res->getInt(6) + res->getInt(7);
+                        } else {
+                            this_team->dinner_people = res->getInt(6) + res->getInt(7);
+                        }
+                    } else {
+                        team_list.push_back({res->getString(4), -1, -1, res->getInt(6) + res->getInt(7)});
+                    }
                 }
+
             }
             delete res;
             delete stmt;
             std::cout << "<td colspan=\"3\" style=\"font-weight:bold;text-align:right;\">Total</td><td style=\"font-weight:bold;\">" << dinner_adult_count << "</td><td style=\"font-weight:bold;\">" << dinner_child_count << "</td>\n";
+            std::cout << "</table>\n";
+
+            std::sort(team_list.begin(), team_list.end(), [](const team_items &a, const team_items &b)
+            {
+                for (size_t c = 0; c < a.username.size() and c < b.username.size(); c++) {
+                    if (std::tolower(a.username[c]) != std::tolower(b.username[c]))
+                        return (std::tolower(a.username[c]) < std::tolower(b.username[c]));
+                }
+                return a.username.size() < b.username.size();
+            });
+
+            std::cout << "<h2 style=\"text-align:center;margin-top:50px;margin-bottom:0px;\">Who hasn't bought what</h2>\n";
+            std::cout << "<table class=\"reg_table\" align=\"center\"><tr>\n";
+            std::cout << "<th>Username</th><th>Event</th><th>Camping</th><th>Dinner</th>\n";
+            std::cout << "</tr>\n";
+            for (unsigned int i = 0; i < team_list.size(); i++) {
+                std::cout << "<tr>\n";
+                std::cout << "<td>" << Encoder::htmlEntityEncode(team_list.at(i).username) << "</td>\n";
+                if (team_list.at(i).event_people >= 0) {
+                    std::cout << "<td style=\"text-align:center;\">" << team_list.at(i).event_people << "</td>\n";
+                } else {
+                    std::cout << "<td style=\"text-align:center;background-color:#FFC0C0;\">-</td>\n";
+                }
+                if (team_list.at(i).camping_people >= 0) {
+                    std::cout << "<td style=\"text-align:center;\">" << team_list.at(i).camping_people << "</td>\n";
+                } else {
+                    std::cout << "<td></td>\n";
+                }
+                if (team_list.at(i).dinner_people >= 0) {
+                    std::cout << "<td style=\"text-align:center;\">" << team_list.at(i).dinner_people << "</td>\n";
+                } else {
+                    std::cout << "<td></td>\n";
+                }
+                std::cout << "</tr>\n";
+            }
+
             std::cout << "</table>\n";
 
 

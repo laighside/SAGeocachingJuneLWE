@@ -428,6 +428,23 @@ END$$
 DELIMITER ;
 
 /**
+ * insertPublicFileUpload This adds an entry to the public_file_upload table
+ */
+DROP FUNCTION IF EXISTS insertPublicFileUpload;
+DELIMITER $$
+CREATE FUNCTION insertPublicFileUpload(public_filenameIn TEXT, cache_numberIn int, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    DECLARE new_guid TEXT;
+    DECLARE new_server_filename TEXT;
+    SET new_guid = UUID();
+    SET new_server_filename = CONCAT(LPAD(CONVERT(cache_numberIn, CHAR), 3, '0'), "_", new_guid, ".jpg");
+    INSERT INTO public_file_upload (guid, cache_number, public_filename, server_filename, user_ip) VALUES (new_guid, cache_numberIn, public_filenameIn, new_server_filename, userIP);
+    RETURN LAST_INSERT_ID();
+END$$
+DELIMITER ;
+
+/**
  * insertRegistration This adds an entry to the event_registrations table
  */
 DROP FUNCTION IF EXISTS insertRegistration;
@@ -1083,6 +1100,22 @@ BEGIN
         SET dummy = log_user_event(userIP, username, CONCAT("Email was unsubscribed (token: ",  token_unsub, " )"));
     END IF;
     RETURN result;
+END$$
+DELIMITER ;
+
+/**
+ * updatePublicFileUploadSize This sets the file size value for a entry in the public_file_upload table
+ */
+DROP FUNCTION IF EXISTS updatePublicFileUploadSize;
+DELIMITER $$
+CREATE FUNCTION updatePublicFileUploadSize(idIn INT, file_sizeIn INT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM public_file_upload WHERE id = idIn)) THEN
+        UPDATE public_file_upload SET file_size = file_sizeIn WHERE id = idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
 END$$
 DELIMITER ;
 

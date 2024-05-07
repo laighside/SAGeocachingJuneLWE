@@ -19,7 +19,7 @@
 #include "core/JlweUtils.h"
 
 int main () {
-    try{
+    try {
         JlweCore jlwe;
         std::string page_request = CgiEnvironment::getRequestUri();
 
@@ -37,47 +37,76 @@ int main () {
         sql::PreparedStatement *prep_stmt;
         sql::ResultSet *res;
 
-        std::string file_dir = jlwe.config.at("files").at("directory");
+        std::string public_upload_dir = jlwe.config.at("publicFileUpload").at("directory");
+        std::string base_file_dir = jlwe.config.at("files").at("directory");
+        bool includePublicUploads = (base_file_dir.size() < public_upload_dir.size()) && (public_upload_dir.substr(0, base_file_dir.size()) == base_file_dir);
+
+        std::string full_filename = "";
+        std::string mysql_filename = "";
+
+        bool validFile = false;
+        bool validFilename = false;
 
         prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT filename,public FROM files WHERE CONCAT(directory,filename) = ?;");
         prep_stmt->setString(1, filename);
         res = prep_stmt->executeQuery();
-
-        bool validFile = false;
-
-        if (res->next()){ // if the file exists in MySQL
-            if (res->getInt(2) != 0 || jlwe.isLoggedIn()){ // if public file or user is logged in
-                std::string mysql_filename = res->getString(1);
+        if (res->next()) { // if the file exists in MySQL
+            if (res->getInt(2) != 0 || jlwe.isLoggedIn()) { // if public file or user is logged in
+                mysql_filename = res->getString(1);
 
                 // check if it is a file not a directory
                 if (mysql_filename.at(mysql_filename.size() - 1) != '/') {
 
                     // this should be safe from injection attacks since filename is confirmed to exist in the database
-                    std::string full_filename = file_dir + filename;
-                    std::string mime_type = JlweUtils::getMIMEType(full_filename);
-
-                    FILE *file = fopen(full_filename.c_str(), "rb");
-                    if (file) { // if file exists in filesystem
-                        // output header
-                        std::cout << "Access-Control-Allow-Origin: *\r\n";
-                        std::cout << "Content-type:" << mime_type << "\r\n";
-                        std::cout << "Content-Disposition: attachment; filename=" << mysql_filename << "\r\n\r\n";
-
-                        char buffer[1024];
-                        size_t size = 1024;
-                        while (size == 1024){
-                            size = fread(buffer, 1, 1024, file);
-                            std::cout.write(buffer, size);
-                        }
-                        validFile = true;
-                        fclose(file);
-                    }
+                    full_filename = base_file_dir + filename;
+                    validFilename = true;
 
                 }
             }
         }
         delete res;
         delete prep_stmt;
+
+        // Check if it's in public upload folder
+        if ((!validFilename) && includePublicUploads && jlwe.isLoggedIn()) {
+            size_t idx = filename.find_last_of('/');
+            std::string sub_dir = (idx != std::string::npos) ? filename.substr(0, idx) : "";
+            std::string filename_only = (idx != std::string::npos) ? filename.substr(idx + 1) : "";
+            if (base_file_dir + sub_dir == public_upload_dir && filename_only.size() > 0) {
+                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT server_filename FROM public_file_upload WHERE server_filename = ?;");
+                prep_stmt->setString(1, filename_only);
+                res = prep_stmt->executeQuery();
+                if (res->next()) { // if the file exists in MySQL
+                    mysql_filename = res->getString(1);
+                    full_filename = public_upload_dir + "/" + mysql_filename;
+                    validFilename = true;
+                }
+                delete res;
+                delete prep_stmt;
+            }
+        }
+
+        // Output file data if filename is valid
+        if (validFilename && full_filename.size() > 0 && mysql_filename.size() > 0) {
+            std::string mime_type = JlweUtils::getMIMEType(full_filename);
+
+            FILE *file = fopen(full_filename.c_str(), "rb");
+            if (file) { // if file exists in filesystem
+                // output header
+                std::cout << "Access-Control-Allow-Origin: *\r\n";
+                std::cout << "Content-type:" << mime_type << "\r\n";
+                std::cout << "Content-Disposition: attachment; filename=" << mysql_filename << "\r\n\r\n";
+
+                char buffer[1024];
+                size_t size = 1024;
+                while (size == 1024){
+                    size = fread(buffer, 1, 1024, file);
+                    std::cout.write(buffer, size);
+                }
+                validFile = true;
+                fclose(file);
+            }
+        }
 
         int response_code = 200;
 

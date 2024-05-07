@@ -92,6 +92,51 @@ int main () {
 
                 if (jsonDocumentIn.contains("items")) {
 
+                    std::string public_upload_dir = jlwe.config.at("publicFileUpload").at("directory");
+                    std::string base_file_dir = jlwe.config.at("files").at("directory");
+                    bool includePublicUploads = (base_file_dir.size() < public_upload_dir.size()) && (public_upload_dir.substr(0, base_file_dir.size()) == base_file_dir);
+
+                    // public uploads
+                    if (includePublicUploads) {
+                        std::string upload_folder_url = std::string(jlwe.config.at("files").at("urlPrefix")) + public_upload_dir.substr(base_file_dir.size()) + "/";
+
+                        nlohmann::json jsonObject;
+                        jsonObject["href"] = upload_folder_url;
+                        jsonObject["size"] = 0;
+                        prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT SUM(file_size) FROM public_file_upload;");
+                        res = prep_stmt->executeQuery();
+                        if (res->next()) {
+                            jsonObject["size"] = res->getInt(1);
+                        }
+                        delete res;
+                        delete prep_stmt;
+                        jsonObject["time"] = 0;
+                        jsonObject["owner"] = "";
+                        jsonObject["status"] = "";
+                        jsonObject["fetched"] = false;
+                        jsonObject["managed"] = true;
+                        jsonObject["readOnly"] = true;
+                        jsonDocumentOut["items"].push_back(jsonObject);
+
+                        stmt = jlwe.getMysqlCon()->createStatement();
+                        res = stmt->executeQuery("SELECT server_filename,unix_timestamp(timestamp),file_size,user_ip FROM public_file_upload ORDER BY timestamp DESC;");
+                        while (res->next()) {
+                            nlohmann::json jsonObject;
+                            jsonObject["href"] = upload_folder_url + res->getString(1);
+                            jsonObject["size"] = res->getInt(3);
+                            jsonObject["time"] = res->getInt64(2) * 1000;
+                            jsonObject["owner"] = res->getString(4);
+                            jsonObject["status"] = "";
+                            jsonObject["readOnly"] = true;
+
+                            jsonDocumentOut["items"].push_back(jsonObject);
+                        }
+                        delete res;
+                        delete stmt;
+                    }
+
+
+                    // Normal files
                     stmt = jlwe.getMysqlCon()->createStatement();
                     res = stmt->executeQuery("SELECT filename,directory,size,year,owner,public,unix_timestamp(date_uploaded) FROM files ORDER BY year DESC;");
                     while (res->next()) {

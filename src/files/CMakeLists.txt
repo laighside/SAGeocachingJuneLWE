@@ -18,3 +18,6 @@ target_link_libraries(thumbnail.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 add_executable(upload_file.cgi upload_file.cpp)
 target_link_libraries(upload_file.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 
+add_executable(public_upload.cgi public_upload.cpp)
+target_link_libraries(public_upload.cgi jlwecore ${MYSQLCPPCONN_LIBRARY} httprequest)
+

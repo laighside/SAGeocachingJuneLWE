@@ -41,6 +41,15 @@
         "imagePrefix":"/img/uploads"
     },
 
+    /* Settings for public file upload */
+    /* Things work a bit better if the directory is a sub-directoy of the file manager directory */
+    /* Ensure ImageMagick convert is configured securely before enabling public file upload */
+    "publicFileUpload": {
+        "directory":"",
+        "maxUploadSize":10485760,
+        "enabled":false
+    },
+
     /* Settings for Google reCAPTCHA service */
     "recaptcha": {
         "url":"https://www.google.com/recaptcha/api/siteverify",

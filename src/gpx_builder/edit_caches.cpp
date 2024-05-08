@@ -100,7 +100,7 @@ int main () {
             std::cout << "              <td><span style=\"float:right\">Cache number:</span></td>\n";
             std::cout << "              <td><input type=\"number\" id=\"cache_number\" min=\"1\" max=\"" << number_game_caches << "\" value=\"1\" onchange=\"getCacheDetails()\"> <span id=\"cache_number_note\">" << (isUserCache ? "" : "(enter this first!)") << "</span></td>\n";
 
-            std::cout << "              <td rowspan=\"6\">\n";
+            std::cout << "              <td rowspan=\"7\">\n";
             std::cout << "              <div style=\"width: 100%;display:table;\">\n";
             std::cout << "              <div style=\"display:table-cell;\">Coordinates:</div>\n";
             std::cout << "              <div style=\"display:table-cell;padding-right:5px;\"><input type=\"text\" id=\"coordinates\" style=\"width:100%;\"></div>\n";
@@ -158,6 +158,11 @@ int main () {
             std::cout << "              </label></span><br />\n";
             std::cout << "              </div>\n";
             std::cout << "              <p><span style=\"font-style: italic;\">If unsure, leave boxes un-checked</span></p>\n";
+            std::cout << "              </td>\n";
+            std::cout << "            </tr>\n";
+            std::cout << "            <tr>\n";
+            std::cout << "              <td><span style=\"float:right\">Photos:</span></td>\n";
+            std::cout << "              <td id=\"photo_cell\">\n";
             std::cout << "              </td>\n";
             std::cout << "            </tr>\n";
             std::cout << "            <tr>\n";

@@ -43,6 +43,8 @@ int main () {
 
             nlohmann::json jsonDocument;
 
+            int cache_number_for_photos = 0;
+
             if (cache_number) {
                 prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT cache_name,team_name,latitude,longitude,public_hint,detailed_hint,camo,permanent,private_property,actual_distance FROM caches WHERE cache_number = ?;");
                 prep_stmt->setInt(1, cache_number);
@@ -67,6 +69,9 @@ int main () {
                 }
                 delete res;
                 delete prep_stmt;
+
+                cache_number_for_photos = cache_number;
+
             } else if (id_number) {
                 prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT cache_number,cache_name,team_name,phone_number,latitude,longitude,public_hint,detailed_hint,camo,permanent,private_property,actual_distance,IP_address FROM user_hidden_caches WHERE id_number = ?;");
                 prep_stmt->setInt(1, id_number);
@@ -86,6 +91,8 @@ int main () {
                     jsonDocument["private_property"] = res->getInt(11);
                     jsonDocument["actual_distance"] = res->getInt(12);
                     jsonDocument["ip_address"] = res->getString(13);
+
+                    cache_number_for_photos = res->getInt(1);
                 } else {
                     jsonDocument["success"] = false;
                     jsonDocument["error"] = "Cache not found";
@@ -95,6 +102,29 @@ int main () {
             } else {
                 jsonDocument["success"] = false;
                 jsonDocument["error"] = "Invalid cache number";
+            }
+
+            jsonDocument["photos"] = nlohmann::json::array();
+
+            std::string public_upload_dir = jlwe.config.at("publicFileUpload").at("directory");
+            std::string base_file_dir = jlwe.config.at("files").at("directory");
+            bool includePublicUploads = (base_file_dir.size() < public_upload_dir.size()) && (public_upload_dir.substr(0, base_file_dir.size()) == base_file_dir);
+
+            if (includePublicUploads && cache_number_for_photos > 0) {
+                std::string upload_folder_url = std::string(jlwe.config.at("files").at("urlPrefix")) + public_upload_dir.substr(base_file_dir.size()) + "/";
+
+                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT server_filename,file_size FROM public_file_upload WHERE cache_number = ? AND file_size > 0;");
+                prep_stmt->setInt(1, cache_number_for_photos);
+                res = prep_stmt->executeQuery();
+                while (res->next()) {
+                    nlohmann::json jsonObject;
+                    jsonObject["filename"] = res->getString(1);
+                    jsonObject["file_size"] = res->getInt(2);
+                    jsonObject["href"] = upload_folder_url + res->getString(1);
+                    jsonDocument["photos"].push_back(jsonObject);
+                }
+                delete res;
+                delete prep_stmt;
             }
 
             std::cout << JsonUtils::makeJsonHeader() << jsonDocument.dump();

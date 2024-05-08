@@ -89,6 +89,8 @@ function getUserCache(id) {
 // This takes the cache data from a HTTP response and places it in the form (used to load existing data)
 function loadCacheJson(data, responseCode) {
 
+    loadPhotos([]); // clear photos
+
     if (responseCode === 200){
         var jsonObj = JSON.parse(data);
 
@@ -133,13 +135,39 @@ function loadCacheJson(data, responseCode) {
             document.getElementById("camo").checked = false;
             document.getElementById("permanent").checked = false;
             document.getElementById("private").checked = false;
-            if (jsonObj.error == 'cache not found') {
+            if (jsonObj.error == 'Cache not found') {
                 document.getElementById("page_note").innerHTML = 'Error: ' + jsonObj.error + ' (this is normal when entering the cache for the first time)';
             } else {
                 document.getElementById("page_note").innerHTML = 'Error: ' + jsonObj.error;
             }
             updateCoords(true);
         }
+        loadPhotos(jsonObj.photos);
+    }
+}
+
+// Parses the list of photos into HTML for the page
+function loadPhotos(photos) {
+    var photoCell = document.getElementById("photo_cell");
+    photoCell.innerHTML = "";
+
+    if (photos && photos.length > 0) {
+        photos_html = "";
+        for (var i = 0; i < photos.length; i++) {
+            var photoSpan = document.createElement("a");
+            photoSpan.innerText = photos[i].filename;
+            photoSpan.href = photos[i].href;
+            photoSpan.dataset.lightbox = "gallery";
+            photoSpan.dataset.title = "";
+            photoCell.appendChild(photoSpan);
+            var lineBreak = document.createElement("br");
+            photoCell.appendChild(lineBreak);
+        }
+    } else {
+        var noneSpan = document.createElement("span");
+        noneSpan.innerText = "None";
+        noneSpan.style.fontStyle = "italic";
+        photoCell.appendChild(noneSpan);
     }
 }
 

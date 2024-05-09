@@ -19,7 +19,8 @@
 #include <ctime>
 #include <stdexcept>
 
-#include <cstdio>  // for popen
+#include <cstdio>   // for popen
+#include <iostream> // cout
 
 #include "../ext/csprng/csprng.hpp"
 
@@ -158,6 +159,16 @@ std::string JlweUtils::readFileToString(const char *filename) {
     }
     fclose(file);
     return result;
+}
+
+void JlweUtils::readFileToOStream(FILE * file, std::ostream& stream, size_t buffer_size) {
+    if (!file) return;
+    char buffer[buffer_size];
+    size_t size = buffer_size;
+    while (size == buffer_size) {
+        size = fread(buffer, 1, buffer_size, file);
+        stream.write(buffer, static_cast<long>(size));
+    }
 }
 
 bool JlweUtils::compareStringsNoCase(const std::string& s1, const std::string& s2) {

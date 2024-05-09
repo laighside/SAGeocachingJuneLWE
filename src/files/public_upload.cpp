@@ -180,7 +180,7 @@ int main () {
         rmdir(dir_name);
 
         // Make HTML output
-        HtmlTemplate html(false);
+        HtmlTemplate html(true);
         html.outputHttpHtmlHeader();
         if (!html.outputHeader(&jlwe, "JLWE - Upload photos", false))
             return 0;

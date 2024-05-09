@@ -102,6 +102,15 @@ public:
     static std::string readFileToString(const char *filename);
 
     /*!
+     * \brief Reads an entire file and writes it to an ostream (eg. cout).
+     *
+     * \param file Open file pointer to read from
+     * \param stream The ostream to write to
+     * \param buffer_size How many bytes in each block of data read then written
+     */
+    static void readFileToOStream(FILE * file, std::ostream& stream, size_t buffer_size = 1024);
+
+    /*!
      * \brief A case insensitive comparison of two strings.
      *
      * \param s1 The first string
@@ -153,6 +162,9 @@ public:
 
     static inline std::string replaceString(std::string subject, const std::string& search,
                               const std::string& replace) {
+        if (search.size() == 0) // This will cause an infinite loop so just return if the search string is empty
+            return subject;
+
         size_t pos = 0;
         while ((pos = subject.find(search, pos)) != std::string::npos) {
              subject.replace(pos, search.length(), replace);

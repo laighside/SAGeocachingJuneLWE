@@ -17,7 +17,7 @@
  * @returns {Object} The element to add to the document
  */
 function makeDeleteIcon(onClick) {
-    return makeIconButton(onClick, "/img/delete.svg");
+    return makeIconButton(onClick, "/img/delete.svg", "Delete");
 }
 
 /**
@@ -27,7 +27,7 @@ function makeDeleteIcon(onClick) {
  * @returns {Object} The element to add to the document
  */
 function makeEditIcon(onClick) {
-    return makeIconButton(onClick, "/img/edit.svg");
+    return makeIconButton(onClick, "/img/edit.svg", "Edit");
 }
 
 /**
@@ -45,14 +45,20 @@ function makeTickIcon(onClick) {
  *
  * @param {Function} onClick Function to call when the button is clicked
  * @param {String} imageUrl URL to the SVG image to use as the button
+ * @param {String} altText Alt text for the image element
  * @returns {Object} The element to add to the document
  */
-function makeIconButton(onClick, imageUrl) {
+function makeIconButton(onClick, imageUrl, altText) {
     var editIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     editIcon.classList.add("iconButton");
     editIcon.style.float = "right";
     editIcon.setAttribute("width", "20");
     editIcon.setAttribute("height", "20");
+    if (altText) {
+        var titleElement = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        titleElement.textContent = altText;
+        editIcon.appendChild(titleElement);
+    }
     var imageElement = document.createElementNS("http://www.w3.org/2000/svg", "image");
     if (imageUrl)
         imageElement.setAttributeNS("http://www.w3.org/1999/xlink", "href", imageUrl);
@@ -142,6 +148,31 @@ function makeCheckboxElement(id, label, checked, onChange) {
 }
 
 /**
+ * Makes a combo-box
+ *
+ * @param {String} id The id of the combo-box
+ * @param {Array} options List of options to show in the combo-box
+ * @param {Function} onChange Function to call when the combo-box state is changed
+ * @returns {Object} The element to add to the document
+ */
+function makeComboBoxElement(id, options, onChange) {
+    var selectElement = document.createElement("select");
+    selectElement.id = id;
+    selectElement.name = id;
+    for (var i = 0; i < options.length; i++) {
+        var selectOption = document.createElement("option");
+        selectOption.innerText = options[i].display_text;
+        selectOption.value = options[i].value;
+        if (options[i].selected)
+            selectOption.selected = "true";
+        selectElement.appendChild(selectOption);
+    }
+    if (onChange)
+        selectElement.addEventListener('change', onChange);
+    return selectElement;
+}
+
+/**
  * Makes a table cell with a span to dispaly value
  * Used to make part of an editable cell
  *
@@ -191,7 +222,7 @@ function makeEditableTextCell(initialText, idStr, saveFunction) {
  * @param {String} inputStep The value for the step attribute of the input element
  */
 function makeEditableNumberCell(initialValue, idStr, saveFunction, intOnly, inputStep) {
-    var valueCell = makeEditableCell(initialValue.toString(), idStr);
+    var valueCell = makeEditableCell(initialValue ? initialValue.toString() : 0, idStr);
 
     var valueCellEdit = makeNumberEditBlock("table_cell_input_" + idStr, saveNumberEdit.bind(this, idStr, saveFunction, intOnly), inputStep);
     valueCellEdit.id = "table_cell_edit_" + idStr;
@@ -238,7 +269,11 @@ function saveNumberEdit(idStr, saveFunction, intOnly) {
         newValue = parseFloat(inputElement.value);
     }
     inputElement.value = newValue;
-    saveFunction(newValue, saveEditSuccess.bind(this, idStr));
+    if (saveFunction) {
+        saveFunction(newValue, saveEditSuccess.bind(this, idStr));
+    } else {
+        saveEditSuccess(idStr);
+    }
 }
 
 /**

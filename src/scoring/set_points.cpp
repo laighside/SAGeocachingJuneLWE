@@ -65,6 +65,47 @@ int main () {
                     delete res;
                     delete prep_stmt;
                 }
+
+                if (jsonDocument.contains("hide_or_find")) {
+                    prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT setFindPointsTradsType(?,?,?,?);");
+                    prep_stmt->setInt(1, item_id);
+                    prep_stmt->setString(2, std::string(jsonDocument.at("hide_or_find")).substr(0,1));
+                    prep_stmt->setString(3, jlwe.getCurrentUserIP());
+                    prep_stmt->setString(4, jlwe.getCurrentUsername());
+                    res = prep_stmt->executeQuery();
+                    if (res->next()) {
+                        if (res->getInt(1) == 0) {
+                            result = JsonUtils::makeJsonSuccess("Type updated");
+                        } else {
+                            result = JsonUtils::makeJsonError("ID not found");
+                        }
+                    } else {
+                        result = JsonUtils::makeJsonError("Unable to execute query");
+                    }
+                    delete res;
+                    delete prep_stmt;
+                }
+
+                if (jsonDocument.contains("config")) {
+                    prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT setFindPointsTradsConfig(?,?,?,?);");
+                    prep_stmt->setInt(1, item_id);
+                    prep_stmt->setString(2, std::string(jsonDocument.at("config").dump()));
+                    prep_stmt->setString(3, jlwe.getCurrentUserIP());
+                    prep_stmt->setString(4, jlwe.getCurrentUsername());
+                    res = prep_stmt->executeQuery();
+                    if (res->next()) {
+                        if (res->getInt(1) == 0) {
+                            result = JsonUtils::makeJsonSuccess("Config updated");
+                        } else {
+                            result = JsonUtils::makeJsonError("ID not found");
+                        }
+                    } else {
+                        result = JsonUtils::makeJsonError("Unable to execute query");
+                    }
+                    delete res;
+                    delete prep_stmt;
+                }
+
             }
 
             if (points_type == "find_extras") {

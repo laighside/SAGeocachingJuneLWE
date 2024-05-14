@@ -52,12 +52,19 @@ int main () {
             delete stmt;
 
             stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT id, name, enabled FROM game_find_points_trads ORDER BY id;");
+            res = stmt->executeQuery("SELECT id, name, enabled, hide_or_find, config FROM game_find_points_trads ORDER BY id;");
             while (res->next()) {
                 nlohmann::json jsonObject;
                 jsonObject["id"] = res->getInt(1);
                 jsonObject["name"] = res->getString(2);
                 jsonObject["enabled"] = (res->getInt(3) != 0);
+                jsonObject["hide_or_find"] = res->getString(4);
+                if (res->isNull(5)) {
+                    jsonObject["config"] = nullptr;
+                } else {
+                    nlohmann::json configJson = nlohmann::json::parse(std::string(res->getString(5)));
+                    jsonObject["config"] = configJson;
+                }
 
                 jsonDocument["find_points_trads"].push_back(jsonObject);
             }

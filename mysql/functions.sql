@@ -715,6 +715,22 @@ END$$
 DELIMITER ;
 
 /**
+ * setFindPointsTradsConfig This sets the config JSON for a given id in the game_find_points_trads table
+ */
+DROP FUNCTION IF EXISTS setFindPointsTradsConfig;
+DELIMITER $$
+CREATE FUNCTION setFindPointsTradsConfig(idIn INT, configIn TEXT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM game_find_points_trads WHERE id = idIn)) THEN
+        UPDATE game_find_points_trads SET config = configIn WHERE id = idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
+END$$
+DELIMITER ;
+
+/**
  * setFindPointsTradsEnabled This sets the enabled for a given id in the game_find_points_trads table
  */
 DROP FUNCTION IF EXISTS setFindPointsTradsEnabled;
@@ -724,6 +740,22 @@ CREATE FUNCTION setFindPointsTradsEnabled(idIn INT, enabledIn INT, userIP VARCHA
 BEGIN
     IF (EXISTS(SELECT * FROM game_find_points_trads WHERE id = idIn)) THEN
         UPDATE game_find_points_trads SET enabled = enabledIn WHERE id = idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
+END$$
+DELIMITER ;
+
+/**
+ * setFindPointsTradsEnabled This sets the hide_or_find type for a given id in the game_find_points_trads table
+ */
+DROP FUNCTION IF EXISTS setFindPointsTradsType;
+DELIMITER $$
+CREATE FUNCTION setFindPointsTradsType(idIn INT, hide_or_findIn CHAR(1), userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM game_find_points_trads WHERE id = idIn)) THEN
+        UPDATE game_find_points_trads SET hide_or_find = hide_or_findIn WHERE id = idIn;
         RETURN 0;
     END IF;
     RETURN 1;

@@ -53,26 +53,24 @@ int main () {
 
             std::cout << "<p>This page is for setting the point values for each cache.</p>\n";
 
-            std::cout << "<h3>Find points (traditional caches)</h3>\n";
-            std::cout << "<p>These are points teams get for finding the usual 100 traditional caches. For example, walking bonus points.</p>\n";
+            std::cout << "<h3>Traditional cache points</h3>\n";
+            std::cout << "<p>These are points teams get for the usual 100 traditional caches. The &quot;Special Caches&quot; setting is for if you wish to set a specific cache to a specific value. (eg. cache 100 is worth 5 points)</p>\n";
+            std::cout << "<p>Note: since everyone finds their own caches, having &quot;find only&quot; points makes no sense.</p>\n";
 
             std::cout << "<table id=\"find_points_trads_table\" align=\"center\"><tr>\n";
-            std::cout << "<th>Enabled</th><th>Name</th>\n";
+            std::cout << "<th>Enabled</th><th>Name</th><th>Points for:</th><th>Options</th>\n";
             std::cout << "</table>\n";
 
             std::cout << "<h3>Find points (extras)</h3>\n";
-            std::cout << "<p>These are points teams get for doing things on Sunday that aren't finding the usual 100 traditional caches. For example, puzzle caches, black thunder.</p>\n";
+            std::cout << "<p>These are points teams get for doing things that aren't finding the usual 100 traditional caches. For example, puzzle caches, black thunder.</p>\n";
 
             std::cout << "<table id=\"find_points_extras_table\" align=\"center\"><tr>\n";
             std::cout << "<th>Enabled</th><th>Name</th><th>Point value</th>\n";
             std::cout << "</table>\n";
             std::cout << "<p style=\"text-align:center\"><input type=\"button\" onclick=\"addNewFindPointsExtra();\" value=\"Create new find points item\"></p>\n";
 
-            std::cout << "<h3>Hide points</h3>\n";
-            std::cout << "<p>These are points associated with the caches teams hid on Saturday. For example, zone bonus points.</p>\n";
-
-            std::cout << "<h4 style=\"text-align:center\">Bonus zones</h4>\n";
-            std::cout << "<p style=\"text-align:center\">Note that zone bonus points need to be set before any caches are entered into the GPX builder.</p>\n";
+            std::cout << "<h3>Bonus zones</h4>\n";
+            std::cout << "<p>These KML files define the areas that zone bonus points apply to. Note that zone bonus points need to be set before any caches are entered into the GPX builder.</p>\n";
             std::cout << "<table id=\"zones_table\" align=\"center\"><tr>\n";
             std::cout << "<th>KML File</th><th>Name</th><th>Point value</th>\n";
             std::cout << "</table>\n";

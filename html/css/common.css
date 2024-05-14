@@ -378,6 +378,11 @@ user-select: none;
 }
 
 
+.grey_table_border td, .grey_table_border th {
+  border-color: #C0C0C0;
+}
+
+
 .more_menu {
     min-width: 100px;
 }

@@ -327,15 +327,17 @@ CREATE TABLE `game_find_points_trads` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` text NOT NULL,
   `enabled` int NOT NULL DEFAULT '1',
+  `hide_or_find` char(1) NOT NULL DEFAULT 'F',
+  `config` text,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `game_find_points_trads`
 --
 
 LOCK TABLES `game_find_points_trads` WRITE;
-INSERT INTO `game_find_points_trads` VALUES (1,'1 point per cache', 1),(2,'Walking bonus points', 1);
+INSERT INTO `game_find_points_trads` VALUES (1,'1 point per cache', 1, 'F', '[]'),(2,'Walking points', 1, 'F', '{\"distance\":100,\"max_points\":4}'),(3, 'Zone points', 1, 'H', NULL),(4, 'Creative hide points', 0, 'H', '{\"points\":1}');
 UNLOCK TABLES;
 
 --

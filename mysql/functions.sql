@@ -877,6 +877,40 @@ END$$
 DELIMITER ;
 
 /**
+ * setTeamFindExtra This adds an entry, or updates an existing entry in the game_find_list table (for an extras item)
+ */
+DROP FUNCTION IF EXISTS setTeamFindExtra;
+DELIMITER $$
+CREATE FUNCTION setTeamFindExtra(team_idIn INT, extras_id_numberIn INT, find_valueIn INT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM game_find_list WHERE team_id = team_idIn AND extras_id_number = extras_id_numberIn)) THEN
+        UPDATE game_find_list SET find_value = find_valueIn WHERE team_id = team_idIn AND extras_id_number = extras_id_numberIn;
+    ELSE
+        INSERT INTO game_find_list (team_id, extras_id_number, find_value) VALUES(team_idIn, extras_id_numberIn, find_valueIn);
+    END IF;
+    RETURN 0;
+END$$
+DELIMITER ;
+
+/**
+ * setTeamFindTrad This adds an entry, or updates an existing entry in the game_find_list table (for a trad cache)
+ */
+DROP FUNCTION IF EXISTS setTeamFindTrad;
+DELIMITER $$
+CREATE FUNCTION setTeamFindTrad(team_idIn INT, trad_cache_numberIn INT, find_valueIn INT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM game_find_list WHERE team_id = team_idIn AND trad_cache_number = trad_cache_numberIn)) THEN
+        UPDATE game_find_list SET find_value = find_valueIn WHERE team_id = team_idIn AND trad_cache_number = trad_cache_numberIn;
+    ELSE
+        INSERT INTO game_find_list (team_id, trad_cache_number, find_value) VALUES(team_idIn, trad_cache_numberIn, find_valueIn);
+    END IF;
+    RETURN 0;
+END$$
+DELIMITER ;
+
+/**
  * setSlideContent This sets the content and title of a slide in the powerpoint
  */
 DROP FUNCTION IF EXISTS setSlideContent;

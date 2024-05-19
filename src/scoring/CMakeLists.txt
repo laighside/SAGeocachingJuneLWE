@@ -8,6 +8,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CGI_BIN_DIR}/scoring")
 
 
 add_library(powerpoint STATIC PowerPoint.cpp)
+add_library(point_calculator STATIC PointCalculator.cpp)
 
 add_executable(scoring.cgi scoring.cpp)
 target_link_libraries(scoring.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
@@ -25,7 +26,7 @@ add_executable(save_team_info.cgi save_team_info.cpp)
 target_link_libraries(save_team_info.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 
 add_executable(get_scores.cgi get_scores.cpp)
-target_link_libraries(get_scores.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
+target_link_libraries(get_scores.cgi jlwecore point_calculator ${MYSQLCPPCONN_LIBRARY})
 
 add_executable(get_slides.cgi get_slides.cpp)
 target_link_libraries(get_slides.cgi jlwecore powerpoint ${MYSQLCPPCONN_LIBRARY})
@@ -38,4 +39,7 @@ target_link_libraries(get_points.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 
 add_executable(set_points.cgi set_points.cpp)
 target_link_libraries(set_points.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
+
+add_executable(set_find_value.cgi set_find_value.cpp)
+target_link_libraries(set_find_value.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 

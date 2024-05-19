@@ -103,13 +103,17 @@ int main () {
             std::cout << "<div id=\"team_scores\" class=\"pageTabContent\">\n";
 
             std::cout << "<h2 style=\"text-align:center\">Team Scores</h2>\n";
-            std::cout << "<p>Copy the zone and cache return points into the Excel scoring spreadsheet. After calculating the final scores, enter then below and they will appear on the Powerpoint presentation.</p>\n";
             std::cout << "<p>To set a team as DSQ/DNF, enter a score of minus one hundred (-100)</p>\n";
-            std::cout << "<table id=\"team_scores_table\" align=\"center\">\n";
-            std::cout << "<tr><th>Team</th><th>Zone Points</th><th>Return Points</th><th>Final Score</th></tr>\n";
-            std::cout << "</table>\n";
+            std::cout << "<p>After changing any of the inputs, press the Refresh Scores button to recalculate the scores with the new data.</p>\n";
+            std::cout << "<p style=\"text-align:center\"><input type=\"button\" onclick=\"openTeamScoresTab();\" value=\"Refresh Scores\"></p>\n";
 
             std::cout << "<p id=\"team_scores_total_p\"></p>\n";
+
+            std::cout << "<p id=\"scoring_errors\" style=\"color:red;\"></p>\n";
+
+            std::cout << "<table id=\"team_scores_table\" align=\"center\">\n";
+            std::cout << "<tr><th>Team</th><th>Find Points<br />(trads)</th><th>Find Points<br />(extras)</th><th>Hide Points</th><th>Penalties</th><th>Final Score<br />(calculated)</th><th>Final Score<br />(actual)</th></tr>\n";
+            std::cout << "</table>\n";
 
             std::cout << "</div>\n";
 

@@ -72,7 +72,7 @@ function makeTeamListTableRowHtml(jsonTeam, row) {
     cachesCell.addEventListener('drop', dropCache);
     cachesCell.addEventListener('dragover', allowDropCache);
     for (var i = 0; i < jsonTeam.caches.length; i++) {
-        cachesCell.appendChild(makeCacheIconElement(jsonTeam.caches[i].cache_number));
+        cachesCell.appendChild(makeCacheIconElement(jsonTeam.caches[i]));
     }
     row.appendChild(cachesCell);
 

@@ -28,6 +28,8 @@ function compareStrings(a, b) {
  * This downloads the list of teams/scores and displays it the team placings order
  */
 function openLeaderboardTab() {
+    showTableStatusRow("Loading...", "scoreboard_table");
+
     downloadUrl('get_scores.cgi', null,
             function(data, responseCode) {
                 var jsonObj = JSON.parse(data);

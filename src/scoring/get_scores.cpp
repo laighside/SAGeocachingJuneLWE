@@ -22,16 +22,7 @@
 
 #include "../ext/nlohmann/json.hpp"
 
-struct cache {
-    int cache_number;
-    int team_id;
-    int zone_bonus;
-    bool has_coordinates;
-    bool handout;
-    bool returned;
-};
-
-bool sortIntDesc (int i,int j) { return (i>j); }
+#include "PointCalculator.h"
 
 int main () {
     try {
@@ -54,33 +45,38 @@ int main () {
             if (number_game_caches < 1)
                 throw std::invalid_argument("Invalid setting for number_game_caches = " + std::to_string(number_game_caches));
 
+            PointCalculator point_calculator(&jlwe, number_game_caches);
+
             std::vector<bool> caches_allocated(static_cast<size_t>(number_game_caches), false);
 
-            std::vector<cache> cache_list;
-
-            stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT cache_handout.cache_number, cache_handout.team_id, caches.cache_number, IF(cache_handout.owner_name = '', 0, 1), caches.zone_bonus, cache_handout.returned FROM caches RIGHT OUTER JOIN cache_handout ON caches.cache_number=cache_handout.cache_number;");
-            while (res->next()) {
-                cache c;
-                c.cache_number = res->getInt(1);
-                c.team_id = res->getInt(2);
-                c.has_coordinates = !(res->isNull(3));
-                c.handout = (res->getInt(4) > 0);
-                c.zone_bonus = res->getInt(5);
-                c.returned = (res->getInt(6) > 0);
-                cache_list.push_back(c);
-            }
-            delete res;
-            delete stmt;
-
-
             nlohmann::json jsonDocument;
+            jsonDocument["number_game_caches"] = number_game_caches;
 
             bool warning_cache_not_in_handout = false;
             bool warning_cache_not_in_gpx = false;
 
-            jsonDocument["teams"] = nlohmann::json::array();
+            jsonDocument["cache_list"] = nlohmann::json::array();
+            for (unsigned int i = 0; i < number_game_caches; i++)
+                jsonDocument["cache_list"].push_back(nullptr);
 
+            std::vector<PointCalculator::Cache> * cache_list = point_calculator.getCacheList();
+            for (unsigned int i = 0; i < cache_list->size(); i++) {
+                int cache_number = cache_list->at(i).cache_number;
+                if (cache_number > number_game_caches)
+                    continue;
+
+                nlohmann::json jsonObject;
+                jsonObject["cache_number"] = cache_number;
+                jsonObject["team_id"] = cache_list->at(i).team_id;
+                jsonObject["has_coordinates"] = cache_list->at(i).has_coordinates;
+                jsonObject["handout"] = cache_list->at(i).handout;
+                jsonObject["returned"] = cache_list->at(i).returned;
+                jsonObject["total_hide_points"] = cache_list->at(i).total_hide_points;
+                jsonObject["total_find_points"] = cache_list->at(i).total_find_points;
+                jsonDocument["cache_list"][cache_number - 1] = jsonObject;
+            }
+
+            jsonDocument["teams"] = nlohmann::json::array();
             stmt = jlwe.getMysqlCon()->createStatement();
             res = stmt->executeQuery("SELECT team_id, team_name, team_members, competing, final_score FROM game_teams" + std::string(include_non_compete ? ";" : " WHERE competing = 1;"));
             while (res->next()) {
@@ -99,49 +95,69 @@ int main () {
                 }
 
                 jsonObject["caches"] = nlohmann::json::array();
+                for (unsigned int i = 0; i < cache_list->size(); i++) {
+                    if (cache_list->at(i).team_id == team_id) {
+                        PointCalculator::Cache c = cache_list->at(i);
+                        jsonObject["caches"].push_back(c.cache_number);
 
-                std::vector<int> zone_points;
-                int not_returned_points = 0;
-                for (unsigned int i = 0; i < cache_list.size(); i++) {
-                    if (cache_list.at(i).team_id == team_id) {
-                        nlohmann::json jsonObject2;
-                        cache c = cache_list.at(i);
-
-                        jsonObject2["cache_number"] = c.cache_number;
-                        jsonObject2["has_coordinates"] = c.has_coordinates;
-                        jsonObject2["handout"] = c.handout;
-                        jsonObject2["zone_bonus"] = c.zone_bonus;
-                        jsonObject2["returned"] = c.returned;
-
-                        if (c.returned == false)
-                            not_returned_points += -2;
-                        zone_points.push_back(c.zone_bonus);
+                        caches_allocated[static_cast<size_t>(c.cache_number - 1)] = true;
 
                         if (c.handout == false)
                             warning_cache_not_in_handout = true;
                         if (c.has_coordinates == false)
                             warning_cache_not_in_gpx = true;
-
-                        jsonObject["caches"].push_back(jsonObject2);
-
-                        caches_allocated[static_cast<size_t>(c.cache_number - 1)] = true;
                     }
                 }
 
-                std::sort(zone_points.begin(), zone_points.end(), sortIntDesc);
-                int zone_total = 0;
-                if (zone_points.size() > 0)
-                    zone_total += zone_points.at(0);
-                if (zone_points.size() > 1)
-                    zone_total += zone_points.at(1);
+                jsonObject["hide_points"] = point_calculator.getTeamHideScore(team_id);
 
-                jsonObject["zone_points"] = zone_total;
-                jsonObject["returned_points"] = not_returned_points;
+                std::vector<int> trad_finds = point_calculator.getTeamTradFindList(team_id);
+                jsonObject["trad_find_points"] = point_calculator.getTotalTradFindScore(trad_finds);
+                jsonObject["trad_finds"] = nlohmann::json::array();
+                for (unsigned int i = 0; i < trad_finds.size(); i++)
+                    jsonObject["trad_finds"].push_back(trad_finds.at(i));
+
+                std::vector<PointCalculator::ExtrasFind> extra_finds = point_calculator.getTeamExtrasFindList(team_id);
+                jsonObject["extra_find_points"] = point_calculator.getTotalExtrasFindScore(extra_finds);
+                jsonObject["extra_finds"] = nlohmann::json::object();
+                for (unsigned int i = 0; i < extra_finds.size(); i++) {
+                    if (extra_finds.at(i).team_id == team_id)
+                        jsonObject["extra_finds"][std::to_string(extra_finds.at(i).id)] = extra_finds.at(i).value;
+                }
+
+                int not_returned_caches = point_calculator.getCachesNotReturned(team_id);
+                int late = point_calculator.getMinutesLate(extra_finds);
+                jsonObject["not_returned_caches"] = not_returned_caches;
+                jsonObject["late"] = late;
+                jsonObject["penalties"] = (not_returned_caches * -2) + (late * -1);
 
                 jsonDocument["teams"].push_back(jsonObject);
             }
             delete res;
             delete stmt;
+
+            std::vector<PointCalculator::CachePoints> * trad_points = point_calculator.getPointSourceList();
+            jsonDocument["trad_points"] = nlohmann::json::array();
+            for (unsigned int i = 0; i < trad_points->size(); i++) {
+                nlohmann::json jsonObject;
+                jsonObject["id"] = trad_points->at(i).id;
+                jsonObject["item_name"] = trad_points->at(i).item_name;
+                jsonObject["hide_or_find"] = trad_points->at(i).hide_or_find;
+                jsonObject["points_list"] = nlohmann::json::array();
+                for (unsigned int j = 0; j < trad_points->at(i).points_list.size(); j++)
+                    jsonObject["points_list"].push_back(trad_points->at(i).points_list.at(j));
+                jsonDocument["trad_points"].push_back(jsonObject);
+            }
+
+            std::vector<PointCalculator::ExtraItem> * extras_items = point_calculator.getExtrasItemsList();
+            jsonDocument["extras_points"] = nlohmann::json::array();
+            for (unsigned int i = 0; i < extras_items->size(); i++) {
+                nlohmann::json jsonObject;
+                jsonObject["id"] = extras_items->at(i).id;
+                jsonObject["name"] = extras_items->at(i).item_name;
+                jsonObject["point_value"] = extras_items->at(i).points_value;
+                jsonDocument["extras_points"].push_back(jsonObject);
+            }
 
             jsonDocument["warning_cache_not_in_handout"] = warning_cache_not_in_handout;
             jsonDocument["warning_cache_not_in_gpx"] = warning_cache_not_in_gpx;

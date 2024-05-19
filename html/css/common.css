@@ -382,6 +382,16 @@ user-select: none;
   border-color: #C0C0C0;
 }
 
+.grey_background {
+  background-color: #C0C0C0;
+}
+.red_background {
+  background-color: #FFC0C0;
+}
+.green_background {
+  background-color: #99ff99;
+}
+
 
 .more_menu {
     min-width: 100px;

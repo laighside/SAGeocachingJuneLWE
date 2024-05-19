@@ -1,0 +1,191 @@
+/**
+  @file    PointCalculator.h
+  @author  Ben <admin@laighside.com>
+  @version 1.0
+
+  @section DESCRIPTION
+  Class that calculates the points for each cache and team
+
+  This file is part of the SA Geocaching JLWE website, full details (including licence) can be found on Github.
+  https://github.com/laighside/SAGeocachingJuneLWE
+ */
+#ifndef POINTCALCULATOR_H
+#define POINTCALCULATOR_H
+
+#include <string>
+#include <vector>
+
+#include "../core/JlweCore.h"
+
+class PointCalculator
+{
+public:
+
+    /*! \struct Cache
+     *  \brief Stores a cache
+     */
+    struct Cache {
+        int cache_number;
+        int team_id;
+        int zone_points;
+        int walking_distance;
+        bool creative;
+        bool returned;
+        bool has_coordinates;
+        bool handout;
+
+        int total_hide_points;
+        int total_find_points;
+    };
+
+    /*! \struct CachePoints
+     *  \brief Stores the points for the trad caches, for a single points source eg. walking points
+     */
+    struct CachePoints {
+        int id;
+        std::string item_name;
+        std::string hide_or_find;
+        std::string configJson;
+        std::vector<int> points_list;
+    };
+
+    /*! \struct ExtraItem
+     *  \brief Stores something a team gets points for that isn't a trad cache
+     *         eg. Puzzles, black thunder, late return
+     */
+    struct ExtraItem {
+        int id;
+        std::string item_name;
+        int points_value;
+    };
+
+    /*! \struct extraItem
+     *  \brief Stores a single find on an ExtraItem for a given team
+     *         eg. Team A found black thunder x2
+     */
+    struct ExtrasFind {
+        int team_id;
+        int id;
+        int value;
+    };
+
+    /*!
+     * \brief PointCalculator Constructor.
+     *
+     * \param jlwe JlweCore object (for mysql access)
+     * \param number_game_caches The total number of caches in the game (from the website settings)
+     */
+    PointCalculator(JlweCore *jlwe, int number_game_caches);
+
+    /*!
+     * \brief PointCalculator Destructor.
+     */
+    ~PointCalculator();
+
+    /*!
+     * \brief Gets the list of all the caches
+     *
+     * \return The list of caches
+     */
+    std::vector<Cache> * getCacheList();
+
+    /*!
+     * \brief Gets the list of the sources of points for the traditional caches
+     * eg. Walking points, zone points, etc.
+     *
+     * \return The list of items
+     */
+    std::vector<CachePoints> * getPointSourceList();
+
+    /*!
+     * \brief Gets the list of all the extra items that teams can get points on
+     * eg. Puzzles, black thunder, etc.
+     *
+     * \return The list of items
+     */
+    std::vector<ExtraItem> * getExtrasItemsList();
+
+    /*!
+     * \brief Gets a list of caches hidden by the given team
+     *
+     * \param teamId The id number of the team
+     * \return The list of caches hidden by the team
+     */
+    std::vector<Cache> getCachesForTeam(int teamId);
+
+    /*!
+     * \brief Gets the total number of hide points for a given team
+     * This is the sum of hide points for the best two caches that the team hid
+     *
+     * \param teamId The id number of the team
+     * \return The total hide points
+     */
+    int getTeamHideScore(int teamId);
+
+    /*!
+     * \brief Gets the number of caches that a given team didn't return
+     *
+     * \param teamId The id number of the team
+     * \return The number of caches not returned
+     */
+    int getCachesNotReturned(int teamId);
+
+    /*!
+     * \brief Gets a list of traditional caches found by the given team
+     *
+     * \param teamId The id number of the team
+     * \return A list of 100 numbers (one for each cache), where 1 = found, 0 = not found by the team
+     */
+    std::vector<int> getTeamTradFindList(int teamId);
+
+    /*!
+     * \brief Gets the total number of traditional find points for a given team
+     * This is the sum of find points for all the caches that the team found
+     *
+     * \param find_list The team's list of finds on traditional caches
+     * \return The total find points
+     */
+    int getTotalTradFindScore(const std::vector<int> &find_list);
+
+    /*!
+     * \brief Gets a list of extras items found by the given team
+     *
+     * \param teamId The id number of the team
+     * \return The list of extras finds (as id number and value) found by the team
+     */
+    std::vector<ExtrasFind> getTeamExtrasFindList(int teamId);
+
+    /*!
+     * \brief Gets the total number of find points on extras items for a given team
+     * This is the sum of points for all the extras items that the team found
+     *
+     * \param find_list The team's list of finds on extras items
+     * \return The total points
+     */
+    int getTotalExtrasFindScore(const std::vector<ExtrasFind> &find_list);
+
+    /*!
+     * \brief Gets the number of minutes late that a team is
+     * This value is stored as an extras find with id = -1
+     *
+     * \param find_list The team's list of finds on extras items
+     * \return The number of minutes
+     */
+    static int getMinutesLate(const std::vector<ExtrasFind> &find_list);
+
+private:
+    int m_number_game_caches;
+    JlweCore *m_jlwe;
+
+    std::vector<Cache> caches;
+    std::vector<CachePoints> trad_points;
+    std::vector<ExtraItem> extras_items;
+
+    // Initialize points_list for each ExtraItem
+    void calculatePointsForEachPointSource();
+    // Initialize total_hide_points and total_find_points for each Cache
+    void calculateTotalHideFindPoints();
+
+};
+
+#endif // POINTCALCULATOR_H

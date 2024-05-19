@@ -41,6 +41,26 @@ function makeTickIcon(onClick) {
 }
 
 /**
+ * Makes a button with a expand down icon
+ *
+ * @param {Function} onClick Function to call when the button is clicked
+ * @returns {Object} The element to add to the document
+ */
+function makeExpandDownIcon(onClick) {
+    return makeIconButton(onClick, "/img/expand_circle_down.svg", "Expand");
+}
+
+/**
+ * Makes a button with a expand up icon
+ *
+ * @param {Function} onClick Function to call when the button is clicked
+ * @returns {Object} The element to add to the document
+ */
+function makeExpandUpIcon(onClick) {
+    return makeIconButton(onClick, "/img/expand_circle_up.svg");
+}
+
+/**
  * Makes a button out of an icon image
  *
  * @param {Function} onClick Function to call when the button is clicked
@@ -68,6 +88,23 @@ function makeIconButton(onClick, imageUrl, altText) {
     if (onClick)
         editIcon.addEventListener('click', onClick);
     return editIcon;
+}
+
+/**
+ * Convenience function that creates a HTML element: <type id=id>text</type>
+ *
+ * @param {String} type The type of element
+ * @param {String} text The innerText for the element
+ * @param {String} id The id for the element
+ * @returns {Object} The element
+ */
+function makeHtmlElement(type, text, id) {
+    var element = document.createElement(type);
+    if (id)
+        element.id = id;
+    if (text)
+        element.innerText = text;
+    return element;
 }
 
 /**
@@ -289,6 +326,48 @@ function saveEditSuccess(idStr) {
     var newValue = document.getElementById("table_cell_input_" + idStr).value;
     dataElement.dataset.value = newValue;
     document.getElementById("table_cell_value_span_" + idStr).innerText = newValue;
+}
+
+/**
+ * Makes a table cell with an expand button in it
+ *
+ * @param {String} cellValue The value to display in the cell
+ * @param {String} idStr The id of element(s)
+ * @param {Function} onChange Function to call when the expanded status is changed
+ */
+function makeExpandCell(cellValue, idStr, onChange) {
+    var expandCell = document.createElement("td");
+    expandCell.style = "position:relative;";
+    var valueCellSet = document.createElement("div");
+    valueCellSet.id = "table_cell_set_" + idStr;
+    var valueSpan = document.createElement("span");
+    valueSpan.id = "table_cell_value_span_" + idStr;
+    valueSpan.innerText = cellValue;
+    valueCellSet.appendChild(valueSpan);
+    var expandDownIcon = makeExpandDownIcon(toggleExpandCell.bind(this, true, idStr, onChange))
+    expandDownIcon.id = "expand_down_icon_" + idStr;
+    valueCellSet.appendChild(expandDownIcon);
+    var expandUpIcon = makeExpandUpIcon(toggleExpandCell.bind(this, false, idStr, onChange))
+    expandUpIcon.id = "expand_up_icon_" + idStr;
+    expandUpIcon.style.display = "none";
+    valueCellSet.appendChild(expandUpIcon);
+    expandCell.appendChild(valueCellSet);
+
+    return expandCell;
+}
+
+/**
+ * Called when a expand toggle is clicked, swaps the up/down arrow direction
+ *
+ * @param {Boolean} expandedState Is the expand option currently set to expand
+ * @param {String} idStr The id (suffix) of expand button element
+ * @param {Function} onChange Function to call when the expanded status is changed
+ */
+function toggleExpandCell(expandedState, idStr, onChange) {
+    document.getElementById("expand_down_icon_" + idStr).style.display = expandedState ? "none" : "block";
+    document.getElementById("expand_up_icon_" + idStr).style.display = expandedState ? "block" : "none";
+    if (onChange)
+        onChange(idStr, expandedState);
 }
 
 /**

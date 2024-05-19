@@ -306,6 +306,20 @@ CREATE TABLE `files` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
+-- Table structure for table `game_find_list`
+--
+
+DROP TABLE IF EXISTS `game_find_list`;
+CREATE TABLE `game_find_list` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `team_id` int NOT NULL,
+  `trad_cache_number` int DEFAULT NULL,
+  `extras_id_number` int DEFAULT NULL,
+  `find_value` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
 -- Table structure for table `game_find_points_extras`
 --
 

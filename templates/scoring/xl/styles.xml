@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac">
+  <fonts count="6">
+    <font>
+      <sz val="11"/>
+      <color rgb="FF000000"/>
+      <name val="Calibri"/>
+    </font>
+    <font>
+      <sz val="11"/>
+      <color rgb="FF000000"/>
+      <name val="Calibri"/>
+      <b/>
+    </font>
+    <font>
+      <sz val="9"/>
+      <color rgb="FF000000"/>
+      <name val="Calibri"/>
+    </font>
+    <font>
+      <sz val="11"/>
+      <color rgb="FFFF0000"/>
+      <name val="Calibri"/>
+    </font>
+    <font>
+      <b/>
+      <u/>
+      <sz val="11.0"/>
+      <color rgb="FF0000FF"/>
+      <name val="Calibri"/>
+    </font>
+    <font>
+      <u/>
+      <sz val="11.0"/>
+      <color rgb="FF0000FF"/>
+      <name val="Calibri"/>
+    </font>
+  </fonts>
+  <fills count="11">
+    <fill>
+      <patternFill patternType="none"/>
+    </fill>
+    <!-- This one isn't used but MS Excel doesn't seem to work without it -->
+    <fill>
+      <patternFill patternType="lightGray"/>
+    </fill>
+    <fill>
+      <patternFill patternType="solid">
+        <fgColor rgb="FF92D050"/>
+        <bgColor rgb="FF92D050"/>
+      </patternFill>
+    </fill>
+    <fill>
+      <patternFill patternType="solid">
+        <fgColor rgb="FFC6D9F0"/>
+        <bgColor rgb="FFC6D9F0"/>
+      </patternFill>
+    </fill>
+    <fill>
+      <patternFill patternType="solid">
+        <fgColor rgb="FFFDE9D9"/>
+        <bgColor rgb="FFFDE9D9"/>
+      </patternFill>
+    </fill>
+    <fill>
+      <patternFill patternType="solid">
+        <fgColor rgb="FF303030"/>
+        <bgColor rgb="FF303030"/>
+      </patternFill>
+    </fill>
+    <fill>
+      <patternFill patternType="solid">
+        <fgColor rgb="FFDDD9C3"/>
+        <bgColor rgb="FFDDD9C3"/>
+      </patternFill>
+    </fill>
+    <fill>
+      <patternFill patternType="solid">
+        <fgColor rgb="FFC4BD97"/>
+        <bgColor rgb="FFC4BD97"/>
+      </patternFill>
+    </fill>
+    <fill>
+      <patternFill patternType="solid">
+        <fgColor rgb="FFB2A1C7"/>
+        <bgColor rgb="FFB2A1C7"/>
+      </patternFill>
+    </fill>
+    <fill>
+      <patternFill patternType="solid">
+        <fgColor rgb="FFFABF8F"/>
+        <bgColor rgb="FFFABF8F"/>
+      </patternFill>
+    </fill>
+    <fill>
+      <patternFill patternType="solid">
+        <fgColor rgb="FFFF0000"/>
+        <bgColor rgb="FFFF0000"/>
+      </patternFill>
+    </fill>
+  </fills>
+  <borders count="4">
+    <border/>
+    <border>
+      <left/>
+      <right/>
+      <top/>
+      <bottom/>
+      <diagonal/>
+    </border>
+    <border>
+      <left style="thin">
+        <color rgb="FF000000"/>
+      </left>
+      <right style="thin">
+        <color rgb="FF000000"/>
+      </right>
+      <top style="thin">
+        <color rgb="FF000000"/>
+      </top>
+      <bottom style="thin">
+        <color rgb="FF000000"/>
+      </bottom>
+    </border>
+    <border>
+      <left style="hair">
+        <color rgb="FF000000"/>
+      </left>
+      <right style="hair">
+        <color rgb="FF000000"/>
+      </right>
+      <top style="hair">
+        <color rgb="FF000000"/>
+      </top>
+      <bottom style="hair">
+        <color rgb="FF000000"/>
+      </bottom>
+    </border>
+  </borders>
+  <cellStyleXfs count="1">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+  </cellStyleXfs>
+  <cellXfs count="23">
+    <!-- 0: default style -->
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <!-- 1: Team title (cell A1) -->
+    <xf numFmtId="0" fontId="1" fillId="2" borderId="0" />
+    <!-- 2: Title pink -->
+    <xf numFmtId="0" fontId="2" fillId="3" borderId="0" />
+    <!-- 3: Title blue -->
+    <xf numFmtId="0" fontId="2" fillId="4" borderId="0" />
+    <!-- 4: Title dark grey -->
+    <xf numFmtId="0" fontId="2" fillId="5" borderId="0" />
+    <!-- 5: Title light grey -->
+    <xf numFmtId="0" fontId="2" fillId="6" borderId="0" applyAlignment="1">
+      <alignment horizontal="center"/>
+    </xf>
+    <!-- 6: Title brown -->
+    <xf numFmtId="0" fontId="2" fillId="7" borderId="0" applyAlignment="1">
+      <alignment horizontal="center"/>
+    </xf>
+    <!-- 7: Title no color -->
+    <xf numFmtId="0" fontId="2" fillId="0" borderId="0" applyAlignment="1">
+      <alignment horizontal="center"/>
+    </xf>
+    <!-- 8: Team name -->
+    <xf numFmtId="0" fontId="0" fillId="8" borderId="2" />
+    <!-- 9: Find grid pink -->
+    <xf numFmtId="0" fontId="0" fillId="3" borderId="3" />
+    <!-- 10: Find grid blue -->
+    <xf numFmtId="0" fontId="0" fillId="4" borderId="3" />
+    <!-- 11: Find grid dark grey -->
+    <xf numFmtId="0" fontId="0" fillId="5" borderId="0" />
+    <!-- 12: Find grid light grey -->
+    <xf numFmtId="0" fontId="0" fillId="6" borderId="3" />
+    <!-- 13: Find grid brown -->
+    <xf numFmtId="0" fontId="0" fillId="7" borderId="3" />
+    <!-- 14: Totals row -->
+    <xf numFmtId="0" fontId="1" fillId="9" borderId="2" />
+    <!-- 15: Hyperlink bold -->
+    <xf numFmtId="0" fontId="4" fillId="0" borderId="0" applyAlignment="1">
+      <alignment horizontal="center"/>
+    </xf>
+    <!-- 16: Bold no color -->
+    <xf numFmtId="0" fontId="1" fillId="0" borderId="0" />
+    <!-- 17: Bold no color center -->
+    <xf numFmtId="0" fontId="1" fillId="0" borderId="0" applyAlignment="1">
+      <alignment horizontal="center"/>
+    </xf>
+    <!-- 18: Text center -->
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyAlignment="1">
+      <alignment horizontal="center"/>
+    </xf>
+    <!-- 19: Red background -->
+    <xf numFmtId="0" fontId="0" fillId="10" borderId="0" applyAlignment="1">
+      <alignment horizontal="center"/>
+    </xf>
+    <!-- 20: Hyperlink -->
+    <xf numFmtId="0" fontId="5" fillId="0" borderId="0" applyAlignment="1">
+      <alignment horizontal="center"/>
+    </xf>
+    <!-- 21: Red text -->
+    <xf numFmtId="0" fontId="3" fillId="0" borderId="0" applyAlignment="1">
+      <alignment horizontal="center"/>
+    </xf>
+    <!-- 22: Team name brown -->
+    <xf numFmtId="0" fontId="0" fillId="7" borderId="2" />
+  </cellXfs>
+  <cellStyles count="1">
+    <cellStyle name="Normal" xfId="0" builtinId="0"/>
+  </cellStyles>
+  <dxfs count="0"/>
+  <tableStyles count="0" defaultTableStyle="TableStyleMedium2" defaultPivotStyle="PivotStyleLight16"/>
+  <extLst>
+    <ext uri="{EB79DEF2-80B8-43e5-95BD-54CBDDF9020C}" xmlns:x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main">
+      <x14:slicerStyles defaultSlicerStyle="SlicerStyleLight1"/>
+    </ext>
+  </extLst>
+</styleSheet>
+

@@ -102,6 +102,10 @@ int main () {
             // Team scores
             std::cout << "<div id=\"team_scores\" class=\"pageTabContent\">\n";
 
+            std::cout << "<p style=\"text-align:center;\">\n";
+            std::cout << "<a class=\"admin_button\" href=\"download_scoring_xlsx.cgi\"><span>Download Scoring Spreadsheet</span></a>\n";
+            std::cout << "</p>\n";
+
             std::cout << "<h2 style=\"text-align:center\">Team Scores</h2>\n";
             std::cout << "<p>To set a team as DSQ/DNF, enter a score of minus one hundred (-100)</p>\n";
             std::cout << "<p>After changing any of the inputs, press the Refresh Scores button to recalculate the scores with the new data.</p>\n";

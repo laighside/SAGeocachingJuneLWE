@@ -42,7 +42,7 @@
     },
 
     /* Settings for public file upload */
-    /* Things work a bit better if the directory is a sub-directoy of the file manager directory */
+    /* Things work a bit better if the directory is a sub-directory of the file manager directory */
     /* Ensure ImageMagick convert is configured securely before enabling public file upload */
     "publicFileUpload": {
         "directory":"",
@@ -58,6 +58,9 @@
 
     /* API key for Google Maps */
     "GoogleMapsApiKey": "",
+
+    /* Path to Office Open XML templates (the templates folder in the github repo) */
+    "ooxmlTemplatePath": "",
 
     /* Path to the Maxmind GeoIP database file */
     "mmdbFilename": "",

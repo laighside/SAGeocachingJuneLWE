@@ -16,6 +16,9 @@ target_link_libraries(scoring.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 add_executable(download_ppt.cgi download_ppt.cpp)
 target_link_libraries(download_ppt.cgi jlwecore powerpoint ${MYSQLCPPCONN_LIBRARY})
 
+add_executable(download_scoring_xlsx.cgi download_scoring_xlsx.cpp WriteScoringXLSX.cpp)
+target_link_libraries(download_scoring_xlsx.cgi jlwecore point_calculator ${MYSQLCPPCONN_LIBRARY})
+
 add_executable(set_best_cache.cgi set_best_cache.cpp)
 target_link_libraries(set_best_cache.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 

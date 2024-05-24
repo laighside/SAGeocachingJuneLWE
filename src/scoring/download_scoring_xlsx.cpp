@@ -41,7 +41,7 @@ int main () {
 
             PointCalculator point_calculator(&jlwe, number_game_caches);
 
-            std::vector<WriteScoringXLSX::ExtraItem> defaultExtras = {{"Hide", 1}, {"C Return", -2}, {"Late", -1}};
+            std::vector<WriteScoringXLSX::ExtraItem> defaultExtras = {{"Hide", 1}, {"C Return", CACHE_RETURN_PENALTY}, {"Late", MINUTES_LATE_PENALTY}};
 
             std::vector<PointCalculator::ExtraItem> * extras_items = point_calculator.getExtrasItemsList();
             std::vector<WriteScoringXLSX::ExtraItem> findExtras;

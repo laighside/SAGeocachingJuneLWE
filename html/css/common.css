@@ -122,6 +122,7 @@ input[type='submit']:hover {
 input:not([type]):disabled, input[type='button']:disabled, input[type='submit']:disabled {
   background-color: #cccccc;
   color: #666666;
+  cursor: default;
 }
 
 /* Mark input boxes that gets an error on validation: */

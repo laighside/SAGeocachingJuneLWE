@@ -100,6 +100,19 @@ END$$
 DELIMITER ;
 
 /**
+ * addUploadScoringData This adds an entry to the upload_scoring_data table
+ */
+DROP FUNCTION IF EXISTS addUploadScoringData;
+DELIMITER $$
+CREATE FUNCTION addUploadScoringData(filenameIn TEXT, json_dataIn TEXT, userIP TEXT, usernameIn TEXT) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    INSERT INTO upload_scoring_data (filename, json_data, username, user_ip) VALUES (filenameIn, json_dataIn, usernameIn, userIP);
+    RETURN LAST_INSERT_ID();
+END$$
+DELIMITER ;
+
+/**
  * addUserCache This adds an entry to the user_hidden_caches table
  */
 DROP FUNCTION IF EXISTS addUserCache;

@@ -17,6 +17,12 @@
 
 #include "../core/JlweCore.h"
 
+// Number of penalty points for each cache that isn't returned
+#define CACHE_RETURN_PENALTY   -2
+
+// Number of penalty points per minute late at the end of the game
+#define MINUTES_LATE_PENALTY   -1
+
 class PointCalculator
 {
 public:

@@ -597,6 +597,20 @@ CREATE TABLE `stripe_event_log` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
+-- Table structure for table `upload_scoring_data`
+--
+
+CREATE TABLE `upload_scoring_data` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `upload_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `filename` text NOT NULL,
+  `username` text NOT NULL,
+  `user_ip` text NOT NULL,
+  `json_data` text NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
 -- Table structure for table `user_hidden_caches`
 --
 
@@ -826,7 +840,7 @@ CREATE TABLE `webpages` (
   `draft_page` tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY (`page_id`),
   UNIQUE KEY `page_id_UNIQUE` (`page_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `webpages`
@@ -853,7 +867,8 @@ INSERT INTO `webpages` VALUES
   (17,'/change_password.html','Change Password','<h1>Change Password</h1>\n<form action=\"/cgi-bin/password/change.cgi\" method=\"POST\">\n    <table border=\"0\" align=\"left\" style=\"border:0\">\n            <tr style=\"border:0\">\n              <td style=\"border:0\"><span style=\"float:right\">Old Password:</span></td>\n              <td style=\"border:0\"><input name=\"old_password\" type=\"password\"></td>\n            </tr>\n            <tr style=\"border:0\">\n              <td style=\"border:0\"><span style=\"float:right\">New Password:</span></td>\n              <td style=\"border:0\"><input name=\"new_password\" type=\"password\"></td>\n            </tr>\n            <tr style=\"border:0\">\n              <td colspan=\"2\" align=\"center\" style=\"border:0\"><input type=\"submit\" value=\"Submit\"></td>\n            </tr>\n    </table>\n</form>\n',1,0,0),
   (18,'/password_reset.html','Reset Password','      <h1>Reset Password</h1>\n<p>Enter your email below and a password reset link will be sent to your inbox.</p>\n        <form action=\"/cgi-bin/password/send_reset_email.cgi\" method=\"POST\">\n            <table border=\"0\" align=\"left\" style=\"border:0\">\n                    <tr style=\"border:0\">\n                      <td style=\"border:0\"><span style=\"float:right\">Email:</span></td>\n                      <td style=\"border:0\"><input type=\"email\" name=\"email\"></td>\n                    </tr>\n                    <tr style=\"border:0\">\n                      <td colspan=\"2\" align=\"center\" style=\"border:0\"><input type=\"submit\" value=\"Submit\"></td>\n                    </tr>\n            </table>\n        </form>',0,0,0),
   (19,'/sponsors.html','Sponsors','<h1>June LWE Sponsors</h1>',0,1,0),
-  (20,'/upload','Send us your photos','<h1>Send us your photos</h1>\n<p>Upload photos of your cache hides, or any other photos you take during the event!</p>\n<p>Accepted formats: JPEG, PNG, GIF, HEIC (size limit is 10MB)</p>\n<form id=\"upload_form\" action=\"/cgi-bin/files/public_upload.cgi\" method=\"POST\" enctype=\"multipart/form-data\">\n<table border=\"0\" align=\"left\" style=\"border:0;\">\n<tr><td style=\"border:0;padding:10px;\"><label for=\"cache_number\">Cache number:</label>\n<input type=\"number\" id=\"cache_number\" name=\"cache_number\" min=\"0\" max=\"100\" value=\"0\" /><br />(leave as zero if your photo isn\'t of a game cache)</td></tr>\n<tr><td style=\"border:0\"><input type=\"file\" name=\"files\" multiple=\"true\" required=\"true\" style=\"font-size:20px;padding:10px;\" /></td></tr>\n<tr><td style=\"border:0\" align=\"center\"><div class=\"g-recaptcha\" data-sitekey=\"6LcSsbsUAAAAAJSnbvPpdUVmE-vwEYPVwjNSpIDA\"></div></td></tr>\n<tr><td style=\"border:0\"><input type=\"submit\" value=\"Submit\" style=\"width:100%\"></td></tr>\n</table>\n</form>\n\n<script src=\"https://www.google.com/recaptcha/api.js\" async defer></script>\n<script>\nvar form = document.getElementById(\'upload_form\');\nform.addEventListener(\"submit\", function(event){\n    if (grecaptcha.getResponse() === \'\') {                            \n      event.preventDefault();\n      alert(\'Please check the recaptcha\');\n    }\n  }\n, false);\n</script>',0,1,0);
+  (20,'/upload','Send us your photos','<h1>Send us your photos</h1>\n<p>Upload photos of your cache hides, or any other photos you take during the event!</p>\n<p>Accepted formats: JPEG, PNG, GIF, HEIC (size limit is 10MB)</p>\n<form id=\"upload_form\" action=\"/cgi-bin/files/public_upload.cgi\" method=\"POST\" enctype=\"multipart/form-data\">\n<table border=\"0\" align=\"left\" style=\"border:0;\">\n<tr><td style=\"border:0;padding:10px;\"><label for=\"cache_number\">Cache number:</label>\n<input type=\"number\" id=\"cache_number\" name=\"cache_number\" min=\"0\" max=\"100\" value=\"0\" /><br />(leave as zero if your photo isn\'t of a game cache)</td></tr>\n<tr><td style=\"border:0\"><input type=\"file\" name=\"files\" multiple=\"true\" required=\"true\" style=\"font-size:20px;padding:10px;\" /></td></tr>\n<tr><td style=\"border:0\" align=\"center\"><div class=\"g-recaptcha\" data-sitekey=\"6LcSsbsUAAAAAJSnbvPpdUVmE-vwEYPVwjNSpIDA\"></div></td></tr>\n<tr><td style=\"border:0\"><input type=\"submit\" value=\"Submit\" style=\"width:100%\"></td></tr>\n</table>\n</form>\n\n<script src=\"https://www.google.com/recaptcha/api.js\" async defer></script>\n<script>\nvar form = document.getElementById(\'upload_form\');\nform.addEventListener(\"submit\", function(event){\n    if (grecaptcha.getResponse() === \'\') {                            \n      event.preventDefault();\n      alert(\'Please check the recaptcha\');\n    }\n  }\n, false);\n</script>',0,1,0),
+  (21,'/upload_scoring_xlsx.html','Upload scoring spreadsheet','<h1>Upload completed scoring spreadsheet</h1>\n<p>The scoring data can imported into the website database which allows the scores to be automatically added to the Powerpoint presentation. Select the completed scoring Excel (.xlsx) file below, then press upload. A summary of the data in the file will be shown before you have the choice to save it to the website or not.</p>\n<form id=\"upload_form\" action=\"/cgi-bin/scoring/upload_scoring_xlsx.cgi\" method=\"POST\" enctype=\"multipart/form-data\">\n<p><input type=\"file\" name=\"file\" required=\"true\" style=\"font-size:16px;padding:10px;\" /></p>\n<p><input type=\"submit\" value=\"Upload\" /></p>\n</form>',1,0,0,0);
 UNLOCK TABLES;
 
 --

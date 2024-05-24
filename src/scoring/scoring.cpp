@@ -104,6 +104,7 @@ int main () {
 
             std::cout << "<p style=\"text-align:center;\">\n";
             std::cout << "<a class=\"admin_button\" href=\"download_scoring_xlsx.cgi\"><span>Download Scoring Spreadsheet</span></a>\n";
+            std::cout << "<a class=\"admin_button\" href=\"/upload_scoring_xlsx.html\"><span>Upload Completed Spreadsheet</span></a>\n";
             std::cout << "</p>\n";
 
             std::cout << "<h2 style=\"text-align:center\">Team Scores</h2>\n";

@@ -17,7 +17,8 @@ var findTableIds = {
     onePointPerCache: 1,
     walkingPoints: 2,
     zonePoints: 3,
-    creativePoints: 4
+    creativePoints: 4,
+    cacheSpacingPoints: 5
 };
 
 /**
@@ -194,6 +195,33 @@ function makeFindPointsTradsOptionsHtml(id_number, jsonData) {
             row_1.appendChild(cell_1_1);
             row_1.appendChild(makeEditableNumberCell(jsonData.points, "creative_hides_point_value_" + id_number.toString(), saveCreativePointsConfig.bind(this, id_number), true, "1"));
             subTable.appendChild(row_1);
+        }
+
+        if (id_number === findTableIds.cacheSpacingPoints) { // cache spacing points
+            var row_1 = document.createElement("tr");
+            var cell_1_1 = document.createElement("td");
+            cell_1_1.innerText = "Metres per point:";
+            cell_1_1.style.textAlign = "right";
+            row_1.appendChild(cell_1_1);
+            row_1.appendChild(makeEditableNumberCell(jsonData.distance, "cache_spacing_points_distance_value_" + id_number.toString(), saveCacheSpacingPointsConfig.bind(this, id_number), true, "1"));
+            subTable.appendChild(row_1);
+
+            var row_2 = document.createElement("tr");
+            var cell_2_1 = document.createElement("td");
+            cell_2_1.innerText = "Max points:";
+            cell_2_1.style.textAlign = "right";
+            row_2.appendChild(cell_2_1);
+            row_2.appendChild(makeEditableNumberCell(jsonData.max_points, "cache_spacing_points_max_value_" + id_number.toString(), saveCacheSpacingPointsConfig.bind(this, id_number), true, "1"));
+            subTable.appendChild(row_2);
+
+            var row_3 = document.createElement("tr");
+            var cell_3 = document.createElement("td");
+            cell_3.innerHTML = "Points are applied<br />on a per cache basis";
+            cell_3.colSpan = "2";
+            cell_3.style.fontStyle = "italic";
+            cell_3.style.textAlign = "center";
+            row_3.appendChild(cell_3);
+            subTable.appendChild(row_3);
         }
 
         baseElement.appendChild(subTable);
@@ -486,6 +514,28 @@ function saveWalkingPointsConfig(id, newValue, successCallback) {
  */
 function saveCreativePointsConfig(id, newValue, successCallback) {
     saveFindPointsTradsConfig(findTableIds.creativePoints, {points: parseInt(newValue)}, successCallback);
+}
+
+/**
+ * Saves any changes to the cache spacing points config
+ *
+ * @param {Number} id Should always be 5
+ * @param {Object} newValue Unused
+ * @param {Function} successCallback Callback function when new value is successfully sent to server
+ */
+function saveCacheSpacingPointsConfig(id, newValue, successCallback) {
+    var newDistanceValue = document.getElementById("table_cell_input_cache_spacing_points_distance_value_" + id.toString()).value;
+    if (!newDistanceValue || newDistanceValue.length === 0)
+        newDistanceValue = document.getElementById("table_cell_set_cache_spacing_points_distance_value_" + id.toString()).dataset.value;
+
+    var newMaxPointsValue = document.getElementById("table_cell_input_cache_spacing_points_max_value_" + id.toString()).value;
+    if (!newMaxPointsValue || newMaxPointsValue.length === 0)
+        newMaxPointsValue = document.getElementById("table_cell_set_cache_spacing_points_max_value_" + id.toString()).dataset.value;
+
+    saveFindPointsTradsConfig(findTableIds.cacheSpacingPoints, {
+                                  distance: parseInt(newDistanceValue),
+                                  max_points: parseInt(newMaxPointsValue)
+                              }, successCallback);
 }
 
 /**

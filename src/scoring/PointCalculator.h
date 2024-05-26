@@ -33,6 +33,8 @@ public:
     struct Cache {
         int cache_number;
         int team_id;
+        double latitude;
+        double longitude;
         int zone_points;
         int walking_distance;
         bool creative;
@@ -192,6 +194,8 @@ private:
     // Initialize total_hide_points and total_find_points for each Cache
     void calculateTotalHideFindPoints();
 
+    // Calculate the straight line distance (in metres) between two caches
+    double getDistanceBetweenCaches(const Cache &c1, const Cache &c2);
 };
 
 #endif // POINTCALCULATOR_H

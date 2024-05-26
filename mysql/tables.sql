@@ -344,14 +344,19 @@ CREATE TABLE `game_find_points_trads` (
   `hide_or_find` char(1) NOT NULL DEFAULT 'F',
   `config` text,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `game_find_points_trads`
 --
 
 LOCK TABLES `game_find_points_trads` WRITE;
-INSERT INTO `game_find_points_trads` VALUES (1,'1 point per cache', 1, 'F', '[]'),(2,'Walking points', 1, 'F', '{\"distance\":100,\"max_points\":4}'),(3, 'Zone points', 1, 'H', NULL),(4, 'Creative hide points', 0, 'H', '{\"points\":1}');
+INSERT INTO `game_find_points_trads` VALUES
+    (1, '1 point per cache', 1, 'F', '[]'),
+    (2, 'Walking points', 1, 'F', '{\"distance\":100,\"max_points\":4}'),
+    (3, 'Zone points', 1, 'H', NULL),
+    (4, 'Creative hide points', 0, 'H', '{\"points\":1}'),
+    (5, 'Cache spacing points', 0, 'H', '{\"distance\":500,\"max_points\":2}');
 UNLOCK TABLES;
 
 --
@@ -600,6 +605,7 @@ CREATE TABLE `stripe_event_log` (
 -- Table structure for table `upload_scoring_data`
 --
 
+DROP TABLE IF EXISTS `upload_scoring_data`;
 CREATE TABLE `upload_scoring_data` (
   `id` int NOT NULL AUTO_INCREMENT,
   `upload_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,

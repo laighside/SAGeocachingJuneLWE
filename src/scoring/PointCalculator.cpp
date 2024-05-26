@@ -12,6 +12,7 @@
 #include "PointCalculator.h"
 #include <algorithm>
 #include <stdexcept>
+#include <cmath>
 
 #include "../ext/nlohmann/json.hpp"
 
@@ -38,7 +39,7 @@ PointCalculator::PointCalculator(JlweCore *jlwe, int number_game_caches) {
     delete stmt;
 
     stmt = jlwe->getMysqlCon()->createStatement();
-    res = stmt->executeQuery("SELECT cache_handout.cache_number, cache_handout.team_id, caches.cache_number, IF(cache_handout.owner_name = '', 0, 1), caches.zone_bonus, caches.osm_distance, caches.actual_distance, caches.camo, cache_handout.returned FROM caches RIGHT OUTER JOIN cache_handout ON caches.cache_number=cache_handout.cache_number ORDER BY cache_handout.cache_number;");
+    res = stmt->executeQuery("SELECT cache_handout.cache_number, cache_handout.team_id, caches.cache_number, IF(cache_handout.owner_name = '', 0, 1), caches.zone_bonus, caches.osm_distance, caches.actual_distance, caches.camo, cache_handout.returned, caches.latitude, caches.longitude FROM caches RIGHT OUTER JOIN cache_handout ON caches.cache_number=cache_handout.cache_number ORDER BY cache_handout.cache_number;");
     while (res->next()) {
         if (res->isNull(1) || res->isNull(2)) // This means cache is in GPX list but not handout table. This shouldn't happen.
             continue;
@@ -58,6 +59,8 @@ PointCalculator::PointCalculator(JlweCore *jlwe, int number_game_caches) {
         }
         c.creative = (!res->isNull(8)) && (res->getInt(8) > 0);
         c.returned = (!res->isNull(9)) && (res->getInt(9) > 0);
+        c.latitude = res->getDouble(10);
+        c.longitude = res->getDouble(11);
         c.total_hide_points = 0;
         c.total_find_points = 0;
         this->caches.push_back(c);
@@ -250,6 +253,47 @@ void PointCalculator::calculatePointsForEachPointSource() {
                     this->trad_points.at(i).points_list[cache_number - 1] = this->caches.at(j).creative ? points : 0;
             }
 
+        } else if (trad_points.at(i).id == 5) { // cache spacing points
+
+            int distance_per_point = configJson["distance"];
+            int max_points = configJson["max_points"];
+
+            for (unsigned int j = 0; j < this->caches.size(); j++) {
+
+                // skip caches without coordinates
+                if (!this->caches.at(j).has_coordinates)
+                    continue;
+
+                int cache_number = this->caches.at(j).cache_number;
+                double shortest_distance = 1e9;
+
+                for (unsigned int k = 0; k < this->caches.size(); k++) {
+                    // skip caches without coordinates
+                    if (!this->caches.at(k).has_coordinates)
+                        continue;
+                    // skip comparing to the same cache
+                    if (j == k)
+                        continue;
+
+                    // if the caches are owned by the same team
+                    if (this->caches.at(j).team_id == this->caches.at(k).team_id) {
+
+                        // check the distance between them
+                        double distance = this->getDistanceBetweenCaches(this->caches.at(j), this->caches.at(k));
+                        if (distance < shortest_distance)
+                            shortest_distance = distance;
+                    }
+                }
+
+                int spacing_points = static_cast<int>(shortest_distance) / distance_per_point;
+                if (spacing_points > max_points)
+                    spacing_points = max_points;
+
+                if (cache_number > 0 && cache_number <= this->trad_points.at(i).points_list.size())
+                    this->trad_points.at(i).points_list[cache_number - 1] = spacing_points;
+
+            }
+
         }
     }
 }
@@ -272,4 +316,19 @@ void PointCalculator::calculateTotalHideFindPoints() {
         this->caches[j].total_hide_points = total_hide;
         this->caches[j].total_find_points = total_find;
     }
+}
+
+double PointCalculator::getDistanceBetweenCaches(const PointCalculator::Cache &c1, const PointCalculator::Cache &c2) {
+    const double earth_radius = 6371e3; // metres
+    double lat1_rad = c1.latitude * M_PI / 180;
+    double lat2_rad = c2.latitude * M_PI / 180;
+    double delta_lat = (c2.latitude - c1.latitude) * M_PI / 180;
+    double delta_lon = (c2.longitude - c1.longitude) * M_PI / 180;
+
+    double a = sin(delta_lat/2) * sin(delta_lat/2) +
+              cos(lat1_rad) * cos(lat2_rad) *
+              sin(delta_lon/2) * sin(delta_lon/2);
+    double c = 2 * atan2(sqrt(a), sqrt(1-a));
+
+    return earth_radius * c; // in metres
 }

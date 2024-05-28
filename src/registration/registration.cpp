@@ -23,6 +23,8 @@
 
 struct team_items {
     std::string username;
+    std::string email;
+    std::string user_key;
     int event_people;
     int camping_people;
     int dinner_people;
@@ -109,7 +111,7 @@ int main () {
 
                 std::vector<FormElements::dropDownMenuItem> menuItems;
                 menuItems.push_back({"location.href='/cgi-bin/registration/payment_history.cgi?key=" + Encoder::javascriptAttributeEncode(Encoder::urlEncode(userKey)) + "'", "View details", true});
-                menuItems.push_back({"sendReminderEmail('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "')", "Send Payment Reminder", needToPay && saved && (res->getString(8) == "bank")});
+                menuItems.push_back({"sendReminderEmail('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "', 'payment_reminder_email.cgi')", "Send Payment Reminder", needToPay && saved && (res->getString(8) == "bank")});
                 menuItems.push_back({"cancelRegistration('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "')", "Cancel Registration", saved});
                 std::cout << "<td>" << FormElements::dropDownMenu(rowId, menuItems) << "</td></tr>\n";
 
@@ -126,7 +128,7 @@ int main () {
                             this_team->event_people = res->getInt(6) + res->getInt(7);
                         }
                     } else {
-                        team_list.push_back({res->getString(4), res->getInt(6) + res->getInt(7), -1, -1});
+                        team_list.push_back({res->getString(4), res->getString(3), userKey, res->getInt(6) + res->getInt(7), -1, -1});
                     }
                 }
             }
@@ -184,7 +186,7 @@ int main () {
 
                 std::vector<FormElements::dropDownMenuItem> menuItems;
                 menuItems.push_back({"location.href='/cgi-bin/registration/payment_history.cgi?key=" + Encoder::javascriptAttributeEncode(Encoder::urlEncode(userKey)) + "'", "View details", true});
-                menuItems.push_back({"sendReminderEmail('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "')", "Send Payment Reminder", needToPay && saved && !isEventInc && (res->getString(10) == "bank")});
+                menuItems.push_back({"sendReminderEmail('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "', 'payment_reminder_email.cgi')", "Send Payment Reminder", needToPay && saved && !isEventInc && (res->getString(10) == "bank")});
                 menuItems.push_back({"cancelRegistration('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "')", "Cancel Registration", saved && !isEventInc});
                 std::cout << "<td>" << FormElements::dropDownMenu(rowId, menuItems) << "</td></tr>\n";
 
@@ -199,7 +201,7 @@ int main () {
                             this_team->camping_people = res->getInt(7);
                         }
                     } else {
-                        team_list.push_back({res->getString(4), -1, res->getInt(7), -1});
+                        team_list.push_back({res->getString(4), res->getString(3), userKey, -1, res->getInt(7), -1});
                     }
                 }
             }
@@ -258,7 +260,7 @@ int main () {
 
                 std::vector<FormElements::dropDownMenuItem> menuItems;
                 menuItems.push_back({"location.href='/cgi-bin/registration/payment_history.cgi?key=" + Encoder::javascriptAttributeEncode(Encoder::urlEncode(userKey)) + "'", "View details", true});
-                menuItems.push_back({"sendReminderEmail('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "')", "Send Payment Reminder", needToPay && saved && !isEventInc && (res->getString(8) == "bank")});
+                menuItems.push_back({"sendReminderEmail('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "', 'payment_reminder_email.cgi')", "Send Payment Reminder", needToPay && saved && !isEventInc && (res->getString(8) == "bank")});
                 menuItems.push_back({"cancelRegistration('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "')", "Cancel Registration", saved && !isEventInc});
                 std::cout << "<td>" << FormElements::dropDownMenu(rowId, menuItems) << "</td></tr>\n";
 
@@ -275,7 +277,7 @@ int main () {
                             this_team->dinner_people = res->getInt(6) + res->getInt(7);
                         }
                     } else {
-                        team_list.push_back({res->getString(4), -1, -1, res->getInt(6) + res->getInt(7)});
+                        team_list.push_back({res->getString(4), res->getString(3), userKey, -1, -1, res->getInt(6) + res->getInt(7)});
                     }
                 }
 
@@ -296,7 +298,7 @@ int main () {
 
             std::cout << "<h2 style=\"text-align:center;margin-top:50px;margin-bottom:0px;\">Who hasn't bought what</h2>\n";
             std::cout << "<table class=\"reg_table\" align=\"center\"><tr>\n";
-            std::cout << "<th>Username</th><th>Event</th><th>Camping</th><th>Dinner</th>\n";
+            std::cout << "<th>Username</th><th>Event</th><th>Camping</th><th>Dinner</th><th></th>\n";
             std::cout << "</tr>\n";
             for (unsigned int i = 0; i < team_list.size(); i++) {
                 std::cout << "<tr>\n";
@@ -316,6 +318,11 @@ int main () {
                 } else {
                     std::cout << "<td></td>\n";
                 }
+
+                std::vector<FormElements::dropDownMenuItem> menuItems;
+                menuItems.push_back({"sendReminderEmail('" + Encoder::javascriptAttributeEncode(team_list.at(i).user_key) + "', '" + Encoder::javascriptAttributeEncode(team_list.at(i).email) + "', 'registration_reminder_email.cgi')", "Send Event Registration Reminder", team_list.at(i).event_people < 0});
+                std::cout << "<td>" << FormElements::dropDownMenu(rowId++, menuItems) << "</td>\n";
+
                 std::cout << "</tr>\n";
             }
 
@@ -335,13 +342,13 @@ int main () {
             std::cout << "toggleSaved({currentTarget:document.getElementById(\"savedToggleCB\")});\n";
             std::cout << "document.getElementById(\"savedToggleCB\").addEventListener('change', toggleSaved);\n";
 
-            std::cout << "function sendReminderEmail(userKey, email_address) {\n";
+            std::cout << "function sendReminderEmail(userKey, email_address, api_endpoint) {\n";
             std::cout << "    if (confirm(\"Are you sure you wish to send a reminder email to \" + email_address + \" ?\") == true) {\n";
             std::cout << "        var jsonObj = {\n";
             std::cout << "            \"key\":userKey,\n";
             std::cout << "            \"email\":email_address\n";
             std::cout << "        };\n";
-            std::cout << "        postUrl('payment_reminder_email.cgi', JSON.stringify(jsonObj), null,\n";
+            std::cout << "        postUrl(api_endpoint, JSON.stringify(jsonObj), null,\n";
             std::cout << "            function(data, responseCode) {\n";
             std::cout << "                httpResponseHandler(data, responseCode, false, null, null);\n";
             std::cout << "         }, httpErrorResponseHandler);\n";

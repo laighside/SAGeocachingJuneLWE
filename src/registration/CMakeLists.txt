@@ -33,6 +33,9 @@ target_link_libraries(payment_history.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 add_executable(payment_reminder_email.cgi payment_reminder_email.cpp)
 target_link_libraries(payment_reminder_email.cgi email jlwecore ${MYSQLCPPCONN_LIBRARY})
 
+add_executable(registration_reminder_email.cgi registration_reminder_email.cpp)
+target_link_libraries(registration_reminder_email.cgi email jlwecore ${MYSQLCPPCONN_LIBRARY})
+
 add_executable(cancel.cgi cancel.cpp)
 target_link_libraries(cancel.cgi email jlwecore ${MYSQLCPPCONN_LIBRARY})
 

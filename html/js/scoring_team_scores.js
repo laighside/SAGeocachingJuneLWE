@@ -50,7 +50,18 @@ function openTeamScoresTab() {
                     table.appendChild(makePenaltiesPointsTableRowHtml(jsonTeam));
                 }
 
-                document.getElementById("team_scores_total_p").innerText = "Total: " + jsonObj.teams.length.toString() + " competing teams";
+                // Work out total trad points
+                var total_points = 0;
+                var cache_count = 0;
+                for (var i = 0; i < jsonObj.cache_list.length; i++) {
+                    if (jsonObj.cache_list[i].has_coordinates) {
+                        cache_count++;
+                        total_points += jsonObj.cache_list[i].total_find_points;
+                    }
+                }
+                var totals_html = "Total traditional points: " + total_points.toString() + " points<br />Average points/cache: " + ((cache_count > 0) ? (total_points / cache_count) : 0).toFixed(3) + " points per cache (" + cache_count.toString() + " caches in GPX file)";
+
+                document.getElementById("team_scores_total_p").innerHTML = "Number of teams: " + jsonObj.teams.length.toString() + " competing teams<br />" + totals_html;
 
          }, function(statusCode, statusText) {
              if (statusText && typeof statusText == 'string') {

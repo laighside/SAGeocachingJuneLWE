@@ -13,6 +13,7 @@ RewriteRule "^dinner" "/cgi-bin/registration/registration_form.cgi"   [PT,L]
 RewriteRule "^gpx($|\.)" "/cgi-bin/gpx.cgi"   [PT,L]
 
 RewriteRule "^upload$" "/cgi-bin/jlwe.cgi" [PT,L]
+RewriteRule "^results$" "/cgi-bin/scoring/results.cgi" [PT,L]
 
 RewriteRule "^g?map" "/cgi-bin/jlwe_map.cgi"   [PT,L]
 

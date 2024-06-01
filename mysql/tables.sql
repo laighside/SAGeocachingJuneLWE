@@ -777,6 +777,7 @@ INSERT INTO `vars` VALUES
   ('playing_field_kml','',1,'This is a KML that contains the outline of the playing area. It is shown on maps and used to check that caches are within the playing area.'),
   ('powered_camping_sites','10',1,NULL),
   ('ppt_town','',1,'The town name shown on the PowerPoint presentation.'),
+  ('public_results_enabled','0',1,'When set to \"Yes\" the game results are visible to anyone. Make sure this is set to \"No\" until after the winners are announced.'),
   ('registration_enabled','0',1,'When this is set to \"No\" anyone trying to register will be told that registrations are closed. Use this to turn off the registration form after the event is over.'),
   ('registration_open_date','0',1,'The date/time that registrations open on. The registration form will only be visible to admins before this date.');
 UNLOCK TABLES;

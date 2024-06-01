@@ -39,7 +39,7 @@ PointCalculator::PointCalculator(JlweCore *jlwe, int number_game_caches) {
     delete stmt;
 
     stmt = jlwe->getMysqlCon()->createStatement();
-    res = stmt->executeQuery("SELECT cache_handout.cache_number, cache_handout.team_id, caches.cache_number, IF(cache_handout.owner_name = '', 0, 1), caches.zone_bonus, caches.osm_distance, caches.actual_distance, caches.camo, cache_handout.returned, caches.latitude, caches.longitude FROM caches RIGHT OUTER JOIN cache_handout ON caches.cache_number=cache_handout.cache_number ORDER BY cache_handout.cache_number;");
+    res = stmt->executeQuery("SELECT cache_handout.cache_number, cache_handout.team_id, caches.cache_number, IF(cache_handout.owner_name = '', 0, 1), caches.zone_bonus, caches.osm_distance, caches.actual_distance, caches.camo, cache_handout.returned, caches.latitude, caches.longitude, caches.cache_name FROM caches RIGHT OUTER JOIN cache_handout ON caches.cache_number=cache_handout.cache_number ORDER BY cache_handout.cache_number;");
     while (res->next()) {
         if (res->isNull(1) || res->isNull(2)) // This means cache is in GPX list but not handout table. This shouldn't happen.
             continue;
@@ -61,6 +61,7 @@ PointCalculator::PointCalculator(JlweCore *jlwe, int number_game_caches) {
         c.returned = (!res->isNull(9)) && (res->getInt(9) > 0);
         c.latitude = res->getDouble(10);
         c.longitude = res->getDouble(11);
+        c.cache_name = res->getString(12);
         c.total_hide_points = 0;
         c.total_find_points = 0;
         this->caches.push_back(c);

@@ -44,6 +44,8 @@ public:
 
         int total_hide_points;
         int total_find_points;
+
+        std::string cache_name;
     };
 
     /*! \struct CachePoints

@@ -129,7 +129,7 @@ int main () {
                 int late = point_calculator.getMinutesLate(extra_finds);
                 jsonObject["not_returned_caches"] = not_returned_caches;
                 jsonObject["late"] = late;
-                jsonObject["penalties"] = (not_returned_caches * -2) + (late * -1);
+                jsonObject["penalties"] = (not_returned_caches * CACHE_RETURN_PENALTY) + (late * MINUTES_LATE_PENALTY);
 
                 jsonDocument["teams"].push_back(jsonObject);
             }

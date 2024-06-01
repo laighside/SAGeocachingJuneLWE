@@ -65,7 +65,8 @@ public:
      */
     struct ExtraItem {
         int id;
-        std::string item_name;
+        std::string item_name_short;
+        std::string item_name_long;
         int points_value;
     };
 

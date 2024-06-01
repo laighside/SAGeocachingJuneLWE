@@ -38,13 +38,14 @@ int main () {
             jsonDocument["zones"] = nlohmann::json::array();
 
             stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT id, name, point_value, enabled FROM game_find_points_extras ORDER BY id;");
+            res = stmt->executeQuery("SELECT id, short_name, long_name, point_value, enabled FROM game_find_points_extras ORDER BY id;");
             while (res->next()) {
                 nlohmann::json jsonObject;
                 jsonObject["id"] = res->getInt(1);
-                jsonObject["name"] = res->getString(2);
-                jsonObject["point_value"] = res->getInt(3);
-                jsonObject["enabled"] = (res->getInt(4) != 0);
+                jsonObject["short_name"] = res->getString(2);
+                jsonObject["long_name"] = res->getString(3);
+                jsonObject["point_value"] = res->getInt(4);
+                jsonObject["enabled"] = (res->getInt(5) != 0);
 
                 jsonDocument["find_points_extras"].push_back(jsonObject);
             }

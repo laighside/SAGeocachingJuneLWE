@@ -125,15 +125,16 @@ int main () {
                     delete res;
                     delete prep_stmt;
 
-                    prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT id, name, point_value, enabled FROM game_find_points_extras WHERE id = ?;");
+                    prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT id, short_name, long_name, point_value, enabled FROM game_find_points_extras WHERE id = ?;");
                     prep_stmt->setInt(1, new_id);
                     res = prep_stmt->executeQuery();
                     if (res->next()) {
                         nlohmann::json jsonObject;
                         jsonObject["id"] = res->getInt(1);
-                        jsonObject["name"] = res->getString(2);
-                        jsonObject["point_value"] = res->getInt(3);
-                        jsonObject["enabled"] = (res->getInt(4) != 0);
+                        jsonObject["short_name"] = res->getString(2);
+                        jsonObject["long_name"] = res->getString(3);
+                        jsonObject["point_value"] = res->getInt(4);
+                        jsonObject["enabled"] = (res->getInt(5) != 0);
                         jsonObject["success"] = true;
                         result = JsonUtils::makeJsonHeader() + jsonObject.dump();
                     } else {
@@ -166,16 +167,36 @@ int main () {
                         delete prep_stmt;
                     }
 
-                    if (jsonDocument.contains("name")) {
-                        prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT setFindPointsExtrasName(?,?,?,?);");
+                    if (jsonDocument.contains("short_name")) {
+                        prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT setFindPointsExtrasShortName(?,?,?,?);");
                         prep_stmt->setInt(1, item_id);
-                        prep_stmt->setString(2, std::string(jsonDocument.at("name")));
+                        prep_stmt->setString(2, std::string(jsonDocument.at("short_name")));
                         prep_stmt->setString(3, jlwe.getCurrentUserIP());
                         prep_stmt->setString(4, jlwe.getCurrentUsername());
                         res = prep_stmt->executeQuery();
                         if (res->next()) {
                             if (res->getInt(1) == 0) {
-                                result = JsonUtils::makeJsonSuccess("Name updated");
+                                result = JsonUtils::makeJsonSuccess("Short name updated");
+                            } else {
+                                result = JsonUtils::makeJsonError("ID not found");
+                            }
+                        } else {
+                            result = JsonUtils::makeJsonError("Unable to execute query");
+                        }
+                        delete res;
+                        delete prep_stmt;
+                    }
+
+                    if (jsonDocument.contains("long_name")) {
+                        prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT setFindPointsExtrasLongName(?,?,?,?);");
+                        prep_stmt->setInt(1, item_id);
+                        prep_stmt->setString(2, std::string(jsonDocument.at("long_name")));
+                        prep_stmt->setString(3, jlwe.getCurrentUserIP());
+                        prep_stmt->setString(4, jlwe.getCurrentUsername());
+                        res = prep_stmt->executeQuery();
+                        if (res->next()) {
+                            if (res->getInt(1) == 0) {
+                                result = JsonUtils::makeJsonSuccess("Long name updated");
                             } else {
                                 result = JsonUtils::makeJsonError("ID not found");
                             }

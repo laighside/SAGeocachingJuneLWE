@@ -154,7 +154,8 @@ int main () {
             for (unsigned int i = 0; i < extras_items->size(); i++) {
                 nlohmann::json jsonObject;
                 jsonObject["id"] = extras_items->at(i).id;
-                jsonObject["name"] = extras_items->at(i).item_name;
+                jsonObject["short_name"] = extras_items->at(i).item_name_short;
+                jsonObject["long_name"] = extras_items->at(i).item_name_long;
                 jsonObject["point_value"] = extras_items->at(i).points_value;
                 jsonDocument["extras_points"].push_back(jsonObject);
             }

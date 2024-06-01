@@ -183,7 +183,7 @@ function makeExtrasFindPointsTableRowHtml(jsonData, extras_points) {
 
     for (var i = 0; i < extras_points.length; i++) {
         var cacheRow = document.createElement("tr");
-        cacheRow.appendChild(makeHtmlElement("td", extras_points[i].name));
+        cacheRow.appendChild(makeHtmlElement("td", extras_points[i].long_name));
 
         var value = jsonData.extra_finds[extras_points[i].id.toString()];
         if (value == null)

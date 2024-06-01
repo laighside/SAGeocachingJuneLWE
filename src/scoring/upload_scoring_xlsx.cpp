@@ -101,7 +101,7 @@ int main () {
             std::vector<PointCalculator::ExtraItem> * extras_items = point_calculator.getExtrasItemsList();
             //std::vector<ExtraItemXLSX> findExtras;
             for (unsigned int i = 0; i < extras_items->size(); i++)
-                allExtras.push_back({extras_items->at(i).id, extras_items->at(i).item_name, extras_items->at(i).points_value, 0});
+                allExtras.push_back({extras_items->at(i).id, extras_items->at(i).item_name_short, extras_items->at(i).points_value, 0});
 
             std::vector<PointCalculator::Cache> * cache_list = point_calculator.getCacheList();
 

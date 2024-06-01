@@ -34,9 +34,17 @@ function openPointsSetupTab() {
             function(data, responseCode) {
                 var jsonObj = JSON.parse(data);
 
-                loadFindPointsTradsTable(jsonObj.find_points_trads);
-                loadFindPointsExtrasTable(jsonObj.find_points_extras);
-                loadZonesTable(jsonObj.zones, jsonObj.kml_file_list);
+                if (jsonObj.success === false) {
+                    if (jsonObj.error && typeof jsonObj.error == 'string') {
+                        showTableStatusRow("HTTP error: " + jsonObj.error, "find_points_trads_table");
+                    } else {
+                        showTableStatusRow("HTTP error: Unknown", "find_points_trads_table");
+                    }
+                } else {
+                    loadFindPointsTradsTable(jsonObj.find_points_trads);
+                    loadFindPointsExtrasTable(jsonObj.find_points_extras);
+                    loadZonesTable(jsonObj.zones, jsonObj.kml_file_list);
+                }
 
          }, function(statusCode, statusText) {
              if (statusText && typeof statusText == 'string') {
@@ -282,7 +290,8 @@ function makeFindPointsExtrasRowHtml(jsonData, row) {
     checkboxCell.appendChild(makeCheckboxElement("find_points_extras_checkbox_" + jsonData.id.toString(), "", jsonData.enabled, saveFindPointsExtraEnabled.bind(this, jsonData.id)));
     row.appendChild(checkboxCell);
 
-    row.appendChild(makeEditableTextCell(jsonData.name, "find_points_extras_name_" + jsonData.id.toString(), saveFindPointsExtraName.bind(this, jsonData.id)));
+    row.appendChild(makeEditableTextCell(jsonData.short_name, "find_points_extras_short_name_" + jsonData.id.toString(), saveFindPointsExtraShortName.bind(this, jsonData.id)));
+    row.appendChild(makeEditableTextCell(jsonData.long_name, "find_points_extras_long_name_" + jsonData.id.toString(), saveFindPointsExtraLongName.bind(this, jsonData.id)));
     row.appendChild(makeEditableNumberCell(jsonData.point_value, "find_points_extras_value_" + jsonData.id.toString(), saveFindPointsExtraValue.bind(this, jsonData.id), true, "1"));
 
     var iconCell = document.createElement("td");
@@ -558,17 +567,39 @@ function saveFindPointsExtraEnabled(id) {
 }
 
 /**
- * Saves a edited find points extra name, this sends the new name to the server
+ * Saves a edited find points extra short name, this sends the new name to the server
  *
  * @param {Number} id The ID number of the item being edited
- * @param {String} newValue The new name of the item
+ * @param {String} newValue The new short name of the item
  * @param {Function} successCallback Function to call once the new value is successfully saved
  */
-function saveFindPointsExtraName(id, newValue, successCallback) {
+function saveFindPointsExtraShortName(id, newValue, successCallback) {
     var jsonObj = {
         type: "find_extras",
         id: id,
-        name: newValue
+        short_name: newValue
+    };
+    postUrl('set_points.cgi', JSON.stringify(jsonObj), null,
+            function(data, responseCode) {
+                httpResponseHandler(data, responseCode, true, function(){
+                    if (successCallback)
+                        successCallback();
+                }, null);
+         }, httpErrorResponseHandler);
+}
+
+/**
+ * Saves a edited find points extra long name, this sends the new name to the server
+ *
+ * @param {Number} id The ID number of the item being edited
+ * @param {String} newValue The new long name of the item
+ * @param {Function} successCallback Function to call once the new value is successfully saved
+ */
+function saveFindPointsExtraLongName(id, newValue, successCallback) {
+    var jsonObj = {
+        type: "find_extras",
+        id: id,
+        long_name: newValue
     };
     postUrl('set_points.cgi', JSON.stringify(jsonObj), null,
             function(data, responseCode) {
@@ -625,7 +656,7 @@ function addNewFindPointsExtra() {
  * @param {Number} id The ID number of the item to delete
  */
 function deleteFindPointsExtra(id) {
-    var item_name = document.getElementById("table_cell_set_find_points_extras_name_" + id.toString()).dataset.value;
+    var item_name = document.getElementById("table_cell_set_find_points_extras_long_name_" + id.toString()).dataset.value;
     if (confirm("Are you sure you want to delete \"" + item_name + "\"?")) {
         var jsonObj = {
             "type": "find_extras",

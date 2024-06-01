@@ -46,7 +46,7 @@ int main () {
             std::vector<PointCalculator::ExtraItem> * extras_items = point_calculator.getExtrasItemsList();
             std::vector<WriteScoringXLSX::ExtraItem> findExtras;
             for (unsigned int i = 0; i < extras_items->size(); i++) {
-                findExtras.push_back({extras_items->at(i).item_name, extras_items->at(i).points_value});
+                findExtras.push_back({extras_items->at(i).item_name_short, extras_items->at(i).points_value});
             }
 
             WriteScoringXLSX xlsx(jlwe.config.at("ooxmlTemplatePath"), number_game_caches, findExtras, defaultExtras);

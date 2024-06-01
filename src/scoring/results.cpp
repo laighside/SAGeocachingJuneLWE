@@ -163,7 +163,7 @@ int main () {
                                 found_value = extra_finds.at(j).value;
                             }
                         }
-                        std::cout << "<tr" << (found_value > 0 ? " class=\"green_background\"" : "") << "><td>" << Encoder::htmlEntityEncode(extras_items->at(i).item_name) << "</td>\n";
+                        std::cout << "<tr" << (found_value > 0 ? " class=\"green_background\"" : "") << "><td>" << Encoder::htmlEntityEncode(extras_items->at(i).item_name_long) << "</td>\n";
                         std::cout << "<td>" << extras_items->at(i).points_value << "</td>\n";
                         if (found_value > 0) {
                             std::cout << "<td>Found" << (found_value > 1 ? (" (x" + std::to_string(found_value) + ")") : "") << "</td>\n";

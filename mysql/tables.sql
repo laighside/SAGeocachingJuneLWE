@@ -326,7 +326,8 @@ CREATE TABLE `game_find_list` (
 DROP TABLE IF EXISTS `game_find_points_extras`;
 CREATE TABLE `game_find_points_extras` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `name` text NOT NULL,
+  `short_name` text NOT NULL,
+  `long_name` text NOT NULL,
   `point_value` int NOT NULL DEFAULT '1',
   `enabled` int NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`)

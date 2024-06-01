@@ -49,7 +49,7 @@ DELIMITER $$
 CREATE FUNCTION addFindPointsExtrasItem(userIP VARCHAR(50), usernameIn VARCHAR(100)) RETURNS INT
     NOT DETERMINISTIC
 BEGIN
-    INSERT INTO game_find_points_extras (name, point_value, enabled) VALUES ("New Item", 1, 1);
+    INSERT INTO game_find_points_extras (short_name, long_name, point_value, enabled) VALUES ("New", "New Item", 1, 1);
     RETURN LAST_INSERT_ID();
 END$$
 DELIMITER ;
@@ -696,15 +696,31 @@ END$$
 DELIMITER ;
 
 /**
- * setFindPointsExtrasName This sets the name for a given id in the game_find_points_extras table
+ * setFindPointsExtrasShortName This sets the short_name for a given id in the game_find_points_extras table
  */
-DROP FUNCTION IF EXISTS setFindPointsExtrasName;
+DROP FUNCTION IF EXISTS setFindPointsExtrasShortName;
 DELIMITER $$
-CREATE FUNCTION setFindPointsExtrasName(idIn INT, nameIn TEXT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+CREATE FUNCTION setFindPointsExtrasShortName(idIn INT, nameIn TEXT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
     NOT DETERMINISTIC
 BEGIN
     IF (EXISTS(SELECT * FROM game_find_points_extras WHERE id = idIn)) THEN
-        UPDATE game_find_points_extras SET name = nameIn WHERE id = idIn;
+        UPDATE game_find_points_extras SET short_name = nameIn WHERE id = idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
+END$$
+DELIMITER ;
+
+/**
+ * setFindPointsExtrasLongName This sets the long_name for a given id in the game_find_points_extras table
+ */
+DROP FUNCTION IF EXISTS setFindPointsExtrasLongName;
+DELIMITER $$
+CREATE FUNCTION setFindPointsExtrasLongName(idIn INT, nameIn TEXT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM game_find_points_extras WHERE id = idIn)) THEN
+        UPDATE game_find_points_extras SET long_name = nameIn WHERE id = idIn;
         RETURN 0;
     END IF;
     RETURN 1;

@@ -63,9 +63,10 @@ int main () {
 
             std::cout << "<h3>Find points (extras)</h3>\n";
             std::cout << "<p>These are points teams get for doing things that aren't finding the usual 100 traditional caches. For example, puzzle caches, black thunder.</p>\n";
+            std::cout << "<p>The short name is for the spreadsheet, it should be no more than 10 characters long. The long name is used on the website and can be any length.</p>\n";
 
             std::cout << "<table id=\"find_points_extras_table\" align=\"center\"><tr>\n";
-            std::cout << "<th>Enabled</th><th>Name</th><th>Point value</th>\n";
+            std::cout << "<th>Enabled</th><th>Short Name</th><th>Long Name</th><th>Point value</th>\n";
             std::cout << "</table>\n";
             std::cout << "<p style=\"text-align:center\"><input type=\"button\" onclick=\"addNewFindPointsExtra();\" value=\"Create new find points item\"></p>\n";
 

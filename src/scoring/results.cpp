@@ -77,6 +77,7 @@ int main () {
 
         std::cout << "<style>h3 {margin-top:30px;margin-bottom:10px;}</style>\n";
         std::cout << "<style>.cacheIconContainer {width:50px; text-align:center; padding:3px; border: 1px solid #C0C0C0; display: inline-block;}</style>\n";
+        std::cout << "<style>.blue_background {background-color:#80dcff;}</style>\n";
 
         if (team_id) {
             // output point breakdown for one team
@@ -107,7 +108,7 @@ int main () {
                     std::vector<int> trad_finds = point_calculator.getTeamTradFindList(team_id);
 
                     std::cout << "<h3 style=\"text-align:center;\">Traditional cache finds</h3>\n";
-                    std::cout << "<p style=\"text-align:center;\">Caches in green were found by this team. Bonus points for &quot;hide &amp; find&quot; items are included here (hide points come from finds on their own caches).</p>\n";
+                    std::cout << "<p style=\"text-align:center;\">Caches in green were found by " << Encoder::htmlEntityEncode(team_name) << ". Bonus points for &quot;hide &amp; find&quot; items are included here (hide points are shown in blue, these caches were hidden by " << Encoder::htmlEntityEncode(team_name) << ").</p>\n";
 
                     //std::cout << "<table align=\"center\" class=\"grey_table_border\">\n";
                     std::cout << "<p align=\"center\" class=\"grey_table_border\">\n";
@@ -122,11 +123,18 @@ int main () {
                             if (cache_list->at(cache_number - 1).has_coordinates) {
                                 int find_points = cache_list->at(cache_number - 1).total_find_points;
 
+                                std::string background_class = "";
+                                if (trad_finds.at(cache_number - 1)) {
+                                    background_class = " green_background";
+                                    if (cache_list->at(cache_number - 1).team_id == team_id)
+                                        background_class = " blue_background";
+                                }
+
                                 /*std::cout << "<td style=\"text-align:center;\"" << (trad_finds.at(cache_number - 1) ? " class=\"green_background\"" : "") << ">\n";
                                 std::cout << "<span class=\"cacheIcon\">" << cache_number << "</span><br/>\n";
                                 std::cout << "<span>" << find_points << " pts</span>\n";
                                 std::cout << "</td>\n";*/
-                                std::cout << "<span " << (trad_finds.at(cache_number - 1) ? " class=\"cacheIconContainer green_background\"" : " class=\"cacheIconContainer\"") << ">\n";
+                                std::cout << "<span class=\"cacheIconContainer" << background_class << "\">\n";
                                 std::cout << "<span class=\"cacheIcon\">" << cache_number << "</span><br/>\n";
                                 std::cout << "<span>" << find_points << " pts</span>\n";
                                 std::cout << "</span>";

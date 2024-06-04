@@ -376,7 +376,9 @@ std::string PowerPoint::makeSlideLineXML(std::string line, std::string sub_line)
 }
 
 std::string PowerPoint::makeTeamScoreLineXML(std::string team, std::string members, std::string position, std::string points) {
-    unsigned int charCount = (30 - (position.size() + team.size() + points.size())) * 2;
+    unsigned int charCount = 1;
+    if ((position.size() + team.size() + points.size()) < 30)
+        charCount = (30 - (position.size() + team.size() + points.size())) * 2;
     std::string spaces = "";
     for (unsigned int i = 0; i < charCount; i++)
         spaces += " ";
@@ -893,7 +895,10 @@ void PowerPoint::addJlweLeaderboardSlide(std::vector<PowerPoint::teamScore> plac
     writeStringToFile(makeSvgLeaderBoard(places), this->tmp_dir + "/leaderboard.svg");
 
     // SVG images aren't supported by some versions of powerpoint so we need to convert to a PNG image
-    system(("convert " + this->tmp_dir + "/leaderboard.svg " + this->zip_dir + "ppt/media/leaderboard.png").c_str());
+    // ImageMagick convert just doesn't work here, it defaults to Inkscape which doesn't render text correctly
+    // With Inkscape disabled, the web-safe policy settings prevent it from rendering anything
+    // So just go straight to rsvg-convert
+    system(("rsvg-convert " + this->tmp_dir + "/leaderboard.svg -o " + this->zip_dir + "ppt/media/leaderboard.png").c_str());
 }
 
 std::string PowerPoint::makeSvgLeaderBoard(std::vector<PowerPoint::teamScore> places) {

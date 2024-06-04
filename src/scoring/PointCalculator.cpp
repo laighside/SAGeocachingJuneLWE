@@ -101,20 +101,88 @@ std::vector<PointCalculator::Cache> PointCalculator::getCachesForTeam(int teamId
     return list;
 }
 
-int PointCalculator::getTeamHideScore(int teamId) {
+std::vector<PointCalculator::BestScoreHides> PointCalculator::getBestScoreHidesForTeam(int teamId) {
     std::vector<Cache> team_caches = this->getCachesForTeam(teamId);
-    std::sort(team_caches.begin(), team_caches.end(),
-              [](const Cache & a, const Cache & b) -> bool {
-        return a.total_hide_points > b.total_hide_points;
-    });
 
+    std::vector<BestScoreHides> result;
+
+    struct singleValue {
+        int cache_number;
+        int point_value;
+    };
+
+    if (this->use_totals_for_best_cache_calculation()) {
+
+        std::sort(team_caches.begin(), team_caches.end(),
+                  [](const Cache & a, const Cache & b) -> bool {
+            return a.total_hide_points > b.total_hide_points;
+        });
+
+        // Keep just the best 2
+        std::vector<int> best_caches;
+        for (unsigned int j = 0; j < 2; j++)
+            if (j < team_caches.size())
+                best_caches.push_back(team_caches.at(j).cache_number);
+
+        for (unsigned int i = 0; i < this->trad_points.size(); i++) {
+            if (this->trad_points.at(i).hide_or_find == "H") {
+                result.push_back({this->trad_points.at(i).id, best_caches});
+            }
+        }
+
+    } else {
+
+        for (unsigned int i = 0; i < this->trad_points.size(); i++) {
+            if (this->trad_points.at(i).hide_or_find == "H") {
+
+                // make a list of the points for each cache
+                std::vector<singleValue> point_list;
+                for (unsigned int j = 0; j < team_caches.size(); j++) {
+                    point_list.push_back({team_caches.at(j).cache_number, this->trad_points.at(i).points_list.at(team_caches.at(j).cache_number - 1)});
+                }
+
+                // sort the list
+                std::sort(point_list.begin(), point_list.end(),
+                          [](const singleValue & a, const singleValue & b) -> bool {
+                    return a.point_value > b.point_value;
+                });
+
+                // Keep just the best 2
+                std::vector<int> best_caches;
+                for (unsigned int j = 0; j < 2; j++)
+                    if (j < point_list.size())
+                        best_caches.push_back(point_list.at(j).cache_number);
+
+                result.push_back({this->trad_points.at(i).id, best_caches});
+            }
+        }
+
+    }
+    return result;
+}
+
+int PointCalculator::getTeamHideScore(const std::vector<PointCalculator::BestScoreHides> &best_caches_list) {
     int hide_score = 0;
-    if (team_caches.size() >= 1)
-        hide_score += team_caches.at(0).total_hide_points;
-    if (team_caches.size() >= 2)
-        hide_score += team_caches.at(1).total_hide_points;
+
+    for (unsigned int i = 0; i < this->trad_points.size(); i++) {
+        for (unsigned int j = 0; j < best_caches_list.size(); j++) {
+            if (this->trad_points.at(i).id == best_caches_list.at(j).point_source_id) {
+
+                for (unsigned int k = 0; k < best_caches_list.at(j).cache_numbers.size(); k++) {
+                    int point_value = this->trad_points.at(i).points_list.at(best_caches_list.at(j).cache_numbers.at(k) - 1);
+                    hide_score += point_value;
+                }
+
+            }
+        }
+    }
 
     return hide_score;
+}
+
+int PointCalculator::getTeamHideScore(int teamId) {
+    std::vector<BestScoreHides> best_caches = this->getBestScoreHidesForTeam(teamId);
+    return this->getTeamHideScore(best_caches);
 }
 
 int PointCalculator::getCachesNotReturned(int teamId) {

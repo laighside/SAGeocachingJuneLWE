@@ -46,7 +46,7 @@ function openTeamScoresTab() {
                     makeTeamScoresTableRowHtml(jsonTeam, table);
                     table.appendChild(makeTradFindPointsTableRowHtml(jsonTeam, jsonObj.cache_list, jsonObj.number_game_caches));
                     table.appendChild(makeExtrasFindPointsTableRowHtml(jsonTeam, jsonObj.extras_points));
-                    table.appendChild(makeHidePointsTableRowHtml(jsonTeam, jsonObj.cache_list));
+                    table.appendChild(makeHidePointsTableRowHtml(jsonTeam, jsonObj.cache_list, jsonObj.use_totals_for_best_cache_calculation));
                     table.appendChild(makePenaltiesPointsTableRowHtml(jsonTeam));
                 }
 
@@ -206,7 +206,7 @@ function makeExtrasFindPointsTableRowHtml(jsonData, extras_points) {
  * @param {Object} jsonData The team data for the row
  * @returns {Object} The row element
  */
-function makeHidePointsTableRowHtml(jsonData, cache_list) {
+function makeHidePointsTableRowHtml(jsonData, cache_list, use_totals_for_best_cache_calculation) {
     var baseRow = document.createElement("tr");
     baseRow.id = "row_team_hide_points_" + jsonData.team_id.toString();
     baseRow.style.display = "none";
@@ -222,27 +222,9 @@ function makeHidePointsTableRowHtml(jsonData, cache_list) {
     headerRow.appendChild(makeHtmlElement("th", "Cache"));
     for (var i = 0; i < trad_hide_points.length; i++)
         headerRow.appendChild(makeHtmlElement("th", trad_hide_points[i].item_name));
-    headerRow.appendChild(makeHtmlElement("th", "Total"));
+    if (use_totals_for_best_cache_calculation)
+        headerRow.appendChild(makeHtmlElement("th", "Total"));
     subTable.appendChild(headerRow);
-
-    // Sorted list to work out which are the best two caches for points
-    var sortedList = [];
-    for (var i = 0; i < jsonData.caches.length; i++) {
-        var cache_data = cache_list[jsonData.caches[i] - 1];
-        sortedList.push({
-                            cache_number: jsonData.caches[i],
-                            total_hide_points: cache_data ? cache_data.total_hide_points : 0
-                        });
-    }
-    // Sort the list by hide points
-    sortedList.sort(function(a, b) {
-            return b.total_hide_points - a.total_hide_points;
-        })
-
-    // Take just the top two
-    sortedList = sortedList.slice(0, 2);
-    // Convert to number array, taking just the cache number
-    var topNumbers = sortedList.map(function(x) {return x.cache_number});
 
     for (var i = 0; i < jsonData.caches.length; i++) {
         var cacheRow = document.createElement("tr");
@@ -258,14 +240,20 @@ function makeHidePointsTableRowHtml(jsonData, cache_list) {
 
         for (var j = 0; j < trad_hide_points.length; j++) {
             var value = trad_hide_points[j].points_list[jsonData.caches[i] - 1];
-            cacheRow.appendChild(makeHtmlElement("td", value ? value.toString() : ""));
+            var pointsCell = makeHtmlElement("td", value ? value.toString() : "");
+            if (value > 0 && jsonData.hide_points_best_cache_lists[trad_hide_points[j].id.toString()].includes(jsonData.caches[i]))
+                pointsCell.className = "green_background";
+            cacheRow.appendChild(pointsCell);
         }
 
-        var totalPointsCell = document.createElement("td");
-        totalPointsCell.innerText = cache_data ? cache_data.total_hide_points.toString() : "";
-        if (topNumbers.includes(jsonData.caches[i]))
-            totalPointsCell.className = "green_background";
-        cacheRow.appendChild(totalPointsCell);
+        if (use_totals_for_best_cache_calculation) {
+            var totalPointsCell = document.createElement("td");
+            totalPointsCell.innerText = cache_data ? cache_data.total_hide_points.toString() : "";
+            var best_caches = Object.values(jsonData.hide_points_best_cache_lists)[0];
+            if (best_caches && best_caches.includes(jsonData.caches[i]))
+                totalPointsCell.className = "green_background";
+            cacheRow.appendChild(totalPointsCell);
+        }
 
         subTable.appendChild(cacheRow);
     }

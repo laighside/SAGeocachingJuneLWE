@@ -27,6 +27,14 @@ class PointCalculator
 {
 public:
 
+    /*!
+     * \brief This sets how the hide points are calculated
+     * If true, the total for each cache is calculated, then the best two totals are used for the final hide score
+     * If false, the points for best two caches from each category are calculated, then the totals from each category are added together to get the final hide score
+     * This setting is only relevant if there is more then one "Hide only" points item
+     */
+    static inline bool use_totals_for_best_cache_calculation() {return false;}
+
     /*! \struct Cache
      *  \brief Stores a cache
      */
@@ -80,6 +88,14 @@ public:
         int value;
     };
 
+    /*! \struct BestScoreHides
+     *  \brief Stores the list of caches that give the best score for a single point source (struct CachePoints)
+     */
+    struct BestScoreHides {
+        int point_source_id;
+        std::vector<int> cache_numbers;
+    };
+
     /*!
      * \brief PointCalculator Constructor.
      *
@@ -123,6 +139,23 @@ public:
      * \return The list of caches hidden by the team
      */
     std::vector<Cache> getCachesForTeam(int teamId);
+
+    /*!
+     * \brief Gets the lists of caches that are the best two (highest score) for hide points in each category
+     *
+     * \param teamId The id number of the team
+     * \return The lists of caches
+     */
+    std::vector<BestScoreHides> getBestScoreHidesForTeam(int teamId);
+
+    /*!
+     * \brief Gets the total number of hide points for a given team
+     * This is the sum of hide points for the best two caches that the team hid
+     *
+     * \param best_caches_list A list of the caches that contribute to the total hide score
+     * \return The total hide points
+     */
+    int getTeamHideScore(const std::vector<BestScoreHides> &best_caches_list);
 
     /*!
      * \brief Gets the total number of hide points for a given team

@@ -84,13 +84,17 @@ int main () {
 
             std::string team_name = "";
             int final_score = 0;
+            bool has_final_score = false;
             bool valid_team_id = false;
             prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT team_name, final_score FROM game_teams WHERE competing = 1 AND team_id = ?;");
             prep_stmt->setInt(1, team_id);
             res = prep_stmt->executeQuery();
             if (res->next()) {
                 team_name = res->getString(1);
-                final_score = res->getInt(2);
+                if (!res->isNull(2)) {
+                    has_final_score = true;
+                    final_score = res->getInt(2);
+                }
                 valid_team_id = true;
             }
             delete res;
@@ -102,6 +106,9 @@ int main () {
                 if (final_score == -1000) {
                     std::cout << "<p style=\"text-align:center;font-weight:bold;\">This team was disqualified or did not finish.</p>\n";
                 } else {
+
+                    if (!has_final_score)
+                        std::cout << "<p style=\"text-align:center;font-weight:bold;\">Note: there is no final score set for this team. Please see event organisers for further details.</p>\n";
 
                     PointCalculator point_calculator(&jlwe, number_game_caches);
                     std::vector<PointCalculator::Cache> * cache_list = point_calculator.getCacheList();
@@ -199,46 +206,50 @@ int main () {
                     std::cout << "<tr><th colspan=\"2\">Cache</th>\n";
                     for (unsigned int i = 0; i < trad_hide_points.size(); i++)
                         std::cout << "<th>" << Encoder::htmlEntityEncode(trad_hide_points.at(i).item_name) << "</th>\n";
-                    std::cout << "<th>Total</th></tr>\n";
+                    if (point_calculator.use_totals_for_best_cache_calculation())
+                        std::cout << "<th>Total</th>";
+                    std::cout << "</tr>\n";
 
-                    std::vector<PointCalculator::Cache> sorted_list;
-                    for (unsigned int i = 0; i < cache_list->size(); i++)
-                        if (cache_list->at(i).team_id == team_id)
-                            sorted_list.push_back(cache_list->at(i));
-                    std::sort(sorted_list.begin(), sorted_list.end(), [](const PointCalculator::Cache &a, const PointCalculator::Cache &b)
-                    {
-                        return a.total_hide_points > b.total_hide_points;
-                    });
-
-                    // Get the numbers of the best two
-                    std::vector<int> best_two_caches;
-                    for (unsigned int i = 0; i < 2; i++)
-                        if (i < sorted_list.size())
-                            best_two_caches.push_back(sorted_list.at(i).cache_number);
+                    std::vector<PointCalculator::BestScoreHides> best_cache_numbers = point_calculator.getBestScoreHidesForTeam(team_id);
+                    std::vector<std::vector<int>> best_caches_by_point_source_idx;
+                    for (unsigned int j = 0; j < trad_hide_points.size(); j++) {
+                        std::vector<int> best_caches;
+                        for (unsigned int i = 0; i < best_cache_numbers.size(); i++) {
+                            if (best_cache_numbers.at(i).point_source_id == trad_hide_points.at(j).id)
+                                best_caches = best_cache_numbers.at(i).cache_numbers;
+                        }
+                        best_caches_by_point_source_idx.push_back(best_caches);
+                    }
 
                     for (unsigned int i = 0; i < cache_list->size(); i++) {
                         if (cache_list->at(i).team_id == team_id) {
                             PointCalculator::Cache c = cache_list->at(i);
 
-                            bool is_in_best_two = (std::find(best_two_caches.begin(), best_two_caches.end(), c.cache_number) != best_two_caches.end());
                             std::string cache_name = c.cache_name;
                             if (cache_name.size() > 20)
                                 cache_name = cache_name.substr(0, 17) + "...";
 
-                            std::cout << "<tr" << (is_in_best_two ? " class=\"green_background\"" : "") << ">\n";
+                            std::cout << "<tr>\n";
                             std::cout << "<td style=\"border-right-style:none;\"><span class=\"cacheIcon\">" << c.cache_number << "</span></td>\n";
                             std::cout << "<td style=\"border-left-style:none;\">" << Encoder::htmlEntityEncode(cache_name) << "</td>\n";
 
-                            for (unsigned int j = 0; j < trad_hide_points.size(); j++)
-                                std::cout << "<td style=\"text-align:center;\">" << trad_hide_points.at(j).points_list.at(c.cache_number - 1) << " points</td>\n";
+                            for (unsigned int j = 0; j < trad_hide_points.size(); j++) {
+                                bool is_best_cache = (std::find(best_caches_by_point_source_idx.at(j).begin(), best_caches_by_point_source_idx.at(j).end(), c.cache_number) != best_caches_by_point_source_idx.at(j).end());
+                                std::cout << "<td" << (is_best_cache ? " class=\"green_background\"" : "") << " style=\"text-align:center;\">" << trad_hide_points.at(j).points_list.at(c.cache_number - 1) << " points</td>\n";
+                            }
 
-                            std::cout << "<td style=\"text-align:center;\">" << c.total_hide_points << " points</td>\n";
+                            if (point_calculator.use_totals_for_best_cache_calculation()) {
+                                bool is_best_cache = false;
+                                if (best_caches_by_point_source_idx.size())
+                                    is_best_cache = (std::find(best_caches_by_point_source_idx.at(0).begin(), best_caches_by_point_source_idx.at(0).end(), c.cache_number) != best_caches_by_point_source_idx.at(0).end());
+                                std::cout << "<td" << (is_best_cache ? " class=\"green_background\"" : "") << " style=\"text-align:center;\">" << c.total_hide_points << " points</td>\n";
+                            }
                             std::cout << "</tr>\n";
                         }
                     }
 
                     std::cout << "</table>\n";
-                    int total_hide_points = point_calculator.getTeamHideScore(team_id);
+                    int total_hide_points = point_calculator.getTeamHideScore(best_cache_numbers);
                     std::cout << "<p style=\"text-align:center;\">Total hide points: " << total_hide_points << " points</p>\n";
 
                     std::cout << "<h3 style=\"text-align:center;\">Penalties</h3>\n";
@@ -254,8 +265,13 @@ int main () {
                     int grand_total = total_find_points + total_extras_points + total_hide_points + total_penalty_points;
                     std::cout << "<p style=\"text-align:center;font-weight:bold;\">Grand total: " << grand_total << " points</p>\n";
 
-                    if (grand_total * 10 != final_score)
-                        std::cout << "<p style=\"text-align:center;\">Note: the organisers have assigned this team a different score to what the website is able to calculate. The actual score is: <span style=\"font-weight:bold;\">" << scoreToText(final_score) << " points</span>. Please see event organisers for further details.</p>\n";
+
+                    if (has_final_score) {
+                        if (grand_total * 10 != final_score)
+                            std::cout << "<p style=\"text-align:center;\">Note: the organisers have assigned this team a different score to what the website is able to calculate. The actual score is: <span style=\"font-weight:bold;\">" << scoreToText(final_score) << " points</span>. Please see event organisers for further details.</p>\n";
+                    } else {
+                        std::cout << "<p style=\"text-align:center;\">Note: there is no final score set for this team. Please see event organisers for further details.</p>\n";
+                    }
 
                 }
             } else {
@@ -336,7 +352,7 @@ int main () {
                     previous_position = i;
                 }
                 std::cout << "<td><a href=\"?team_id=" << team_id << "\">" << Encoder::htmlEntityEncode(res->getString(2).substr(0, 30)) << "</a></td>\n";
-                std::cout << "<td>" << scoreToText(score) << "</td>\n";
+                std::cout << "<td>" << (res->isNull(3) ? "-" : scoreToText(score)) << "</td>\n";
                 std::cout << "</tr>\n";
                 i++;
             }

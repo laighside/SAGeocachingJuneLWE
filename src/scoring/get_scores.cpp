@@ -109,7 +109,13 @@ int main () {
                     }
                 }
 
-                jsonObject["hide_points"] = point_calculator.getTeamHideScore(team_id);
+                std::vector<PointCalculator::BestScoreHides> best_cache_numbers = point_calculator.getBestScoreHidesForTeam(team_id);
+                jsonObject["hide_points_best_cache_lists"] = nlohmann::json::object();
+                for (unsigned int i = 0; i < best_cache_numbers.size(); i++) {
+                    jsonObject["hide_points_best_cache_lists"][std::to_string(best_cache_numbers.at(i).point_source_id)] = best_cache_numbers.at(i).cache_numbers;
+                }
+
+                jsonObject["hide_points"] = point_calculator.getTeamHideScore(best_cache_numbers);
 
                 std::vector<int> trad_finds = point_calculator.getTeamTradFindList(team_id);
                 jsonObject["trad_find_points"] = point_calculator.getTotalTradFindScore(trad_finds);
@@ -162,6 +168,7 @@ int main () {
 
             jsonDocument["warning_cache_not_in_handout"] = warning_cache_not_in_handout;
             jsonDocument["warning_cache_not_in_gpx"] = warning_cache_not_in_gpx;
+            jsonDocument["use_totals_for_best_cache_calculation"] = point_calculator.use_totals_for_best_cache_calculation();
 
             jsonDocument["unallocated_caches"] = nlohmann::json::array();
             for (unsigned int i = 0; i < caches_allocated.size(); i++) {

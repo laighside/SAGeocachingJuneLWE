@@ -59,6 +59,10 @@ cp config_sample.json /etc/jlwe/jlwe.json
 
 A directory must be created for storing files uploaded to the file manager. This directory must have read/write access for the Apache user (usually `www-data`). The path for this directory is then entered into the config file in `files -> directory`
 
+#### Templates directory
+
+The `templates` folder contains files used by the CGI scripts for creating Office Open XML files (docx, xlsx, pptx). The `ooxmlTemplatePath` item in the config file must contain the full path to the `templates` folder. The Apache user must have read permissions for this folder.
+
 ### Static content
 The default location for this is usually `/var/www/html/` however any directory can be used. This location is set by `DocumentRoot` in the Apache config.
 
@@ -126,3 +130,6 @@ There are also many other variables to configure at `/cgi-bin/settings/settings.
    - Added notes page
 - 2023
    - Created public Github repo
+- 2024
+   - Added scoring spreadsheet download and upload
+   - Added public photo upload page

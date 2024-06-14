@@ -129,7 +129,11 @@ function loadCacheJson(data, responseCode) {
         } else {
             document.getElementById("cache_name").value = '';
             document.getElementById("team_name").value = '';
-            document.getElementById("coordinates").value = makeCoordString(0, 0);
+            if (default_coordinates) {
+                document.getElementById("coordinates").value = default_coordinates;
+            } else {
+                document.getElementById("coordinates").value = makeCoordString(0, 0);
+            }
             document.getElementById("public_hint").value = '';
             document.getElementById("detailed_hint").value = '';
             document.getElementById("camo").checked = false;

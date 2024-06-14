@@ -75,6 +75,8 @@ public:
         int id;
         std::string item_name_short;
         std::string item_name_long;
+        bool single_find_only;
+        char type;
         int points_value;
     };
 

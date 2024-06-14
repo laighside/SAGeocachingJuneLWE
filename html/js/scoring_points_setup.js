@@ -292,6 +292,31 @@ function makeFindPointsExtrasRowHtml(jsonData, row) {
 
     row.appendChild(makeEditableTextCell(jsonData.short_name, "find_points_extras_short_name_" + jsonData.id.toString(), saveFindPointsExtraShortName.bind(this, jsonData.id)));
     row.appendChild(makeEditableTextCell(jsonData.long_name, "find_points_extras_long_name_" + jsonData.id.toString(), saveFindPointsExtraLongName.bind(this, jsonData.id)));
+
+    var singleFindCheckboxCell = document.createElement("td");
+    singleFindCheckboxCell.style.textAlign = "center";
+    singleFindCheckboxCell.appendChild(makeCheckboxElement("find_points_extras_single_find_checkbox_" + jsonData.id.toString(), "", jsonData.single_find_only, saveFindPointsExtraSingleFind.bind(this, jsonData.id)));
+    row.appendChild(singleFindCheckboxCell);
+
+    var typeComboBoxCell = document.createElement("td");
+    var comboBoxOptions = [
+        {
+            value: "P",
+            display_text: "Puzzle",
+            selected: (jsonData.extras_type === "P")
+        }, {
+            value: "B",
+            display_text: "B Thunder",
+            selected: (jsonData.extras_type === "B")
+        }, {
+            value: "O",
+            display_text: "Other",
+            selected: (jsonData.extras_type === "O")
+        }
+    ]
+    typeComboBoxCell.appendChild(makeComboBoxElement("find_points_extras_type_" + jsonData.id.toString(), comboBoxOptions, saveFindPointsExtrasType.bind(this, jsonData.id)));
+    row.appendChild(typeComboBoxCell);
+
     row.appendChild(makeEditableNumberCell(jsonData.point_value, "find_points_extras_value_" + jsonData.id.toString(), saveFindPointsExtraValue.bind(this, jsonData.id), true, "1"));
 
     var iconCell = document.createElement("td");
@@ -607,6 +632,44 @@ function saveFindPointsExtraLongName(id, newValue, successCallback) {
                     if (successCallback)
                         successCallback();
                 }, null);
+         }, httpErrorResponseHandler);
+}
+
+/**
+ * Saves the single find only status of a find points extra item, this sends the new status to the server
+ *
+ * @param {Number} id The ID number of the item
+ */
+function saveFindPointsExtraSingleFind(id) {
+    var newValue = document.getElementById("find_points_extras_single_find_checkbox_" + id.toString()).checked;
+
+    var jsonObj = {
+        type: "find_extras",
+        id: id,
+        single_find_only: newValue
+    };
+    postUrl('set_points.cgi', JSON.stringify(jsonObj), null,
+            function(data, responseCode) {
+                httpResponseHandler(data, responseCode, true, null, null);
+         }, httpErrorResponseHandler);
+}
+
+/**
+ * Saves the type of a extras points item, this sends the new status to the server
+ *
+ * @param {Number} id The ID number of the item
+ */
+function saveFindPointsExtrasType(id) {
+    var newValue = document.getElementById("find_points_extras_type_" + id.toString()).value;
+
+    var jsonObj = {
+        type: "find_extras",
+        id: id,
+        extras_type: newValue
+    };
+    postUrl('set_points.cgi', JSON.stringify(jsonObj), null,
+            function(data, responseCode) {
+                httpResponseHandler(data, responseCode, true, null, null);
          }, httpErrorResponseHandler);
 }
 

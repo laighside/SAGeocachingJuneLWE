@@ -66,7 +66,7 @@ int main () {
             std::cout << "<p>The short name is for the spreadsheet, it should be no more than 10 characters long. The long name is used on the website and can be any length.</p>\n";
 
             std::cout << "<table id=\"find_points_extras_table\" align=\"center\"><tr>\n";
-            std::cout << "<th>Enabled</th><th>Short Name</th><th>Long Name</th><th>Point value</th>\n";
+            std::cout << "<th>Enabled</th><th>Short Name</th><th>Long Name</th><th>Single<br />find only</th><th>Type</th><th>Point value</th>\n";
             std::cout << "</table>\n";
             std::cout << "<p style=\"text-align:center\"><input type=\"button\" onclick=\"addNewFindPointsExtra();\" value=\"Create new find points item\"></p>\n";
 

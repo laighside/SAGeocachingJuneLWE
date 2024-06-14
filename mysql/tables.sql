@@ -330,6 +330,8 @@ CREATE TABLE `game_find_points_extras` (
   `long_name` text NOT NULL,
   `point_value` int NOT NULL DEFAULT '1',
   `enabled` int NOT NULL DEFAULT '1',
+  `single_find_only` int NOT NULL DEFAULT '0',
+  `extras_type` char(1) NOT NULL DEFAULT 'O',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

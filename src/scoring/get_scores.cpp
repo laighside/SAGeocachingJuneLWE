@@ -162,6 +162,8 @@ int main () {
                 jsonObject["id"] = extras_items->at(i).id;
                 jsonObject["short_name"] = extras_items->at(i).item_name_short;
                 jsonObject["long_name"] = extras_items->at(i).item_name_long;
+                jsonObject["single_find_only"] = extras_items->at(i).single_find_only;
+                jsonObject["extras_type"] = std::string(1, extras_items->at(i).type);
                 jsonObject["point_value"] = extras_items->at(i).points_value;
                 jsonDocument["extras_points"].push_back(jsonObject);
             }

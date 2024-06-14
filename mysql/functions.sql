@@ -696,6 +696,22 @@ END$$
 DELIMITER ;
 
 /**
+ * setFindPointsExtrasSingleFind This sets the single_find_only for a given id in the game_find_points_extras table
+ */
+DROP FUNCTION IF EXISTS setFindPointsExtrasSingleFind;
+DELIMITER $$
+CREATE FUNCTION setFindPointsExtrasSingleFind(idIn INT, single_find_onlyIn INT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM game_find_points_extras WHERE id = idIn)) THEN
+        UPDATE game_find_points_extras SET single_find_only = single_find_onlyIn WHERE id = idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
+END$$
+DELIMITER ;
+
+/**
  * setFindPointsExtrasShortName This sets the short_name for a given id in the game_find_points_extras table
  */
 DROP FUNCTION IF EXISTS setFindPointsExtrasShortName;
@@ -737,6 +753,22 @@ CREATE FUNCTION setFindPointsExtrasPoints(idIn INT, point_valueIn INT, userIP VA
 BEGIN
     IF (EXISTS(SELECT * FROM game_find_points_extras WHERE id = idIn)) THEN
         UPDATE game_find_points_extras SET point_value = point_valueIn WHERE id = idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
+END$$
+DELIMITER ;
+
+/**
+ * setFindPointsExtrasType This sets the extras_type for a given id in the game_find_points_extras table
+ */
+DROP FUNCTION IF EXISTS setFindPointsExtrasType;
+DELIMITER $$
+CREATE FUNCTION setFindPointsExtrasType(idIn INT, extras_typeIn CHAR(1), userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM game_find_points_extras WHERE id = idIn)) THEN
+        UPDATE game_find_points_extras SET extras_type = extras_typeIn WHERE id = idIn;
         RETURN 0;
     END IF;
     RETURN 1;

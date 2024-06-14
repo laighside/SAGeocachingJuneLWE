@@ -31,9 +31,10 @@ PointCalculator::PointCalculator(JlweCore *jlwe, int number_game_caches) {
     delete stmt;
 
     stmt = jlwe->getMysqlCon()->createStatement();
-    res = stmt->executeQuery("SELECT id, short_name, long_name, point_value FROM game_find_points_extras WHERE enabled > 0;");
+    res = stmt->executeQuery("SELECT id, short_name, long_name, single_find_only, extras_type, point_value FROM game_find_points_extras WHERE enabled > 0;");
     while (res->next()) {
-        this->extras_items.push_back({res->getInt(1), res->getString(2), res->getString(3), res->getInt(4)});
+        char type = res->getString(5)->size() ? res->getString(5)->at(0) : 'O';
+        this->extras_items.push_back({res->getInt(1), res->getString(2), res->getString(3), (res->getInt(4) != 0), type, res->getInt(6)});
     }
     delete res;
     delete stmt;

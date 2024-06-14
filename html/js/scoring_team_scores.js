@@ -59,7 +59,37 @@ function openTeamScoresTab() {
                         total_points += jsonObj.cache_list[i].total_find_points;
                     }
                 }
+
+                // Work out trad find percentage
+                var total_trad_finds = 0;
+                for (var i = 0; i < jsonObj.teams.length; i++) {
+                    if (jsonObj.teams[i].trad_finds)
+                        total_trad_finds += jsonObj.teams[i].trad_finds.reduce(function(acc, val) { return acc + val; }, 0);
+                }
+                var trad_find_percentage = 0;
+                if (cache_count > 0 && jsonObj.teams.length > 0)
+                    trad_find_percentage = total_trad_finds * 100 / cache_count / jsonObj.teams.length;
+
+                // Work out puzzle find percentage
+                var puzzle_cache_count = 0;
+                var total_puzzle_finds = 0;
+                for (var i = 0; i < jsonObj.extras_points.length; i++) {
+                    if (jsonObj.extras_points[i].extras_type === "P" && jsonObj.extras_points[i].single_find_only) {
+                        puzzle_cache_count++;
+                        for (var j = 0; j < jsonObj.teams.length; j++) {
+                            if (jsonObj.teams[j].extra_finds)
+                                if (jsonObj.teams[j].extra_finds[jsonObj.extras_points[i].id])
+                                    total_puzzle_finds++;
+                        }
+                    }
+                }
+                var puzzle_find_percentage = 0;
+                if (puzzle_cache_count > 0 && jsonObj.teams.length > 0)
+                    puzzle_find_percentage = total_puzzle_finds * 100 / puzzle_cache_count / jsonObj.teams.length;
+
                 var totals_html = "Total traditional points: " + total_points.toString() + " points<br />Average points/cache: " + ((cache_count > 0) ? (total_points / cache_count) : 0).toFixed(3) + " points per cache (" + cache_count.toString() + " caches in GPX file)";
+                totals_html += "<br />Total traditional finds: " + total_trad_finds.toString() + " finds<br />Traditional average find percentage: " + trad_find_percentage.toFixed(1) + "%";
+                totals_html += "<br />Total puzzle finds: " + total_puzzle_finds.toString() + " finds (over " + puzzle_cache_count.toString() + " puzzle caches)<br />Puzzle average find percentage: " + puzzle_find_percentage.toFixed(1) + "%";
 
                 document.getElementById("team_scores_total_p").innerHTML = "Number of teams: " + jsonObj.teams.length.toString() + " competing teams<br />" + totals_html;
 

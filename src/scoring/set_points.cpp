@@ -207,6 +207,46 @@ int main () {
                         delete prep_stmt;
                     }
 
+                    if (jsonDocument.contains("single_find_only")) {
+                        prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT setFindPointsExtrasSingleFind(?,?,?,?);");
+                        prep_stmt->setInt(1, item_id);
+                        prep_stmt->setInt(2, jsonDocument.at("single_find_only") ? 1 : 0);
+                        prep_stmt->setString(3, jlwe.getCurrentUserIP());
+                        prep_stmt->setString(4, jlwe.getCurrentUsername());
+                        res = prep_stmt->executeQuery();
+                        if (res->next()) {
+                            if (res->getInt(1) == 0) {
+                                result = JsonUtils::makeJsonSuccess("Single find only updated");
+                            } else {
+                                result = JsonUtils::makeJsonError("ID not found");
+                            }
+                        } else {
+                            result = JsonUtils::makeJsonError("Unable to execute query");
+                        }
+                        delete res;
+                        delete prep_stmt;
+                    }
+
+                    if (jsonDocument.contains("extras_type")) {
+                        prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT setFindPointsExtrasType(?,?,?,?);");
+                        prep_stmt->setInt(1, item_id);
+                        prep_stmt->setString(2, std::string(jsonDocument.at("extras_type")).substr(0,1));
+                        prep_stmt->setString(3, jlwe.getCurrentUserIP());
+                        prep_stmt->setString(4, jlwe.getCurrentUsername());
+                        res = prep_stmt->executeQuery();
+                        if (res->next()) {
+                            if (res->getInt(1) == 0) {
+                                result = JsonUtils::makeJsonSuccess("Type updated");
+                            } else {
+                                result = JsonUtils::makeJsonError("ID not found");
+                            }
+                        } else {
+                            result = JsonUtils::makeJsonError("Unable to execute query");
+                        }
+                        delete res;
+                        delete prep_stmt;
+                    }
+
                     if (jsonDocument.contains("point_value")) {
                         prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT setFindPointsExtrasPoints(?,?,?,?);");
                         prep_stmt->setInt(1, item_id);

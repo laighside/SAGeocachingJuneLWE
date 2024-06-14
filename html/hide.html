@@ -15,7 +15,7 @@ https://github.com/laighside/SAGeocachingJuneLWE
 <div class="formTab"><p>Fill out the form below to submit your cache hide.</p>
   <p>Team name:</p><div class="margin"><input type="text" name="team_name" id="team_name" placeholder="Team name..." oninput="this.className = ''"></div>
   <p>Phone number: (we will use this to contact you if there are any issues with your cache)</p><div class="margin"><input type="tel" name="phone_number" id="phone_number" placeholder="Phone..." oninput="this.className = ''"></div>
-  <p>Cache number:</p><div class="margin"><input type="number" name="cache_number" id="cache_number" min="0" max="100" oninput="this.className = ''"></div>
+  <p>Cache number:</p><div class="margin"><input type="number" name="cache_number" id="cache_number" min="0" max="130" oninput="this.className = ''"></div>
   <p>Cache name:</p><div class="margin"><input type="text" name="cache_name" id="cache_name" placeholder="Cache name..." oninput="this.className = ''"></div>
   <p>Public hint:</p><div class="margin"><textarea name="public_hint" rows="3" cols="35" placeholder="This hint will appear on everyones phones and GPSs" oninput="this.className = ''"></textarea></div>
   <p>Private hint:</p><div class="margin"><textarea name="private_hint" rows="3" cols="35" placeholder="This hint is only visible to the organisers - it is used to check if your cache goes missing" oninput="this.className = ''"></textarea></div>
@@ -143,9 +143,9 @@ function validateForm() {
     }
 
     element = document.getElementById("cache_number");
-    if (element.value == "" || isNaN(parseInt(element.value)) || parseInt(element.value) <= 0 || parseInt(element.value) > 100) {
+    if (element.value == "" || isNaN(parseInt(element.value)) || parseInt(element.value) <= 0 || parseInt(element.value) > 130) {
       element.className += " invalid";
-      addFormMessage("Cache Number:", "Please enter a valid cache number (between 1 and 100)");
+      addFormMessage("Cache Number:", "Please enter a valid cache number (between 1 and 130)");
       valid = false;
     }
 

@@ -209,15 +209,17 @@ int main () {
             res = stmt->executeQuery("SELECT cache_number,owner_name,returned FROM cache_handout ORDER BY cache_number;");
             while (res->next()){
                 int cache_number = res->getInt(1);
+                std::string owner_name = res->getString(2);
+                JlweUtils::trimString(owner_name);
                 handout_table_html += "<tr id=\"handout_row_" + std::to_string(cache_number) + "\">\n";
 
                 handout_table_html += "<td>" + std::to_string(cache_number) + "</td>\n";
-                handout_table_html += "<td>" + Encoder::htmlEntityEncode(res->getString(2)) + "</td>\n";
+                handout_table_html += "<td>" + Encoder::htmlEntityEncode(owner_name) + "</td>\n";
 
-                if (res->getString(2)->size()) {
+                if (owner_name.size()) {
                     if (cache_number > 0 && cache_number <= caches_allocated.size())
                         caches_allocated.at(cache_number - 1) = true;
-                    owner_list.push_back(res->getString(2));
+                    owner_list.push_back(owner_name);
                     handout_table_html += "<td style=\"text-align:center\">\u2714</td>\n";
                 } else {
                     handout_table_html += "<td style=\"text-align:center\"></td>\n";
@@ -246,7 +248,6 @@ int main () {
             delete stmt;
             handout_table_html += "</table>\n";
 
-
             std::cout << "<table class=\"no_border\" align=\"center\"><tr>\n";
             std::cout << "<th style=\"text-align:right;\"><input type=\"text\" id=\"handout_owner_textbox\" style=\"width:300px;\" /></th>\n";
             std::cout << "<th><input type=\"button\" value=\"&lt;- Link -&gt;\" onclick=\"linkCacheToOwner()\" /></th>\n";
@@ -260,6 +261,7 @@ int main () {
             res = stmt->executeQuery("SELECT DISTINCT(gc_username) FROM event_registrations WHERE status = 'S' ORDER BY gc_username;");
             while (res->next()) {
                 std::string owner_name = res->getString(1);
+                JlweUtils::trimString(owner_name);
                 bool owner_allocated = false;
                 for (int i = 0; i < owner_list.size(); i++)
                     if (JlweUtils::compareStringsNoCase(owner_list.at(i), owner_name))

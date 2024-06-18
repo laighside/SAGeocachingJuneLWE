@@ -83,17 +83,19 @@ int main () {
             // output point breakdown for one team
 
             std::string team_name = "";
+            std::string team_members = "";
             int final_score = 0;
             bool has_final_score = false;
             bool valid_team_id = false;
-            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT team_name, final_score FROM game_teams WHERE competing = 1 AND team_id = ?;");
+            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT team_name, team_members, final_score FROM game_teams WHERE competing = 1 AND team_id = ?;");
             prep_stmt->setInt(1, team_id);
             res = prep_stmt->executeQuery();
             if (res->next()) {
                 team_name = res->getString(1);
+                team_members = res->getString(2);
                 if (!res->isNull(2)) {
                     has_final_score = true;
-                    final_score = res->getInt(2);
+                    final_score = res->getInt(3);
                 }
                 valid_team_id = true;
             }
@@ -102,6 +104,9 @@ int main () {
 
             if (valid_team_id) {
                 std::cout << "<h2 style=\"text-align:center;\">Results for " << Encoder::htmlEntityEncode(team_name) << "</h2>\n";
+                if (team_members.size())
+                    std::cout << "<p style=\"text-align:center;\">" << Encoder::htmlEntityEncode(team_members) << "</p>\n";
+
 
                 if (final_score == -1000) {
                     std::cout << "<p style=\"text-align:center;font-weight:bold;\">This team was disqualified or did not finish.</p>\n";
@@ -333,7 +338,9 @@ int main () {
             std::cout << "<h2 style=\"text-align:center\">Final Scoreboard</h2>\n";
             std::cout << "<p style=\"text-align:center\">(click on a team name for a breakdown of their points)</p>\n";
             std::cout << "<table align=\"center\">\n";
-            std::cout << "<tr><th>Position</th><th>Team Name</th><th>Points</th></tr>\n";
+            std::cout << "<tr><th>Position</th><th>Team Name</th><th>Caches found</th><th>Points</th></tr>\n";
+
+            PointCalculator point_calculator(&jlwe, number_game_caches);
 
             stmt = jlwe.getMysqlCon()->createStatement();
             res = stmt->executeQuery("SELECT team_id, team_name, final_score FROM game_teams WHERE competing = 1 ORDER BY final_score DESC;");
@@ -352,6 +359,37 @@ int main () {
                     previous_position = i;
                 }
                 std::cout << "<td><a href=\"?team_id=" << team_id << "\">" << Encoder::htmlEntityEncode(res->getString(2).substr(0, 30)) << "</a></td>\n";
+
+                std::vector<int> trad_finds = point_calculator.getTeamTradFindList(team_id);
+                int trad_find_count = 0;
+                for (unsigned int i = 0; i < trad_finds.size(); i++)
+                    if (trad_finds.at(i))
+                        trad_find_count++;
+                int total_find_points = point_calculator.getTotalTradFindScore(trad_finds);
+
+                std::vector<PointCalculator::ExtraItem> * extras_items = point_calculator.getExtrasItemsList();
+                std::vector<PointCalculator::ExtrasFind> extra_finds = point_calculator.getTeamExtrasFindList(team_id);
+                int puzzle_find_count = 0;
+                for (unsigned int i = 0; i < extras_items->size(); i++) {
+                    if (extras_items->at(i).type == 'P') {
+                        for (unsigned int j = 0; j < extra_finds.size(); j++) {
+                            if (extras_items->at(i).id == extra_finds.at(j).id)
+                                if (extra_finds.at(j).value)
+                                    puzzle_find_count++;
+                        }
+                    }
+                }
+
+                int total_extras_points = point_calculator.getTotalExtrasFindScore(extra_finds);
+                int total_hide_points = point_calculator.getTeamHideScore(team_id);
+                int total_penalty_points = (point_calculator.getCachesNotReturned(team_id) * CACHE_RETURN_PENALTY) + (point_calculator.getMinutesLate(extra_finds) * MINUTES_LATE_PENALTY);
+                int grand_total = total_find_points + total_extras_points + total_hide_points + total_penalty_points;
+
+                if (grand_total * 10 == score) {
+                    std::cout << "<td>" << trad_find_count << " + " << puzzle_find_count << "P</td>\n";
+                } else {
+                    std::cout << "<td></td>\n";
+                }
                 std::cout << "<td>" << (res->isNull(3) ? "-" : scoreToText(score)) << "</td>\n";
                 std::cout << "</tr>\n";
                 i++;

@@ -17,11 +17,19 @@
 #include "core/CgiEnvironment.h"
 #include "core/JlweCore.h"
 #include "core/JlweUtils.h"
+#include "core/KeyValueParser.h"
 
 int main () {
     try {
         JlweCore jlwe;
         std::string page_request = CgiEnvironment::getRequestUri();
+
+        KeyValueParser urlQueries(CgiEnvironment::getQueryString(), true);
+        bool download_request = urlQueries.getValue("dl") == "true";
+
+        // remove any url arguments (like fbclid)
+        if (page_request.find("?") != std::string::npos)
+            page_request = page_request.substr(0, page_request.find("?"));
 
         // check the prefix of the path, the htaccess file should only allow requests with the right prefix to call this script
         size_t prefix_length = std::string(jlwe.config.at("files").at("urlPrefix")).size();
@@ -95,7 +103,9 @@ int main () {
                 // output header
                 std::cout << "Access-Control-Allow-Origin: *\r\n";
                 std::cout << "Content-type:" << mime_type << "\r\n";
-                std::cout << "Content-Disposition: attachment; filename=" << mysql_filename << "\r\n\r\n";
+                if (download_request)
+                    std::cout << "Content-Disposition: attachment; filename=" << mysql_filename << "\r\n";
+                std::cout << "\r\n";
 
                 char buffer[1024];
                 size_t size = 1024;

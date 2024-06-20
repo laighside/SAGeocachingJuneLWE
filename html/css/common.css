@@ -934,6 +934,63 @@ user-select: none;
   height: 200px;
 }
 
+.file_container {
+  border: 1px solid #aaaaaa;
+  margin: 5px;
+  padding: 5px;
+  min-height: 200px;
+}
+
+.file_container a {
+  text-decoration: none;
+}
+
+.file {
+  display: inline-block;
+  vertical-align: top;
+  width: 140px;
+  border: 1px solid #dddddd;
+  margin: 10px;
+  padding: 0px;
+}
+
+.file_icon {
+  display: block;
+  height: 105px;
+  width: 140px;
+  text-align: center;
+}
+
+.file_icon img {
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 64px;
+}
+
+.thumbnail {
+  width: 140px !important;
+  height: 105px !important;
+}
+
+.file_name {
+  display: block;
+  padding: 0 6px;
+  text-align: center;
+  color: black;
+  font-size: 14px;
+  line-height: 24px;
+  overflow-wrap: anywhere;
+}
+
+.file:hover .file_name {
+  color: #42a5f5;
+}
+
+.file:hover {
+  box-shadow: 0 1px 10px 0 rgba(0, 0, 0, 0.5);
+}
+
 code {
   background: lightgray;
   border: 1px gray solid;

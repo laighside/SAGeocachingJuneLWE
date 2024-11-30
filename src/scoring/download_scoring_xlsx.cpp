@@ -94,7 +94,7 @@ int main () {
             xlsx.addScoreCalculatorSheet();
 
             // Save the file
-            std::string xlsx_file = xlsx.saveScoringXlsxFile(jlwe.config.at("websiteDomain"));
+            std::string xlsx_file = xlsx.saveXlsxFile("JLWE Scoring", jlwe.config.at("websiteDomain"));
 
             FILE *file = fopen(xlsx_file.c_str(), "rb");
             if (file) { //if file exists in filesystem

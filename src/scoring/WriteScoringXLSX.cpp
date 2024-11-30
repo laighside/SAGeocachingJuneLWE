@@ -20,186 +20,20 @@
 // The number of rows in the spreadsheet to reserve for the list of teams
 #define MAX_TEAM_COUNT 50
 
-WriteScoringXLSX::WriteScoringXLSX(std::string template_dir, unsigned int cacheCount, const std::vector<ExtraItem> &findExtras, const std::vector<ExtraItem> &defaultExtras) {
-    // make temp folder and filenames
-    char dir_template[] = "/tmp/tmpdir.XXXXXX";
-    char *dir_name = mkdtemp(dir_template);
-    if (dir_name == nullptr)
-        throw std::runtime_error("Unable to create temporary directory");
-    this->tmp_dir = std::string(dir_name);
-    this->zip_dir = this->tmp_dir + "/download_xlsx/";
-
-    template_dir += "/scoring";
-    // copy the template to the temp folder
-    int cp_result = system(("cp -r " + template_dir + " " + this->zip_dir).c_str());
-    if (cp_result)
-        throw std::runtime_error("Copying template directory failed: " + template_dir);
-
-    if (system(("mkdir " + this->zip_dir + "xl/_rels").c_str()))
-        throw std::runtime_error("Error while creating _rels directory");
-    if (system(("mkdir " + this->zip_dir + "xl/worksheets").c_str()))
-        throw std::runtime_error("Error while creating worksheets directory");
-
+WriteScoringXLSX::WriteScoringXLSX(std::string template_dir, unsigned int cacheCount, const std::vector<ExtraItem> &findExtras, const std::vector<ExtraItem> &defaultExtras) :
+    WriteXLSX(template_dir + "/scoring")
+{
     this->m_cacheCount = cacheCount;
     this->m_findExtras = findExtras;
     this->m_defaultExtras = defaultExtras;
 
-    this->enter_data_sheet = {"Enter Data", "sheet1.xml"};
-    this->point_values_sheet = {"Point Values", "sheet2.xml"};
-    this->calculator_sheet = {"Score Calculator", "sheet3.xml"};
+    this->enter_data_sheet_display_name = "Enter Data";
+    this->point_values_sheet_display_name = "Point Values";
+    this->calculator_sheet_display_name = "Score Calculator";
 }
 
 WriteScoringXLSX::~WriteScoringXLSX() {
-    system(("rm -r " + this->tmp_dir + "/").c_str());
-}
-
-std::string WriteScoringXLSX::saveScoringXlsxFile(const std::string &creatorName) {
-    std::vector<relationship> rels;
-    rels.push_back({"rId1", "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet", "worksheets/" + this->enter_data_sheet.file_name});
-    rels.push_back({"rId2", "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet", "worksheets/" + this->point_values_sheet.file_name});
-    rels.push_back({"rId3", "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet", "worksheets/" + this->calculator_sheet.file_name});
-    rels.push_back({"rId6", "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings", "sharedStrings.xml"});
-    rels.push_back({"rId5", "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles", "styles.xml"});
-    writeStringToFile(makeRelationshipXML(&rels), this->zip_dir + "xl/_rels/workbook.xml.rels");
-
-    writeStringToFile(makeSharedStringsXML(), this->zip_dir + "xl/sharedStrings.xml");
-    writeStringToFile(makeCoreXML(creatorName), this->zip_dir + "docProps/core.xml");
-    writeStringToFile(makeWorkbookXML(), this->zip_dir + "xl/workbook.xml");
-
-    // zip the folder to make single file
-    std::string ppt_filename = this->tmp_dir + "/download_xlsx.zip";
-    if (system(("cd " + this->zip_dir + " ; zip -q " + ppt_filename + " -r *").c_str()))
-        throw std::runtime_error("Error while running zip compression");
-    return ppt_filename;
-}
-
-std::string WriteScoringXLSX::makeRelationshipXML(std::vector<WriteScoringXLSX::relationship> *relationships) {
-    std::string result = "";
-
-    result += "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
-    result += "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">\n";
-    for (unsigned int i = 0; i < relationships->size(); i++) {
-        relationship rel = relationships->at(i);
-        result += " <Relationship Id=\"" + rel.id + "\" Type=\"" + rel.type + "\" Target=\"" + rel.target + "\"/>\n";
-    }
-    result += "</Relationships>";
-
-    return result;
-}
-
-std::string WriteScoringXLSX::makeCoreXML(const std::string &creatorName) {
-    std::string result = "";
-    result += "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
-    result += "<cp:coreProperties xmlns:cp=\"http://schemas.openxmlformats.org/package/2006/metadata/core-properties\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:dcterms=\"http://purl.org/dc/terms/\" xmlns:dcmitype=\"http://purl.org/dc/dcmitype/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n";
-    result += " <dc:title>June LWE Scoring</dc:title>\n";
-    result += " <dc:creator>" + Encoder::htmlEntityEncode(creatorName) + "</dc:creator>\n";
-    result += " <cp:lastModifiedBy>" + Encoder::htmlEntityEncode(creatorName) + "</cp:lastModifiedBy>\n";
-    result += " <dcterms:created xsi:type=\"dcterms:W3CDTF\">" + JlweUtils::timeToW3CDTF(time(nullptr)) + "</dcterms:created>\n";
-    result += " <dcterms:modified xsi:type=\"dcterms:W3CDTF\">" + JlweUtils::timeToW3CDTF(time(nullptr)) + "</dcterms:modified>\n";
-    result += "</cp:coreProperties>\n";
-    return result;
-}
-
-size_t WriteScoringXLSX::getSharedStringId(const std::string &str) {
-    for (unsigned int i = 0; i < this->sharedStringsList.size(); i++) {
-        if (this->sharedStringsList.at(i) == str)
-            return i;
-    }
-
-    // not found so add new string
-    this->sharedStringsList.push_back(str);
-    return this->sharedStringsList.size() - 1;
-}
-
-std::string WriteScoringXLSX::makeSharedStringsXML() {
-    std::string result = "";
-    result += "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
-    result += "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" count=\"" + std::to_string(this->sharedStringsList.size()) + "\" uniqueCount=\"" + std::to_string(this->sharedStringsList.size()) + "\">\n";
-    for (unsigned int i = 0; i < this->sharedStringsList.size(); i++) {
-        result += "  <si>\n";
-        result += "    <t>" + Encoder::htmlEntityEncode(this->sharedStringsList.at(i)) + "</t>\n";
-        result += "  </si>\n";
-    }
-    result += "</sst>\n";
-    return result;
-}
-
-std::string WriteScoringXLSX::getCellRef(unsigned int x, unsigned int y) {
-    if (x < 1 || y < 1) return "";
-    std::string letter = "";
-    if (x <= 26) {
-        char c = 'A' - 1 + static_cast<char>(x);
-        letter = std::string(&c, 1);
-    } else {
-        char char1 = 'A' + static_cast<char>((x - 1) / 26) - 1;
-        char char2 = 'A' + static_cast<char>((x - 1) % 26);
-        letter = std::string(&char1, 1) + std::string(&char2, 1);
-    }
-    return letter + std::to_string(y);
-}
-
-std::string WriteScoringXLSX::makeEmptyCell(unsigned int x, unsigned int y, xlsx_style style) {
-    std::string result = "";
-    result += "  <c r=\"" + getCellRef(x, y) + "\" s=\"" + std::to_string(style) + "\" />\n";
-    return result;
-}
-
-std::string WriteScoringXLSX::makeStringCell(unsigned int x, unsigned int y, const std::string &value, xlsx_style style) {
-    if (value.size() == 0)
-        return makeEmptyCell(x, y, style);
-
-    std::string result = "";
-    result += "  <c r=\"" + getCellRef(x, y) + "\" s=\"" + std::to_string(style) + "\" t=\"s\">\n";
-    result += "    <v>" + std::to_string(this->getSharedStringId(value)) + "</v>\n";
-    result += "  </c>\n";
-    return result;
-}
-
-std::string WriteScoringXLSX::makeNumberCell(unsigned int x, unsigned int y, int value, xlsx_style style) {
-    std::string result = "";
-    result += "  <c r=\"" + getCellRef(x, y) + "\" s=\"" + std::to_string(style) + "\" t=\"n\">\n";
-    result += "    <v>" + std::to_string(value) + "</v>\n";
-    result += "  </c>\n";
-    return result;
-}
-
-std::string WriteScoringXLSX::makeFormulaCell(unsigned int x, unsigned int y, const std::string &formula, xlsx_style style) {
-    std::string result = "";
-    result += "  <c r=\"" + getCellRef(x, y) + "\" s=\"" + std::to_string(style) + "\" t=\"str\">\n";
-    result += "    <f>" + formula + "</f>\n";
-    result += "  </c>\n";
-    return result;
-}
-
-std::string WriteScoringXLSX::makeWorkbookXML() {
-    std::string result = "";
-    result += "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
-    result += "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">\n";
-    result += " <sheets>\n";
-    result += "  <sheet name=\"" + Encoder::htmlEntityEncode(this->enter_data_sheet.display_name) + "\" sheetId=\"1\" r:id=\"rId1\"/>\n";
-    result += "  <sheet name=\"" + Encoder::htmlEntityEncode(this->point_values_sheet.display_name) + "\" sheetId=\"2\" r:id=\"rId2\"/>\n";
-    result += "  <sheet name=\"" + Encoder::htmlEntityEncode(this->calculator_sheet.display_name) + "\" sheetId=\"3\" r:id=\"rId3\"/>\n";
-    result += " </sheets>\n";
-    result += "</workbook>\n";
-    return result;
-}
-
-void WriteScoringXLSX::writeStringToFile(const std::string &data, const std::string &filename) {
-    FILE * file = fopen(filename.c_str(), "w");
-    if (!file)
-        throw std::runtime_error("Unable to create file: " + filename);
-    fwrite(data.c_str(), 1, data.size(), file);
-    fclose(file);
-}
-
-void WriteScoringXLSX::addWorksheetFromXML(const std::string &filename, const std::string &sheetDataXML) {
-    std::string worksheetXML = "";
-    worksheetXML += "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
-    worksheetXML += "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" mc:Ignorable=\"x14ac\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\">\n";
-    worksheetXML += sheetDataXML;
-    worksheetXML += "</worksheet>\n";
-
-    writeStringToFile(worksheetXML, this->zip_dir + "xl/worksheets/" + filename);
+    // do nothing
 }
 
 void WriteScoringXLSX::addEnterDataSheet(const std::vector<TeamFinds> &teams, unsigned int find_hide_items_count) {
@@ -330,18 +164,18 @@ void WriteScoringXLSX::addEnterDataSheet(const std::vector<TeamFinds> &teams, un
     sheetData += "<row r=\"" + std::to_string(++rowId) + "\">\n";
     sheetData += makeStringCell(1, rowId, "Find points", BOLD_NO_COLOR);
     for (unsigned int i = 0; i < this->m_cacheCount; i++) {
-        std::string formula = "SUM('" + this->point_values_sheet.display_name + "'!" + getCellRef(i + 2, 6) + ")";
+        std::string formula = "SUM('" + this->point_values_sheet_display_name + "'!" + getCellRef(i + 2, 6) + ")";
         sheetData += makeFormulaCell(i + 2, rowId, formula, BOLD_NO_COLOR_CENTER);
     }
     for (unsigned int i = 0; i < extrasEndColId - extrasStartColId + 1; i++) {
-        std::string formula = "SUM('" + this->point_values_sheet.display_name + "'!" + getCellRef(1, i * 2 + 14 + find_hide_items_count) + ")";
+        std::string formula = "SUM('" + this->point_values_sheet_display_name + "'!" + getCellRef(1, i * 2 + 14 + find_hide_items_count) + ")";
         sheetData += makeFormulaCell(extrasStartColId + i, rowId, formula, BOLD_NO_COLOR_CENTER);
     }
     sheetData += "</row>\n";
 
     sheetData += "</sheetData>\n";
 
-    this->addWorksheetFromXML(this->enter_data_sheet.file_name, sheetData);
+    this->addWorksheetFromXML(sheetData, this->enter_data_sheet_display_name);
 }
 
 void WriteScoringXLSX::addPointValuesSheet(const std::vector<CachePoints> &find_points, const std::vector<CachePoints> &hide_points) {
@@ -445,7 +279,7 @@ void WriteScoringXLSX::addPointValuesSheet(const std::vector<CachePoints> &find_
 
     for (unsigned int i = 0; i < this->m_findExtras.size(); i++) {
         sheetData += "<row r=\"" + std::to_string(++rowId) + "\">\n";
-        std::string formula = "'" + this->enter_data_sheet.display_name + "'!" + getCellRef(extrasStartColId + i, 1);
+        std::string formula = "'" + this->enter_data_sheet_display_name + "'!" + getCellRef(extrasStartColId + i, 1);
         sheetData += makeFormulaCell(1, rowId, formula, HYPERLINK);
         sheetData += "</row>\n";
         sheetData += "<row r=\"" + std::to_string(++rowId) + "\">\n";
@@ -454,7 +288,7 @@ void WriteScoringXLSX::addPointValuesSheet(const std::vector<CachePoints> &find_
     }
 
     sheetData += "<row r=\"" + std::to_string(++rowId) + "\">\n";
-    std::string formula = "'" + this->enter_data_sheet.display_name + "'!" + getCellRef(extrasDefaultStartColId - 1, 1);
+    std::string formula = "'" + this->enter_data_sheet_display_name + "'!" + getCellRef(extrasDefaultStartColId - 1, 1);
     sheetData += makeFormulaCell(1, rowId, formula, HYPERLINK);
     sheetData += "</row>\n";
     // skip row (but make it red text)
@@ -464,7 +298,7 @@ void WriteScoringXLSX::addPointValuesSheet(const std::vector<CachePoints> &find_
 
     for (unsigned int i = 0; i < this->m_defaultExtras.size(); i++) {
         sheetData += "<row r=\"" + std::to_string(++rowId) + "\">\n";
-        std::string formula = "'" + this->enter_data_sheet.display_name + "'!" + getCellRef(extrasDefaultStartColId + i, 1);
+        std::string formula = "'" + this->enter_data_sheet_display_name + "'!" + getCellRef(extrasDefaultStartColId + i, 1);
         sheetData += makeFormulaCell(1, rowId, formula, HYPERLINK);
         sheetData += "</row>\n";
         sheetData += "<row r=\"" + std::to_string(++rowId) + "\">\n";
@@ -474,7 +308,7 @@ void WriteScoringXLSX::addPointValuesSheet(const std::vector<CachePoints> &find_
 
     sheetData += "</sheetData>\n";
 
-    this->addWorksheetFromXML(this->point_values_sheet.file_name, sheetData);
+    this->addWorksheetFromXML(sheetData, this->point_values_sheet_display_name);
 }
 
 void WriteScoringXLSX::addScoreCalculatorSheet() {
@@ -503,14 +337,14 @@ void WriteScoringXLSX::addScoreCalculatorSheet() {
 
     // Title row
     sheetData += "<row r=\"" + std::to_string(++rowId) + "\">\n";
-    sheetData += makeFormulaCell(1, 1, "'" + this->enter_data_sheet.display_name + "'!" + getCellRef(1, 1), GREEN_BOLD_BORDER);
+    sheetData += makeFormulaCell(1, 1, "'" + this->enter_data_sheet_display_name + "'!" + getCellRef(1, 1), GREEN_BOLD_BORDER);
     sheetData += makeStringCell(2, 1, "Total", BOLD_NO_COLOR);
 
     for (unsigned int i = 0; i < this->m_cacheCount; i++)
-        sheetData += makeFormulaCell(3 + i, 1, "'" + this->enter_data_sheet.display_name + "'!" + getCellRef(2 + i, 1), TITLE_NO_COLOR);
+        sheetData += makeFormulaCell(3 + i, 1, "'" + this->enter_data_sheet_display_name + "'!" + getCellRef(2 + i, 1), TITLE_NO_COLOR);
     sheetData += makeEmptyCell(extrasStartColId, 1, TITLE_NO_COLOR);
     for (unsigned int i = extrasStartColId; i <= extrasEndColId; i++)
-        sheetData += makeFormulaCell(i + 1, 1, "'" + this->enter_data_sheet.display_name + "'!" + getCellRef(i, 1), TITLE_NO_COLOR);
+        sheetData += makeFormulaCell(i + 1, 1, "'" + this->enter_data_sheet_display_name + "'!" + getCellRef(i, 1), TITLE_NO_COLOR);
     sheetData += makeStringCell(extrasEndColId + 2, 1, "Total", BOLD_NO_COLOR);
 
     sheetData += "</row>\n";
@@ -521,16 +355,16 @@ void WriteScoringXLSX::addScoreCalculatorSheet() {
 
         sheetData += "<row r=\"" + std::to_string(++rowId) + "\">\n";
 
-        sheetData += makeFormulaCell(1, j + 2, "'" + this->enter_data_sheet.display_name + "'!" + getCellRef(1, j + 2), TEAM_NAME_BROWN);
+        sheetData += makeFormulaCell(1, j + 2, "'" + this->enter_data_sheet_display_name + "'!" + getCellRef(1, j + 2), TEAM_NAME_BROWN);
         sheetData += makeFormulaCell(2, j + 2, getCellRef(extrasEndColId + 2, j + 2), BOLD_NO_COLOR);
 
         for (unsigned int i = 0; i < this->m_cacheCount; i++) {
-            std::string formula = "'" + this->enter_data_sheet.display_name + "'!" + getCellRef(i + 2, j + 2) + "*" + "'" + this->enter_data_sheet.display_name + "'!" + getCellRef(i + 2, point_value_row_idx);
+            std::string formula = "'" + this->enter_data_sheet_display_name + "'!" + getCellRef(i + 2, j + 2) + "*" + "'" + this->enter_data_sheet_display_name + "'!" + getCellRef(i + 2, point_value_row_idx);
             sheetData += makeFormulaCell(i + 3, j + 2, formula, NO_STYLE);
         }
 
         for (unsigned int i = extrasStartColId; i <= extrasEndColId; i++) {
-            std::string formula = "'" + this->enter_data_sheet.display_name + "'!" + getCellRef(i, j + 2) + "*" + "'" + this->enter_data_sheet.display_name + "'!" + getCellRef(i, point_value_row_idx);
+            std::string formula = "'" + this->enter_data_sheet_display_name + "'!" + getCellRef(i, j + 2) + "*" + "'" + this->enter_data_sheet_display_name + "'!" + getCellRef(i, point_value_row_idx);
             sheetData += makeFormulaCell(i + 1, j + 2, formula, NO_STYLE);
         }
 
@@ -541,5 +375,5 @@ void WriteScoringXLSX::addScoreCalculatorSheet() {
 
     sheetData += "</sheetData>\n";
 
-    this->addWorksheetFromXML(this->calculator_sheet.file_name, sheetData);
+    this->addWorksheetFromXML(sheetData, this->calculator_sheet_display_name);
 }

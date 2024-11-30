@@ -89,6 +89,15 @@ public:
 
 protected:
     /*!
+     * \brief Converts an (x,y) cell reference into the excel letter/number format (eg. "H35")
+     *
+     * \param x The x coordinate of the cell (starting at 1)
+     * \param y The y coordinate of the cell (starting at 1)
+     * \return The cell reference
+     */
+    static std::string getCellRef(unsigned int x, unsigned int y);
+
+    /*!
      * \brief Makes the XML for an empty cell (used for applying a style to a cell without content)
      *
      * \param x The x coordinate of the cell (starting at 1)
@@ -201,15 +210,6 @@ private:
      * \return The index
      */
     size_t getSharedStringId(const std::string &str);
-
-    /*!
-     * \brief Converts an (x,y) cell reference into the excel letter/number format (eg. "H35")
-     *
-     * \param x The x coordinate of the cell (starting at 1)
-     * \param y The y coordinate of the cell (starting at 1)
-     * \return The cell reference
-     */
-    static std::string getCellRef(unsigned int x, unsigned int y);
 
     /*!
      * \brief Makes the XML for the [Content_Types].xml file

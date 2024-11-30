@@ -17,7 +17,9 @@
 #include <string>
 #include <vector>
 
-class WriteScoringXLSX
+#include "../ooxml/WriteXLSX.h"
+
+class WriteScoringXLSX : public WriteXLSX
 {
 public:
 
@@ -52,8 +54,6 @@ public:
     /*!
      * \brief WriteScoringXLSX Constructor.
      *
-     * This creates a temporary directory with a copy of the template file
-     *
      * \param template_dir Path to the template directory (this is copied to the tmp directory)
      * \param cacheCount Number of traditional caches in the game (the number_game_caches setting)
      * \param findExtras List of items that teams can find that aren't trad caches (eg. puzzles, black thunder)
@@ -63,8 +63,6 @@ public:
 
     /*!
      * \brief WriteScoringXLSX Destructor.
-     *
-     * This deletes the temporary directory
      */
     ~WriteScoringXLSX();
 
@@ -88,17 +86,6 @@ public:
      * \brief Creates the "Score Calculator" sheet
      */
     void addScoreCalculatorSheet();
-
-    /*!
-     * \brief Finalises the XLSX file, then does the ZIP compression
-     *
-     * The XLSX file is save in the temporary directory and the filename is returned
-     * This file will be deleted when the WriteScoringXLSX object is destroyed
-     *
-     * \param creatorName Value for the "creator" field in the document properties
-     * \return The filename of the complete XLSX file
-     */
-    std::string saveScoringXlsxFile(const std::string &creatorName);
 
 private:
 
@@ -129,141 +116,14 @@ private:
         TEAM_NAME_BROWN = 22,
     };
 
-    struct relationship {
-        std::string id;
-        std::string type;
-        std::string target;
-    };
-
-    struct sheet_name {
-        std::string display_name;
-        std::string file_name;
-    };
-
     unsigned int m_cacheCount;
     std::vector<ExtraItem> m_findExtras;
     std::vector<ExtraItem> m_defaultExtras;
 
-    sheet_name enter_data_sheet;
-    sheet_name point_values_sheet;
-    sheet_name calculator_sheet;
+    std::string enter_data_sheet_display_name;
+    std::string point_values_sheet_display_name;
+    std::string calculator_sheet_display_name;
 
-    std::string tmp_dir; // the temporary directory used for storing parts of the XLSX file during construction
-    std::string zip_dir; // the directory that is the base of the ZIP archive (will be inside the temporary directory)
-
-    // List of strings for the shared strings file
-    std::vector<std::string> sharedStringsList;
-
-    /*!
-     * \brief Gets the index number of a string in the shared strings list
-     *
-     * If not found, the string will be added to the list
-     *
-     * \param str The string to search for
-     * \return The index
-     */
-    size_t getSharedStringId(const std::string &str);
-
-    /*!
-     * \brief Converts an (x,y) cell reference into the excel letter/number format (eg. "H35")
-     *
-     * \param x The x coordinate of the cell (starting at 1)
-     * \param y The y coordinate of the cell (starting at 1)
-     * \return The cell reference
-     */
-    static std::string getCellRef(unsigned int x, unsigned int y);
-
-    /*!
-     * \brief Makes the XML for an empty cell (used for applying a style to a cell without content)
-     *
-     * \param x The x coordinate of the cell (starting at 1)
-     * \param y The y coordinate of the cell (starting at 1)
-     * \param style The style to apply to the cell
-     * \return The XML encoded cell
-     */
-    static std::string makeEmptyCell(unsigned int x, unsigned int y, xlsx_style style = NO_STYLE);
-
-    /*!
-     * \brief Makes the XML for a cell containing a string
-     *
-     * \param x The x coordinate of the cell (starting at 1)
-     * \param y The y coordinate of the cell (starting at 1)
-     * \param value The string to put in the cell
-     * \param style The style to apply to the cell
-     * \return The XML encoded cell
-     */
-    std::string makeStringCell(unsigned int x, unsigned int y, const std::string &value, xlsx_style style = NO_STYLE);
-
-    /*!
-     * \brief Makes the XML for a cell containing a number
-     *
-     * \param x The x coordinate of the cell (starting at 1)
-     * \param y The y coordinate of the cell (starting at 1)
-     * \param value The number to put in the cell
-     * \param style The style to apply to the cell
-     * \return The XML encoded cell
-     */
-    static std::string makeNumberCell(unsigned int x, unsigned int y, int value, xlsx_style style = NO_STYLE);
-
-    /*!
-     * \brief Makes the XML for a cell containing a formula
-     *
-     * \param x The x coordinate of the cell (starting at 1)
-     * \param y The y coordinate of the cell (starting at 1)
-     * \param formula The formula to put in the cell
-     * \param style The style to apply to the cell
-     * \return The XML encoded cell
-     */
-    static std::string makeFormulaCell(unsigned int x, unsigned int y, const std::string &formula, xlsx_style style = NO_STYLE);
-
-    /*!
-     * \brief Makes the XML for a relationships file
-     *
-     * \param relationships The list of relationships to put in the file
-     * \return The XML encoded data
-     */
-    static std::string makeRelationshipXML(std::vector<relationship> *relationships);
-
-    /*!
-     * \brief Makes the XML for the core.xml file
-     *
-     * \param creatorName Value for the "creator" field in the document properties
-     * \return The XML encoded data
-     */
-    static std::string makeCoreXML(const std::string &creatorName);
-
-    /*!
-     * \brief Makes the XML for the workbook.xml file
-     *
-     * \return The XML encoded data
-     */
-    std::string makeWorkbookXML();
-
-    /*!
-     * \brief Makes the XML for the sharedStrings.xml file
-     *
-     * \return The XML encoded data
-     */
-    std::string makeSharedStringsXML();
-
-    /*!
-     * \brief Takes the sheetData XML, puts it into a worksheet file and saves it
-     *
-     * \param filename The file name to write the XML data to
-     * \param sheetDataXML The sheetData XML for the sheet
-     */
-    void addWorksheetFromXML(const std::string &filename, const std::string &sheetDataXML);
-
-    /*!
-     * \brief Writes a string to a file
-     *
-     * Will overwrite any existing file with the same name
-     * Throws an error if it fails to write to the file
-     *
-     * \param data The string to write
-     * \param filename The file to write to
-     */
-    static void writeStringToFile(const std::string &data, const std::string &filename);
 };
 
 #endif // WRITESCORINGXLSX_H

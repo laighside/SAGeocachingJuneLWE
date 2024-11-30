@@ -39,8 +39,8 @@ target_link_libraries(registration_reminder_email.cgi email jlwecore ${MYSQLCPPC
 add_executable(cancel.cgi cancel.cpp)
 target_link_libraries(cancel.cgi email jlwecore ${MYSQLCPPCONN_LIBRARY})
 
-add_executable(download_event_registrations.cgi download_event_registrations.cpp RegistrationXLS.cpp)
-target_link_libraries(download_event_registrations.cgi jlwecore ${MYSQLCPPCONN_LIBRARY} OpenXLSX::OpenXLSX pugixml)
+add_executable(download_event_registrations.cgi download_event_registrations.cpp WriteRegistrationXLSX.cpp ../ooxml/WriteXLSX.cpp)
+target_link_libraries(download_event_registrations.cgi jlwecore ${MYSQLCPPCONN_LIBRARY} pugixml)
 
 add_executable(download_dinner_orders.cgi download_dinner_orders.cpp DinnerOrderXLS.cpp)
 target_link_libraries(download_dinner_orders.cgi jlwecore ${MYSQLCPPCONN_LIBRARY} OpenXLSX::OpenXLSX)

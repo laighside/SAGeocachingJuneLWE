@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac">
+  <numFmts count="1">
+    <numFmt numFmtId="166" formatCode="hh:mm:ss\ dd/mm/yyyy"/>
+    <numFmt numFmtId="167" formatCode="&quot;$&quot;#,##0.00"/>
+  </numFmts>
+  <fonts count="2">
+    <font>
+      <sz val="11"/>
+      <color rgb="FF000000"/>
+      <name val="Calibri"/>
+    </font>
+    <font>
+      <sz val="11"/>
+      <color rgb="FF000000"/>
+      <name val="Calibri"/>
+      <b/>
+    </font>
+  </fonts>
+  <fills count="3">
+    <fill>
+      <patternFill patternType="none"/>
+    </fill>
+    <!-- This one isn't used but MS Excel doesn't seem to work without it -->
+    <fill>
+      <patternFill patternType="lightGray"/>
+    </fill>
+    <fill>
+      <patternFill patternType="solid">
+        <fgColor rgb="FFFF8080"/>
+        <bgColor rgb="FFFF8080"/>
+      </patternFill>
+    </fill>
+  </fills>
+  <borders count="1">
+    <border/>
+  </borders>
+  <cellStyleXfs count="1">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+  </cellStyleXfs>
+  <cellXfs count="6">
+    <!-- 0: default style -->
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <!-- 1: Title font (bold) -->
+    <xf numFmtId="0" fontId="1" fillId="0" borderId="0" />
+    <!-- 2: Date/time -->
+    <xf numFmtId="166" fontId="0" fillId="0" borderId="0" />
+    <!-- 3: Currency -->
+    <xf numFmtId="167" fontId="0" fillId="0" borderId="0" />
+    <!-- 4: Red background -->
+    <xf numFmtId="0" fontId="0" fillId="2" borderId="0" />
+    <!-- 5: Currency red background -->
+    <xf numFmtId="167" fontId="0" fillId="2" borderId="0" />
+  </cellXfs>
+  <cellStyles count="1">
+    <cellStyle name="Normal" xfId="0" builtinId="0"/>
+  </cellStyles>
+  <dxfs count="0"/>
+  <tableStyles count="0" defaultTableStyle="TableStyleMedium2" defaultPivotStyle="PivotStyleLight16"/>
+  <extLst>
+    <ext uri="{EB79DEF2-80B8-43e5-95BD-54CBDDF9020C}" xmlns:x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main">
+      <x14:slicerStyles defaultSlicerStyle="SlicerStyleLight1"/>
+    </ext>
+  </extLst>
+</styleSheet>
+

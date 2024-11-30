@@ -21,7 +21,7 @@
 #include "../core/JlweUtils.h"
 #include "../core/KeyValueParser.h"
 
-#include "RegistrationXLS.h"
+#include "WriteRegistrationXLSX.h"
 
 int main () {
     try {
@@ -32,37 +32,37 @@ int main () {
             KeyValueParser urlQueries(CgiEnvironment::getQueryString(), true);
             bool full = !(urlQueries.getValue("simple") == "true");
 
-            // make temp folder and filenames
-            char dir_template[] = "/tmp/tmpdir.XXXXXX";
-            char *dir_name = mkdtemp(dir_template);
-            if (dir_name == nullptr)
-                throw std::runtime_error("Unable to create temporary directory");
+            std::vector<WriteRegistrationXLSX::cacheLog> cache_logs;
+            std::string events_gpx = jlwe.getGlobalVar("event_caches_gpx");
+            if (events_gpx.size())
+                cache_logs = WriteRegistrationXLSX::readLogsFromGPXfile(std::string(jlwe.config.at("files").at("directory")) + events_gpx);
 
-            std::string tmp_filename = std::string(dir_name) + "/registrations.xlsx";
+            time_t jlwe_date = 0;
+            try {
+                jlwe_date = std::stoll(jlwe.getGlobalVar("jlwe_date"));
+            } catch (...) {}
 
-            RegistrationXLS::makeRegistrationXLS(tmp_filename, &jlwe, full);
+            WriteRegistrationXLSX xlsx(jlwe.config.at("ooxmlTemplatePath"));
 
+            xlsx.addEventRegistrationsSheet(jlwe.getMysqlCon(), full, cache_logs);
+            xlsx.addCampingSheet(jlwe.getMysqlCon(), full, jlwe_date);
+            xlsx.addDinnerSheet(jlwe.getMysqlCon(), full);
 
-            FILE *file = fopen(tmp_filename.c_str(), "rb");
+            // Save the file
+            std::string xlsx_file = xlsx.saveXlsxFile("JLWE Event Registrations", jlwe.config.at("websiteDomain"));
+
+            FILE *file = fopen(xlsx_file.c_str(), "rb");
             if (file) { //if file exists in filesystem
                 //output header
                 std::cout << "Content-type:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\r\n";
-                std::cout << "Content-Disposition: attachment; filename=event_registrations.xlsx\r\n\r\n";
+                std::cout << "Content-Disposition: attachment; filename=jlwe_event_registrations_" << JlweUtils::getCurrentYearString() << ".xlsx\r\n\r\n";
 
-                uint8_t buffer[1024];
-                size_t size = 1024;
-                while (size == 1024){
-                    size = fread(buffer, 1, 1024, file);
-                    std::cout.write((const char*)buffer, size);
-                }
+                JlweUtils::readFileToOStream(file, std::cout);
                 fclose(file);
             } else {
                 std::cout << "Content-type:text/plain\r\n\r\n";
-                std::cout << "Error: unable to read xlsx file\n";
+                std::cout << "Error: unable to read temp xlsx file\n";
             }
-
-            rmdir(dir_name);
-
         } else {
             std::cout << "Content-type:text/plain\r\n\r\n";
             std::cout << "You need to be logged in to view this area.\n";

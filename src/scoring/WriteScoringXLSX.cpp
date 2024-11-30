@@ -20,6 +20,9 @@
 // The number of rows in the spreadsheet to reserve for the list of teams
 #define MAX_TEAM_COUNT 50
 
+// The number of stamps/caches on each page of a scorebook (for background cell shading)
+#define STAMPS_PER_PAGE 15
+
 WriteScoringXLSX::WriteScoringXLSX(std::string template_dir, unsigned int cacheCount, const std::vector<ExtraItem> &findExtras, const std::vector<ExtraItem> &defaultExtras) :
     WriteXLSX(template_dir + "/scoring")
 {
@@ -64,7 +67,7 @@ void WriteScoringXLSX::addEnterDataSheet(const std::vector<TeamFinds> &teams, un
 
     //unsigned int colId = 0;
     for (unsigned int i = 0; i < this->m_cacheCount; i++) {
-        bool isOddPage = ((i / 10) % 2 == 0);
+        bool isOddPage = ((i / STAMPS_PER_PAGE) % 2 == 0);
         sheetData += makeStringCell(i + 2, 1, "C" + std::to_string(i + 1), isOddPage ? TITLE_PINK : TITLE_BLUE);
     }
 
@@ -93,7 +96,7 @@ void WriteScoringXLSX::addEnterDataSheet(const std::vector<TeamFinds> &teams, un
         }
 
         for (unsigned int i = 0; i < this->m_cacheCount; i++) {
-            bool isOddPage = ((i / 10) % 2 == 0);
+            bool isOddPage = ((i / STAMPS_PER_PAGE) % 2 == 0);
             if (hasTeam && teams.at(j).finds.size() > i) {
                 int value = teams.at(j).finds.at(i);
                 if (value) {

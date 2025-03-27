@@ -176,19 +176,18 @@ void outputSummaryTab() {
 
     std::cout << FormElements::radioButtons("payment", "Select payment method:", {{"payment_card", "Credit/debit card", "card", "setRadioClass(this.name, '');", false, false}, {"payment_bank", "Bank transfer", "bank", "setRadioClass(this.name, '');", false, false}}); //, {"payment_cash", "Cash at the event", "cash", "setRadioClass(this.name, '');", false, false}
 
-    std::cout << "<div id=\"cash_payment_note\"><p style=\"margin-bottom: 0px;\">We prefer bank or card payment. However payment by cash at the event is an option where bank and card are not suitable. Please contact us to discuss at contact@jlwe.org<br/>\n";
-    std::cout << "<span style=\"font-weight:bold;\">Please note the following conditions apply if you choose to pay with cash:</span></p>\n";
-    std::cout << "<ul style=\"font-weight:bold;margin-top: 0px;margin-bottom: 0px;\"><li>You must bring the exact amount. No change will be given.</li>\n";
-    std::cout << "<li>You may not receive a registration bag. Supplies are limited.</li></ul>\n";
+    std::cout << "<div id=\"cash_payment_note\"><p style=\"margin-bottom: 0px;\">We prefer bank or card payment. However payment at the event is an option where bank and card are not suitable. Please contact us to discuss at contact@jlwe.org<br/>\n";
+    std::cout << "<span style=\"font-weight:bold;\">Please note the following conditions apply if you choose to pay at the event:</span></p>\n";
+    std::cout << "<ul style=\"font-weight:bold;margin-top: 0px;margin-bottom: 0px;\"><li>You may not receive a registration bag. Supplies are limited.</li></ul>\n";
     std::cout << "</div>\n";
 
     std::cout << "<p style=\"line-height:2em;margin-top:0px;\">\n";
-    std::cout << FormElements::radioButton("payment_cash", "payment", "Cash at the event", "cash", "setRadioClass(this.name, '');", false, false);
+    std::cout << FormElements::radioButton("payment_cash", "payment", "Pay at the event (eftpos/paywave)", "cash", "setRadioClass(this.name, '');", false, false);
     std::cout << "</p>\n";
 
     std::cout << "<p id=\"card_surcharge_note\" style=\"font-size:16px;font-weight:bold;\">Please note that there is a surcharge of 1.75% + $0.30 on card payments to cover the card payment processing fee.</p>\n";
-    //std::cout << "<p id=\"payment_note\" style=\"font-size:16px;font-weight:bold;\">Note that camping is not reserved until payment is received. Hence paying by cash at the event is not possible for camping reservations.<br/>\n";
-    std::cout << "<p id=\"payment_note\" style=\"font-size:16px;font-weight:bold;\">Note that dinner and camping is not reserved until payment is received. Hence paying by cash at the event is not possible for dinner and camping reservations.<br/>\n";
+    //std::cout << "<p id=\"payment_note\" style=\"font-size:16px;font-weight:bold;\">Note that camping is not reserved until payment is received. Hence paying upon arrival at the event is not possible for camping reservations.<br/>\n";
+    std::cout << "<p id=\"payment_note\" style=\"font-size:16px;font-weight:bold;\">Note that dinner and camping is not reserved until payment is received. Hence paying upon arrival at the event is not possible for dinner and camping reservations.<br/>\n";
     //std::cout << "Camping fees are non-refundable if you don't attend the event.</p>\n";
     std::cout << "Dinner and camping fees are non-refundable if you don't attend the event.</p>\n";
 

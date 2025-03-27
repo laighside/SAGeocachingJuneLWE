@@ -198,7 +198,7 @@ int main () {
                     }
 
                     if (payment_type == "cash")
-                        result += "<p>You will need to pay <span style=\"font-weight:bold;\">" + PaymentUtils::currencyToString(payment_total) + "</span> upon arrival at the event. <span style=\"font-weight:bold;\">Note that there will be no change given so please ensure you bring the exact amount.</span></p>\n";
+                        result += "<p>You will need to pay <span style=\"font-weight:bold;\">" + PaymentUtils::currencyToString(payment_total) + "</span> upon arrival at the event.</p>\n";// <span style=\"font-weight:bold;\">Note that there will be no change given so please ensure you bring the exact amount.</span></p>\n";
 
                     if (payment_type == "bank") {
                         result += "<p>You will need to make a bank transfer of <span style=\"font-weight:bold;\">" + PaymentUtils::currencyToString(payment_total) + "</span> to the account details below. Please place your geocaching username in the reference field.</p>\n";

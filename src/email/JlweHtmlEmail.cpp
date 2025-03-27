@@ -389,7 +389,7 @@ void JlweHtmlEmail::setHtmlInTemplate(std::string logo_url) {
     result += "        </table>\n";
     result += "      </td></tr>\n";
     result += "      <tr><td id=\"footer\" width=\"100%\">\n";
-    result += "        <p>Geocaching SA " + JlweUtils::getCurrentYearString() + "</p>\n";
+    result += "        <p><a href=\"https://jlwe.org\" style=\"color:#000000;\">June Long Weekend Geocaching Event Inc</a> | " + JlweUtils::getCurrentYearString() + "</p>\n";
     result += "      </td></tr>\n";
     result += "    </table>\n";
     result += "  </td></tr>\n";

@@ -222,7 +222,7 @@ void DinnerOrderXLS::makeDinnerOrderXLS(const std::string &filename, JlweCore *j
     std::string currentTime = JlweUtils::timeToW3CDTF(time(nullptr));
 
     OpenXLSX::XLDocument doc;
-    doc.create(filename);
+    doc.create(filename, true);
     doc.setProperty(OpenXLSX::XLProperty::Creator, jlwe->config.at("websiteDomain"));
     doc.setProperty(OpenXLSX::XLProperty::LastModifiedBy, jlwe->config.at("websiteDomain"));
     doc.setProperty(OpenXLSX::XLProperty::CreationDate, currentTime);

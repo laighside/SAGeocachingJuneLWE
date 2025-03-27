@@ -13,6 +13,7 @@
 #include "Email.h"
 
 #include <cstdio>
+#include <cstring>
 
 #include "../core/Encoder.h"
 #include "../core/JlweUtils.h"

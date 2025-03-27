@@ -14,6 +14,7 @@
 #ifndef ENCODER_H
 #define ENCODER_H
 
+#include <cstdint>
 #include <string>
 
 class Encoder {

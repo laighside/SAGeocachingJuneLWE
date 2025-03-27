@@ -15,7 +15,7 @@ target_link_libraries(builder_map.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 add_executable(download_gpx.cgi download_gpx.cpp)
 target_link_libraries(download_gpx.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 
-add_executable(download_cache_list.cgi download_cache_list.cpp)
+add_executable(download_cache_list.cgi download_cache_list.cpp WriteCacheListDOCX.cpp ../ooxml/WriteDOCX.cpp)
 target_link_libraries(download_cache_list.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 
 add_executable(delete_cache.cgi delete_cache.cpp)

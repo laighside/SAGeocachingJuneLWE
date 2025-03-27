@@ -46,12 +46,14 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #ifndef OPENXLSX_XLCONTENTTYPES_HPP
 #define OPENXLSX_XLCONTENTTYPES_HPP
 
-#pragma warning(push)
-#pragma warning(disable : 4251)
-#pragma warning(disable : 4275)
+#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
+#   pragma warning(push)
+#   pragma warning(disable : 4251)
+#   pragma warning(disable : 4275)
+#endif // _MSC_VER
 
 // ===== External Includes ===== //
-#include <map>
+#include <cstdint> // uint8_t
 #include <memory>
 #include <string>
 #include <vector>
@@ -66,8 +68,9 @@ namespace OpenXLSX
     /**
      * @brief
      */
-    enum class XLContentType {
+    enum class XLContentType : uint8_t {
         Workbook,
+        Relationships,
         WorkbookMacroEnabled,
         Worksheet,
         Chartsheet,
@@ -90,6 +93,13 @@ namespace OpenXLSX
         VMLDrawing,
         Unknown
     };
+
+    /**
+     * @brief utility function: determine the name of an XLContentType value
+     * @param type the XLContentType to get a name for
+     * @return a string with the name of type
+     */
+    std::string XLContentTypeToString( XLContentType type );
 
     /**
      * @brief
@@ -127,7 +137,7 @@ namespace OpenXLSX
          * @param other
          * @return
          */
-        XLContentItem(XLContentItem&& other) noexcept = default;
+        XLContentItem(XLContentItem&& other) noexcept;
 
         /**
          * @brief
@@ -141,7 +151,7 @@ namespace OpenXLSX
          * @param other
          * @return
          */
-        XLContentItem& operator=(XLContentItem&& other) noexcept = default;
+        XLContentItem& operator=(XLContentItem&& other) noexcept;
 
         /**
          * @brief
@@ -155,7 +165,7 @@ namespace OpenXLSX
          */
         std::string path() const;
 
-    private:                                    // ---------- Private Member Variables ---------- //
+    private:
         std::unique_ptr<XMLNode> m_contentNode; /**< */
     };
 
@@ -172,7 +182,7 @@ namespace OpenXLSX
         /**
          * @brief
          */
-        XLContentTypes() = default;
+        XLContentTypes();
 
         /**
          * @brief
@@ -189,27 +199,27 @@ namespace OpenXLSX
          * @brief
          * @param other
          */
-        XLContentTypes(const XLContentTypes& other) = default;
+        XLContentTypes(const XLContentTypes& other);
 
         /**
          * @brief
          * @param other
          */
-        XLContentTypes(XLContentTypes&& other) noexcept = default;
-
-        /**
-         * @brief
-         * @param other
-         * @return
-         */
-        XLContentTypes& operator=(const XLContentTypes& other) = default;
+        XLContentTypes(XLContentTypes&& other) noexcept;
 
         /**
          * @brief
          * @param other
          * @return
          */
-        XLContentTypes& operator=(XLContentTypes&& other) noexcept = default;
+        XLContentTypes& operator=(const XLContentTypes& other);
+
+        /**
+         * @brief
+         * @param other
+         * @return
+         */
+        XLContentTypes& operator=(XLContentTypes&& other) noexcept;
 
         /**
          * @brief Add a new override key/getValue pair to the data store.
@@ -228,7 +238,7 @@ namespace OpenXLSX
          * @brief
          * @param item
          */
-        void deleteOverride(XLContentItem& item);
+        void deleteOverride(const XLContentItem& item);
 
         /**
          * @brief
@@ -243,9 +253,12 @@ namespace OpenXLSX
          */
         std::vector<XLContentItem> getContentItems();
 
-        // ---------- Protected Member Functions ---------- //
+    private:   // ---------- Private Member Variables ---------- //
     };
 }    // namespace OpenXLSX
 
-#pragma warning(pop)
+#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
+#   pragma warning(pop)
+#endif // _MSC_VER
+
 #endif    // OPENXLSX_XLCONTENTTYPES_HPP

@@ -46,24 +46,27 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #ifndef OPENXLSX_XLFORMULA_HPP
 #define OPENXLSX_XLFORMULA_HPP
 
-#pragma warning(push)
-#pragma warning(disable : 4251)
-#pragma warning(disable : 4275)
+#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
+#   pragma warning(push)
+#   pragma warning(disable : 4251)
+#   pragma warning(disable : 4275)
+#endif // _MSC_VER
 
 // ===== External Includes ===== //
-#include <cstdint>
 #include <iostream>
 #include <string>
 #include <variant>
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
-#include "XLException.hpp"
 #include "XLXmlParser.hpp"
 
 // ========== CLASS AND ENUM TYPE DEFINITIONS ========== //
 namespace OpenXLSX
 {
+    constexpr bool XLResetValue    = true;
+    constexpr bool XLPreserveValue = false;
+
     //---------- Forward Declarations ----------//
     class XLFormulaProxy;
     class XLCell;
@@ -85,7 +88,6 @@ namespace OpenXLSX
         friend std::ostream& operator<<(std::ostream& os, const XLFormula& value);
 
     public:
-
         /**
          * @brief Constructor
          */
@@ -97,12 +99,16 @@ namespace OpenXLSX
          * @param formula The formula to initialize the object with.
          */
         template<typename T,
-                 typename std::enable_if<std::is_constructible_v<T, char*>>::type* = nullptr>
-        explicit XLFormula(T formula) {
-
+                 typename = std::enable_if_t<
+                     std::is_same_v<std::decay_t<T>, std::string> || std::is_same_v<std::decay_t<T>, std::string_view> ||
+                     std::is_same_v<std::decay_t<T>, const char*> || std::is_same_v<std::decay_t<T>, char*>>>
+        explicit XLFormula(T formula)
+        {
             // ===== If the argument is a const char *, use the argument directly; otherwise, assume it has a .c_str() function.
-            if constexpr (std::is_same_v<T, const char *>)
+            if constexpr (std::is_same_v<std::decay_t<T>, const char*> || std::is_same_v<std::decay_t<T>, char*>)
                 m_formulaString = formula;
+            else if constexpr (std::is_same_v<std::decay_t<T>, std::string_view>)
+                m_formulaString = std::string(formula);
             else
                 m_formulaString = formula.c_str();
         }
@@ -145,8 +151,11 @@ namespace OpenXLSX
          * @return Reference to the assigned-to object.
          */
         template<typename T,
-                 typename std::enable_if<std::is_constructible_v<T, char*>>::type* = nullptr>
-        XLFormula& operator=(T formula) {
+                 typename = std::enable_if_t<
+                     std::is_same_v<std::decay_t<T>, std::string> || std::is_same_v<std::decay_t<T>, std::string_view> ||
+                     std::is_same_v<std::decay_t<T>, const char*> || std::is_same_v<std::decay_t<T>, char*>>>
+        XLFormula& operator=(T formula)
+        {
             XLFormula temp(formula);
             std::swap(*this, temp);
             return *this;
@@ -158,27 +167,25 @@ namespace OpenXLSX
          * @param formula String containing the formula.
          */
         template<typename T,
-                 typename std::enable_if<std::is_constructible_v<T, char*>>::type* = nullptr>
-        void set(T formula) {
+                 typename = std::enable_if_t<
+                     std::is_same_v<std::decay_t<T>, std::string> || std::is_same_v<std::decay_t<T>, std::string_view> ||
+                     std::is_same_v<std::decay_t<T>, const char*> || std::is_same_v<std::decay_t<T>, char*>>>
+        void set(T formula)
+        {
             *this = formula;
         }
 
         /**
-         * @brief Get the forumla as a std::string.
+         * @brief Get the formula as a std::string.
          * @return A std::string with the formula.
          */
         std::string get() const;
 
         /**
-         * @brief Templated conversion operator, for converting object to a string-type object.
-         * @tparam T Type to convert to.
-         * @return The formula as the desired string-type.
+         * @brief Conversion operator, for converting object to a std::string.
+         * @return The formula as a std::string.
          */
-        template<typename T,
-                 typename std::enable_if<std::is_constructible_v<T, const char*>>::type* = nullptr>
-        operator T() const {
-            return m_formulaString.c_str();
-        }
+        operator std::string() const;    // NOLINT
 
         /**
          * @brief Clear the formula.
@@ -200,7 +207,6 @@ namespace OpenXLSX
         friend class XLFormula;
 
     public:
-
         /**
          * @brief Destructor
          */
@@ -219,16 +225,21 @@ namespace OpenXLSX
          * @param formula The formula string to be assigned.
          * @return A reference to the copied-to object.
          */
-        template<typename T,
-                 typename std::enable_if<std::is_same_v<T, XLFormula> || std::is_constructible_v<T, const char*>>::type* = nullptr>
-        XLFormulaProxy& operator=(T formula) {
-
-            if constexpr (std::is_same_v<T, XLFormula>)
+        template<
+            typename T,
+            typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, XLFormula> || std::is_same_v<std::decay_t<T>, std::string> ||
+                                        std::is_same_v<std::decay_t<T>, std::string_view> || std::is_same_v<std::decay_t<T>, const char*> ||
+                                        std::is_same_v<std::decay_t<T>, char*>>>
+        XLFormulaProxy& operator=(T formula)
+        {
+            if constexpr (std::is_same_v<std::decay_t<T>, XLFormula>)
                 setFormulaString(formula.get().c_str());
-            else if constexpr (std::is_same_v<T, const char*>)
-                setFormulaString(formula);
-            else
+            else if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
                 setFormulaString(formula.c_str());
+            else if constexpr (std::is_same_v<std::decay_t<T>, std::string_view>)
+                setFormulaString(std::string(formula).c_str());
+            else
+                setFormulaString(formula);
 
             return *this;
         }
@@ -239,27 +250,19 @@ namespace OpenXLSX
          * @param formula The formula string to be assigned.
          */
         template<typename T,
-                 typename std::enable_if<std::is_constructible_v<T, char*>>::type* = nullptr>
-        void set(T formula) {
+                 typename = std::enable_if_t<
+                     std::is_same_v<std::decay_t<T>, std::string> || std::is_same_v<std::decay_t<T>, std::string_view> ||
+                     std::is_same_v<std::decay_t<T>, const char*> || std::is_same_v<std::decay_t<T>, char*>>>
+        void set(T formula)
+        {
             *this = formula;
         }
 
         /**
-         * @brief Get the forumla as a std::string.
+         * @brief Get the formula as a std::string.
          * @return A std::string with the formula.
          */
         std::string get() const;
-
-        /**
-         * @brief Templated conversion operator, for converting object to a string-type object.
-         * @tparam T Type to convert to.
-         * @return The formula as the desired string-type.
-         */
-        template<typename T,
-                 typename std::enable_if<std::is_constructible_v<T, const char*>>::type* = nullptr>
-        operator T() const {
-            return get().c_str();
-        }
 
         /**
          * @brief Clear the formula.
@@ -268,13 +271,18 @@ namespace OpenXLSX
         XLFormulaProxy& clear();
 
         /**
+         * @brief Conversion operator, for converting the object to a std::string.
+         * @return The formula as a std::string.
+         */
+        operator std::string() const;    // NOLINT
+
+        /**
          * @brief Implicit conversion to XLFormula object.
          * @return Returns the corresponding XLFormula object.
          */
-        operator XLFormula();    // NOLINT
+        operator XLFormula() const;    // NOLINT
 
     private:
-
         /**
          * @brief Constructor, taking pointers to the cell and cell node objects.
          * @param cell Pointer to the associated cell object.
@@ -304,8 +312,9 @@ namespace OpenXLSX
         /**
          * @brief Set the formula to the given string.
          * @param formulaString String holding the formula.
+         * @param resetValue if true (XLResetValue), the cell value will be set to 0, if false (XLPreserveValue), it will remain unchanged
          */
-        void setFormulaString(const char* formulaString);
+        void setFormulaString(const char* formulaString, bool resetValue = XLResetValue);
 
         /**
          * @brief Get the underlying XLFormula object.
@@ -318,7 +327,7 @@ namespace OpenXLSX
         XLCell*  m_cell;     /**< Pointer to the owning XLCell object. */
         XMLNode* m_cellNode; /**< Pointer to corresponding XML cell node. */
     };
-} // namespace OpenXLSX
+}    // namespace OpenXLSX
 
 // ========== FRIEND FUNCTION IMPLEMENTATIONS ========== //
 namespace OpenXLSX
@@ -329,10 +338,7 @@ namespace OpenXLSX
      * @param rhs
      * @return
      */
-    inline bool operator==(const XLFormula& lhs, const XLFormula& rhs)
-    {
-        return lhs.m_formulaString == rhs.m_formulaString;
-    }
+    inline bool operator==(const XLFormula& lhs, const XLFormula& rhs) { return lhs.m_formulaString == rhs.m_formulaString; }
 
     /**
      * @brief
@@ -340,21 +346,27 @@ namespace OpenXLSX
      * @param rhs
      * @return
      */
-    inline bool operator!=(const XLFormula& lhs, const XLFormula& rhs)
-    {
-        return lhs.m_formulaString != rhs.m_formulaString;
-    }
+    inline bool operator!=(const XLFormula& lhs, const XLFormula& rhs) { return lhs.m_formulaString != rhs.m_formulaString; }
 
     /**
-     * @brief
-     * @param os
-     * @param value
+     * @brief send a formula string to an ostream
+     * @param os the output destination
+     * @param value the formula to send to os
      * @return
      */
-    inline std::ostream& operator<<(std::ostream& os, const XLFormula& value)
-    {
-        return os << value.m_formulaString;
-    }
+    inline std::ostream& operator<<(std::ostream& os, const XLFormula& value) { return os << value.m_formulaString; }
+
+    /**
+     * @brief send a formula string to an ostream
+     * @param os the output destination
+     * @param value the formula proxy whose formula to send to os
+     * @return
+     */
+    inline std::ostream& operator<<(std::ostream& os, const XLFormulaProxy& value) { return os << value.get(); }
 }    // namespace OpenXLSX
+
+#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
+#   pragma warning(pop)
+#endif // _MSC_VER
 
 #endif    // OPENXLSX_XLFORMULA_HPP

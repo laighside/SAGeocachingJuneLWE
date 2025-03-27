@@ -4,8 +4,8 @@
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 set(OPENXLSX_MAJOR_VERSION 0)
 set(OPENXLSX_MINOR_VERSION 3)
-set(OPENXLSX_MICRO_VERSION 1)
-project(OpenXLSX.Library VERSION 0.3.1 LANGUAGES CXX)
+set(OPENXLSX_MICRO_VERSION 2)
+project(OpenXLSX.Library VERSION 0.3.2 LANGUAGES CXX)
 set(CMAKE_DEBUG_POSTFIX d)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN YES)
@@ -31,18 +31,24 @@ set(IGNORE_ME ${CMAKE_C_COMPILER}) # Suppress CMake warning message
 # Add build options
 #=======================================================================================================================
 option(OPENXLSX_COMPACT_MODE "Build library in compact mode (slower, but uses less memory)" OFF)
-set(OPENXLSX_LIBRARY_TYPE "SHARED" CACHE STRING "Set the library type to SHARED or STATIC")
+set(OPENXLSX_LIBRARY_TYPE "STATIC" CACHE STRING "Set the library type to SHARED or STATIC")
 
 #=======================================================================================================================
 # EXTERNAL LIBRARIES
 #   Define external libraries used by OpenXLSX. The libraries (Zippy, PugiXML, and NoWide) are header-only, so
 #   INTERFACE libraries should be defined.
 #=======================================================================================================================
-add_library(NoWide INTERFACE IMPORTED)
-target_include_directories(NoWide SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/nowide/>)
+
+if (OPENXLSX_ENABLE_NOWIDE)
+    add_library(NoWide INTERFACE IMPORTED)
+    target_include_directories(NoWide SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/nowide/>)
+endif()
 
 add_library(Zippy INTERFACE IMPORTED)
 target_include_directories(Zippy SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/zippy/>)
+if (OPENXLSX_ENABLE_NOWIDE)
+    target_compile_definitions(Zippy INTERFACE ENABLE_NOWIDE)
+endif ()
 
 add_library(PugiXML INTERFACE IMPORTED)
 target_include_directories(PugiXML SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/external/pugixml/>)
@@ -89,19 +95,25 @@ set(OPENXLSX_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLCellValue.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLColor.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLColumn.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/sources/XLComments.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLContentTypes.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLDateTime.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLDocument.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/sources/XLDrawing.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLFormula.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/sources/XLMergeCells.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLProperties.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLRelationships.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLRow.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLRowData.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLSharedStrings.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLSheet.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/sources/XLStyles.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/sources/XLTables.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLWorkbook.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLXmlData.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLXmlFile.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/sources/XLXmlParser.cpp
         ${CMAKE_CURRENT_LIST_DIR}/sources/XLZipArchive.cpp
         )
 
@@ -110,7 +122,7 @@ set(OPENXLSX_SOURCES
 # STATIC AND SHARED LIBRARY
 #   Check that the input is valid
 #=======================================================================================================================
-if(NOT ${OPENXLSX_LIBRARY_TYPE} STREQUAL "STATIC" AND NOT ${OPENXLSX_LIBRARY_TYPE} STREQUAL "SHARED")
+if(NOT "${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC" AND NOT "${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
     message( FATAL_ERROR "Invalid library type. Must be SHARED or STATIC." )
 endif()
 
@@ -118,7 +130,7 @@ endif()
 # STATIC LIBRARY
 #   Define the static library
 #=======================================================================================================================
-if (${OPENXLSX_LIBRARY_TYPE} STREQUAL "STATIC")
+if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "STATIC")
     add_library(OpenXLSX STATIC "")
     add_library(OpenXLSX::OpenXLSX ALIAS OpenXLSX)
     target_sources(OpenXLSX PRIVATE ${OPENXLSX_SOURCES})
@@ -130,8 +142,13 @@ if (${OPENXLSX_LIBRARY_TYPE} STREQUAL "STATIC")
     target_link_libraries(OpenXLSX
             PRIVATE
             $<BUILD_INTERFACE:Zippy>
-            $<BUILD_INTERFACE:PugiXML>
-            $<BUILD_INTERFACE:NoWide>)
+            $<BUILD_INTERFACE:PugiXML>)
+
+    if (OPENXLSX_ENABLE_NOWIDE)
+        target_link_libraries(OpenXLSX
+                PRIVATE
+                $<BUILD_INTERFACE:NoWide>)
+    endif ()
 
     target_compile_definitions(OpenXLSX PUBLIC OPENXLSX_STATIC_DEFINE)
 
@@ -141,7 +158,7 @@ endif ()
 # SHARED LIBRARY
 #   Define the shared library
 #=======================================================================================================================
-if (${OPENXLSX_LIBRARY_TYPE} STREQUAL "SHARED")
+if ("${OPENXLSX_LIBRARY_TYPE}" STREQUAL "SHARED")
     add_library(OpenXLSX SHARED "")
     add_library(OpenXLSX::OpenXLSX ALIAS OpenXLSX)
     target_sources(OpenXLSX PRIVATE ${OPENXLSX_SOURCES})
@@ -153,8 +170,13 @@ if (${OPENXLSX_LIBRARY_TYPE} STREQUAL "SHARED")
     target_link_libraries(OpenXLSX
             PRIVATE
             $<BUILD_INTERFACE:Zippy>
-            $<BUILD_INTERFACE:PugiXML>
-            $<BUILD_INTERFACE:NoWide>)
+            $<BUILD_INTERFACE:PugiXML>)
+
+    if (OPENXLSX_ENABLE_NOWIDE)
+        target_link_libraries(OpenXLSX
+                PRIVATE
+                $<BUILD_INTERFACE:NoWide>)
+    endif ()
 
     # Enable Link-Time Optimization (LTO)
     include(CheckIPOSupported)
@@ -164,6 +186,12 @@ if (${OPENXLSX_LIBRARY_TYPE} STREQUAL "SHARED")
     endif ()
 
 endif()
+
+
+if (OPENXLSX_ENABLE_NOWIDE)
+    target_compile_definitions(OpenXLSX PRIVATE ENABLE_NOWIDE)
+endif ()
+
 
 # Generate export header
 include(GenerateExportHeader)
@@ -199,7 +227,7 @@ list(APPEND OPENXLSX_DEBUG_FLAGS_GNUCLANG
         "-Weffc++"
         "-Wno-unknown-pragmas")
 list(APPEND OPENXLSX_DEBUG_FLAGS_MSVC
-        "/permissive"
+        "/permissive-"
         "/W4"
         "/w14242"
         "/w14254"
@@ -223,6 +251,7 @@ list(APPEND OPENXLSX_DEBUG_FLAGS_MSVC
         "/wd4251"
         "/wd4275")
 list(APPEND OPENXLSX_RELEASE_FLAGS_MSVC
+        "/permissive-"
         "/wd4251"
         "/wd4275")
 

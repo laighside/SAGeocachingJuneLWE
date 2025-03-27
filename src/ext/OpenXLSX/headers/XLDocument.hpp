@@ -46,32 +46,40 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #ifndef OPENXLSX_XLDOCUMENT_HPP
 #define OPENXLSX_XLDOCUMENT_HPP
 
-#pragma warning(push)
-#pragma warning(disable : 4251)
-#pragma warning(disable : 4275)
+#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
+#   pragma warning(push)
+#   pragma warning(disable : 4251)
+#   pragma warning(disable : 4275)
+#endif // _MSC_VER
 
 // ===== External Includes ===== //
-#include <algorithm>
-#include <fstream>
-#include <iostream>
+#include <algorithm> // std::find_if
 #include <list>
-#include <map>
 #include <string>
 
 // ===== OpenXLSX Includes ===== //
+#include "IZipArchive.hpp"
 #include "OpenXLSX-Exports.hpp"
 #include "XLCommandQuery.hpp"
+#include "XLComments.hpp"
 #include "XLContentTypes.hpp"
-#include "XLException.hpp"
+#include "XLDrawing.hpp"
 #include "XLProperties.hpp"
 #include "XLRelationships.hpp"
 #include "XLSharedStrings.hpp"
+#include "XLStyles.hpp"
+#include "XLTables.hpp"
 #include "XLWorkbook.hpp"
 #include "XLXmlData.hpp"
 #include "XLZipArchive.hpp"
 
 namespace OpenXLSX
 {
+    constexpr const unsigned int pugi_parse_settings = pugi::parse_default | pugi::parse_ws_pcdata; // TBD: | pugi::parse_comments
+
+    constexpr const bool XLForceOverwrite = true;    // readability constant for 2nd parameter of XLDocument::saveAs
+    constexpr const bool XLDoNotOverwrite = false;   //  "
+
     /**
      * @brief The XLDocumentProperties class is an enumeration of the possible properties (metadata) that can be set
      * for a XLDocument object (and .xlsx file)
@@ -118,13 +126,14 @@ namespace OpenXLSX
         /**
          * @brief Constructor. The default constructor with no arguments.
          */
-        XLDocument() = default;
+        explicit XLDocument(const IZipArchive& zipArchive = XLZipArchive());
 
         /**
          * @brief Constructor. An alternative constructor, taking the path to the .xlsx file as an argument.
          * @param docPath A std::string with the path to the .xlsx file.
+         * @param zipArchive
          */
-        explicit XLDocument(const std::string& docPath);
+        explicit XLDocument(const std::string& docPath, const IZipArchive& zipArchive = XLZipArchive());
 
         /**
          * @brief Copy constructor
@@ -159,6 +168,16 @@ namespace OpenXLSX
         XLDocument& operator=(XLDocument&& other) noexcept = default;
 
         /**
+         * @brief ensure that warnings are shown (default setting)
+         */
+        void showWarnings();
+
+        /**
+         * @brief ensure that warnings are suppressed where this parameter is supported (currently only XLStyles)
+         */
+        void suppressWarnings();
+
+        /**
          * @brief Open the .xlsx file with the given path
          * @param fileName The path of the .xlsx file to open
          */
@@ -167,8 +186,19 @@ namespace OpenXLSX
         /**
          * @brief Create a new .xlsx file with the given name.
          * @param fileName The path of the new .xlsx file.
+         * @param forceOverwrite If not true (XLForceOverwrite) and fileName exists, create will throw an exception
+         * @throw XLException (OpenXLSX failed checks)
+         * @throw ZipRuntimeError (zippy failed archive / file access)
          */
-        void create(const std::string& fileName);
+        void create(const std::string& fileName, bool forceOverwrite);
+
+        /**
+         * @brief Create a new .xlsx file with the given name. Legacy interface, invokes create( fileName, XLForceOverwrite )
+         * @param fileName The path of the new .xlsx file.
+         * @deprecated use instead void create(const std::string& fileName, bool forceOverwrite)
+         * @warning Overwriting an existing file is retained as legacy behavior, but can lead to data loss!
+         */
+        [[deprecated]] void create(const std::string& fileName);
 
         /**
          * @brief Close the current document
@@ -177,22 +207,35 @@ namespace OpenXLSX
 
         /**
          * @brief Save the current document using the current filename, overwriting the existing file.
-         * @return true if successful; otherwise false.
+         * @throw XLException (OpenXLSX failed checks)
+         * @throw ZipRuntimeError (zippy failed archive / file access)
          */
         void save();
 
         /**
          * @brief Save the document with a new name. If a file exists with that name, it will be overwritten.
          * @param fileName The path of the file
-         * @return true if successful; otherwise false.
+         * @param forceOverwrite If not true (XLForceOverwrite) and fileName exists, saveAs will throw an exception
+         * @throw XLException (OpenXLSX failed checks)
+         * @throw ZipRuntimeError (zippy failed archive / file access)
          */
-        void saveAs(const std::string& fileName);
+        void saveAs(const std::string& fileName, bool forceOverwrite);
+
+        /**
+         * @brief Save the document with a new name. Legacy interface, invokes saveAs( fileName, XLForceOverwrite )
+         * @param fileName The path of the file
+         * @deprecated use instead void saveAs(const std::string& fileName, bool forceOverwrite)
+         * @warning Overwriting an existing file is retained as legacy behavior, but can lead to data loss!
+         */
+        [[deprecated]] void saveAs(const std::string& fileName);
 
         /**
          * @brief Get the filename of the current document, e.g. "spreadsheet.xlsx".
          * @return A std::string with the filename.
+         * @note 2024-06-03: function can't return as reference to const because filename as a substr of m_filePath can be a temporary
+         * @note 2024-07-28: Removed const from return type
          */
-        const std::string& name() const;
+        std::string name() const;
 
         /**
          * @brief Get the full path of the current document, e.g. "drive/blah/spreadsheet.xlsx"
@@ -221,12 +264,6 @@ namespace OpenXLSX
         void setProperty(XLProperty prop, const std::string& value);
 
         /**
-         * @brief
-         * @return
-         */
-        explicit operator bool() const;
-
-        /**
          * @brief Delete the property from the document
          * @param theProperty The property to delete from the document
          */
@@ -234,245 +271,117 @@ namespace OpenXLSX
 
         /**
          * @brief
+         * @return
+         */
+        explicit operator bool() const;
+
+        /**
+         * @brief
+         * @return
+         */
+        bool isOpen() const;
+
+        /**
+         * @brief return a handle on the workbook's styles
+         * @return a reference to m_styles
+         */
+        XLStyles& styles();
+
+        /**
+         * @brief determine whether a worksheet relationships file exists for sheetXmlNo
+         * @param sheetXmlNo check for this sheet number # (xl/worksheets/_reals/sheet#.xml.rels)
+         * @return true if relationships file exists
+         */
+        bool hasSheetRelationships(uint16_t sheetXmlNo) const;
+
+        /**
+         * @brief determine whether a worksheet vml drawing file exists for sheetXmlNo
+         * @param sheetXmlNo check for this sheet number # (xl/drawings/vmlDrawing#.xml)
+         * @return true if vml drawing file exists
+         */
+        bool hasSheetVmlDrawing(uint16_t sheetXmlNo) const;
+
+        /**
+         * @brief determine whether a worksheet comments file exists for sheetXmlNo
+         * @param sheetXmlNo check for this sheet number # (xl/comments#.xml)
+         * @return true if comments file exists
+         */
+        bool hasSheetComments(uint16_t sheetXmlNo) const;
+
+        /**
+         * @brief determine whether a worksheet table(s) file exists for sheetXmlNo
+         * @param sheetXmlNo check for this sheet number # (xl/tables/table#.xml)
+         * @return true if table(s) file exists
+         */
+        bool hasSheetTables(uint16_t sheetXmlNo) const;
+
+        /**
+         * @brief fetch the worksheet relationships for sheetXmlNo, create the file if it does not exist
+         * @param sheetXmlNo fetch for this sheet #
+         * @return an XLRelationships object initialized with the sheet relationships
+         */
+        XLRelationships sheetRelationships(uint16_t sheetXmlNo);
+
+        /**
+         * @brief fetch the worksheet VML drawing for sheetXmlNo, create the file if it does not exist
+         * @param sheetXmlNo fetch for this sheet #
+         * @return an XLVmlDrawing object initialized with the sheet drawing
+         */
+        XLVmlDrawing sheetVmlDrawing(uint16_t sheetXmlNo);
+
+        /**
+         * @brief fetch the worksheet comments for sheetXmlNo, create the file if it does not exist
+         * @param sheetXmlNo fetch for this sheet #
+         * @return an XLComments object initialized with the sheet comments
+         */
+        XLComments sheetComments(uint16_t sheetXmlNo);
+
+        /**
+         * @brief fetch the worksheet tables for sheetXmlNo, create the file if it does not exist
+         * @param sheetXmlNo fetch for this sheet #
+         * @return an XLTables object initialized with the sheet tables
+         */
+        XLTables sheetTables(uint16_t sheetXmlNo);
+
+        /**
+         * @brief
          * @param command
+         * @return for XLCommandType::SetSheetActive: execution success, otherwise always true
          */
-        template<typename Command>
-        void executeCommand(Command command)
-        {
-            if constexpr (std::is_same_v<Command, XLCommandSetSheetName>) {
-                m_appProperties.setSheetName(command.sheetName(), command.newName());
-                m_workbook.setSheetName(command.sheetID(), command.newName());
-            }
-
-            else if constexpr (std::is_same_v<Command, XLCommandSetSheetVisibility>) {    // NOLINT
-            }
-
-            else if constexpr (std::is_same_v<Command, XLCommandSetSheetColor>) {
-            }
-
-            else if constexpr (std::is_same_v<Command, XLCommandSetSheetIndex>) {
-                auto sheetName = executeQuery(XLQuerySheetName(command.sheetID())).sheetName();
-                m_workbook.setSheetIndex(sheetName, command.sheetIndex());
-            }
-
-            else if constexpr (std::is_same_v<Command, XLCommandResetCalcChain>) {
-                m_archive.deleteEntry("xl/calcChain.xml");
-                auto item = std::find_if(m_data.begin(), m_data.end(), [&](const XLXmlData& item) {
-                    return item.getXmlPath() == "xl/calcChain.xml";
-                });
-
-                if (item != m_data.end()) m_data.erase(item);
-            }
-
-            else if constexpr (std::is_same_v<Command, XLCommandAddSharedStrings>) {
-                std::string sharedStrings {
-                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                    "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" count=\"1\" uniqueCount=\"1\">\n"
-                    "  <si>\n"
-                    "    <t/>\n"
-                    "  </si>\n"
-                    "</sst>"
-                };
-                m_contentTypes.addOverride("/xl/sharedStrings.xml", XLContentType::SharedStrings);
-                m_wbkRelationships.addRelationship(XLRelationshipType::SharedStrings, "sharedStrings.xml");
-                m_archive.addEntry("xl/sharedStrings.xml", sharedStrings);
-            }
-
-            else if constexpr (std::is_same_v<Command, XLCommandAddWorksheet>) {
-                std::string emptyWorksheet {
-                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
-                    "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\""
-                    " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\""
-                    " xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" mc:Ignorable=\"x14ac\""
-                    " xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\">"
-                    "<dimension ref=\"A1\"/>"
-                    "<sheetViews>"
-                    "<sheetView workbookViewId=\"0\"/>"
-                    "</sheetViews>"
-                    "<sheetFormatPr baseColWidth=\"10\" defaultRowHeight=\"16\" x14ac:dyDescent=\"0.2\"/>"
-                    "<sheetData/>"
-                    "<pageMargins left=\"0.7\" right=\"0.7\" top=\"0.75\" bottom=\"0.75\" header=\"0.3\" footer=\"0.3\"/>"
-                    "</worksheet>"
-                };
-                m_contentTypes.addOverride(command.sheetPath(), XLContentType::Worksheet);
-                m_wbkRelationships.addRelationship(XLRelationshipType::Worksheet, command.sheetPath().substr(4));
-                m_appProperties.appendSheetName(command.sheetName());
-                m_archive.addEntry(command.sheetPath().substr(1), emptyWorksheet);
-                m_data.emplace_back(
-                    /* parentDoc */ this,
-                    /* xmlPath   */ command.sheetPath().substr(1),
-                    /* xmlID     */ m_wbkRelationships.relationshipByTarget(command.sheetPath().substr(4)).id(),
-                    /* xmlType   */ XLContentType::Worksheet);
-            }
-
-            else if constexpr (std::is_same_v<Command, XLCommandAddChartsheet>) {
-            }
-
-            else if constexpr (std::is_same_v<Command, XLCommandDeleteSheet>) {
-                m_appProperties.deleteSheetName(command.sheetName());
-                auto sheetPath = "/xl/" + m_wbkRelationships.relationshipById(command.sheetID()).target();
-                m_archive.deleteEntry(sheetPath.substr(1));
-                m_contentTypes.deleteOverride(sheetPath);
-                m_wbkRelationships.deleteRelationship(command.sheetID());
-                m_data.erase(std::find_if(m_data.begin(), m_data.end(), [&](const XLXmlData& item) {
-                    return item.getXmlPath() == sheetPath.substr(1);
-                }));
-            }
-
-            else if constexpr (std::is_same_v<Command, XLCommandCloneSheet>) {
-                auto internalID = m_workbook.createInternalSheetID();
-                auto sheetPath  = "/xl/worksheets/sheet" + std::to_string(internalID) + ".xml";
-                if (m_workbook.sheetExists(command.cloneName()))
-                    throw XLInternalError("Sheet named \"" + command.cloneName() + "\" already exists.");
-
-                if (m_wbkRelationships.relationshipById(command.sheetID()).type() == XLRelationshipType::Worksheet) {
-                    m_contentTypes.addOverride(sheetPath, XLContentType::Worksheet);
-                    m_wbkRelationships.addRelationship(XLRelationshipType::Worksheet, sheetPath.substr(4));
-                    m_appProperties.appendSheetName(command.cloneName());
-                    m_archive.addEntry(sheetPath.substr(1), std::find_if(m_data.begin(), m_data.end(), [&](const XLXmlData& data) {
-                                                                return data.getXmlPath().substr(3) ==
-                                                                       m_wbkRelationships.relationshipById(command.sheetID()).target();
-                                                            })->getRawData());
-                    m_data.emplace_back(
-                        /* parentDoc */ this,
-                        /* xmlPath   */ sheetPath.substr(1),
-                        /* xmlID     */ m_wbkRelationships.relationshipByTarget(sheetPath.substr(4)).id(),
-                        /* xmlType   */ XLContentType::Worksheet);
-                }
-                else {
-                    m_contentTypes.addOverride(sheetPath, XLContentType::Chartsheet);
-                    m_wbkRelationships.addRelationship(XLRelationshipType::Chartsheet, sheetPath.substr(4));
-                    m_appProperties.appendSheetName(command.cloneName());
-                    m_archive.addEntry(sheetPath.substr(1), std::find_if(m_data.begin(), m_data.end(), [&](const XLXmlData& data) {
-                                                                return data.getXmlPath().substr(3) ==
-                                                                       m_wbkRelationships.relationshipById(command.sheetID()).target();
-                                                            })->getRawData());
-                    m_data.emplace_back(
-                        /* parentDoc */ this,
-                        /* xmlPath   */ sheetPath.substr(1),
-                        /* xmlID     */ m_wbkRelationships.relationshipByTarget(sheetPath.substr(4)).id(),
-                        /* xmlType   */ XLContentType::Chartsheet);
-                }
-
-                m_workbook.prepareSheetMetadata(command.cloneName(), internalID);
-            }
-
-            else {
-                throw XLInternalError("Invalid command object.");
-            }
-        }
+        bool execCommand(const XLCommand& command);
 
         /**
          * @brief
-         * @tparam Query
          * @param query
          * @return
          */
-        template<typename Query>
-        Query executeQuery(Query query) const
-        {
-            if constexpr (std::is_same_v<Query, XLQuerySheetName>) {    // NOLINT
-                query.setSheetName(m_workbook.sheetName(query.sheetID()));
-                return query;
-            }
-
-            else if constexpr (std::is_same_v<Query, XLQuerySheetIndex>) {
-                return query;
-            }
-
-            else if constexpr (std::is_same_v<Query, XLQuerySheetVisibility>) {
-                query.setSheetVisibility(m_workbook.sheetVisibility(query.sheetID()));
-                return query;
-            }
-
-            else if constexpr (std::is_same_v<Query, XLQuerySheetType>) {
-                if (m_wbkRelationships.relationshipById(query.sheetID()).type() == XLRelationshipType::Worksheet)
-                    query.setSheetType(XLContentType::Worksheet);
-                else
-                    query.setSheetType(XLContentType::Chartsheet);
-
-                return query;
-            }
-
-            else if constexpr (std::is_same_v<Query, XLQuerySheetID>) {
-                query.setSheetVisibility(m_workbook.sheetVisibility(query.sheetName()));
-                return query;
-            }
-
-            else if constexpr (std::is_same_v<Query, XLQuerySheetRelsID>) {
-                query.setSheetID(m_wbkRelationships.relationshipByTarget(query.sheetPath().substr(4)).id());
-                return query;
-            }
-
-            else if constexpr (std::is_same_v<Query, XLQuerySheetRelsTarget>) {
-                query.setSheetTarget(m_wbkRelationships.relationshipById(query.sheetID()).target());
-                return query;
-            }
-
-            // TODO: This requires m_sharedStrings to be mutable. Is there a way around that?
-            else if constexpr (std::is_same_v<Query, XLQuerySharedStrings>) {
-                query.setSharedStrings(&m_sharedStrings);
-                return query;
-            }
-
-            else {
-                throw XLInternalError("Invalid query object.");
-            }
-        }
+        XLQuery execQuery(const XLQuery& query) const;
 
         /**
          * @brief
-         * @tparam Query
          * @param query
          * @return
          */
-        template<typename Query>
-        Query executeQuery(Query query)
-        {
-            if constexpr (std::is_same_v<Query, XLQuerySheetName>) {    // NOLINT
-                return static_cast<const XLDocument&>(*this).executeQuery(query);
-            }
+        XLQuery execQuery(const XLQuery& query);
 
-            else if constexpr (std::is_same_v<Query, XLQuerySheetIndex>) {
-                return static_cast<const XLDocument&>(*this).executeQuery(query);
-            }
+        /**
+         * @brief configure an alternative XML saving declaration to be used with pugixml
+         * @param savingDeclaration An XLXmlSavingDeclaration object with the configuration to use
+         * @return
+         */
+        void setSavingDeclaration(XLXmlSavingDeclaration const& savingDeclaration);
 
-            else if constexpr (std::is_same_v<Query, XLQuerySheetVisibility>) {
-                return static_cast<const XLDocument&>(*this).executeQuery(query);
-            }
+        /**
+         * @brief
+         * @return
+         */
+        const XLSharedStrings& sharedStrings() const { return m_sharedStrings; }
 
-            else if constexpr (std::is_same_v<Query, XLQuerySheetType>) {
-                return static_cast<const XLDocument&>(*this).executeQuery(query);
-            }
-
-            else if constexpr (std::is_same_v<Query, XLQuerySheetID>) {
-                return static_cast<const XLDocument&>(*this).executeQuery(query);
-            }
-
-            else if constexpr (std::is_same_v<Query, XLQuerySheetRelsID>) {
-                return static_cast<const XLDocument&>(*this).executeQuery(query);
-            }
-
-            else if constexpr (std::is_same_v<Query, XLQuerySheetRelsTarget>) {
-                return static_cast<const XLDocument&>(*this).executeQuery(query);
-            }
-
-            else if constexpr (std::is_same_v<Query, XLQuerySharedStrings>) {
-                return static_cast<const XLDocument&>(*this).executeQuery(query);
-            }
-
-            else if constexpr (std::is_same_v<Query, XLQueryXmlData>) {
-                auto result =
-                    std::find_if(m_data.begin(), m_data.end(), [&](const XLXmlData& item) { return item.getXmlPath() == query.xmlPath(); });
-                if (result == m_data.end()) throw XLInternalError("Path does not exist in zip archive.");
-                query.setXmlData(&*result);
-                return query;
-            }
-
-            else {
-                throw XLInternalError("Invalid query object.");
-            }
-        }
+        /**
+         * @brief rewrite the shared strings cache (and update all cells referencing an index from the shared strings), dropping unused strings
+         * @note potentially time-intensive (on documents with many strings or many cells referring shared strings)
+         */
+        void cleanupSharedStrings();
 
         //----------------------------------------------------------------------------------------------------------------------
         //           Protected Member Functions
@@ -487,39 +396,101 @@ namespace OpenXLSX
         std::string extractXmlFromArchive(const std::string& path);
 
         /**
-         * @brief
+         * @brief fetch the XLXmlData object as stored in m_data, throw XLInternalError if path is not found
+         * @param path The relative path of the file.
+         * @param doNotThrow if true, will return a nullptr if path is not found
+         * @return a pointer to the XLXmlData object stored in m_data (or nullptr, see doNotThrow)
+         */
+        XLXmlData* getXmlData(const std::string& path, bool doNotThrow = false);
+
+        /**
+         * @brief const overload of getXmlData
          * @param path
+         * @param doNotThrow
          * @return
          */
-        XLXmlData* getXmlData(const std::string& path);
+        const XLXmlData* getXmlData(const std::string& path, bool doNotThrow = false) const;
 
         /**
          * @brief
          * @param path
          * @return
          */
-        const XLXmlData* getXmlData(const std::string& path) const;
+        bool hasXmlData(const std::string& path) const;
 
         //----------------------------------------------------------------------------------------------------------------------
         //           Private Member Variables
         //----------------------------------------------------------------------------------------------------------------------
 
     private:
-        std::string                  m_filePath {}; /**< The path to the original file*/
-        std::string                  m_realPath {}; /**<  */
-        mutable std::list<XLXmlData> m_data {};     /**<  */
+        bool m_suppressWarnings {true}; /**< If true, will suppress output of warnings where supported */
+
+        std::string m_filePath {};      /**< The path to the original file*/
+
+        XLXmlSavingDeclaration m_xmlSavingDeclaration;  /**< The xml saving declaration that will be passed to pugixml before generating the XML output data*/
+
+        mutable std::list<XLXmlData>    m_data {};              /**<  */
+        mutable std::deque<std::string> m_sharedStringCache {}; /**<  */
+        mutable XLSharedStrings         m_sharedStrings {};     /**<  */
 
         XLRelationships m_docRelationships {}; /**< A pointer to the document relationships object*/
         XLRelationships m_wbkRelationships {}; /**< A pointer to the document relationships object*/
         XLContentTypes  m_contentTypes {};     /**< A pointer to the content types object*/
         XLAppProperties m_appProperties {};    /**< A pointer to the App properties object */
         XLProperties    m_coreProperties {};   /**< A pointer to the Core properties object*/
-        mutable XLSharedStrings m_sharedStrings {};    /**<  */
+        XLStyles        m_styles {};           /**< A pointer to the document styles object*/
         XLWorkbook      m_workbook {};         /**< A pointer to the workbook object */
-        XLZipArchive    m_archive {};          /**<  */
+        IZipArchive     m_archive {};          /**<  */
     };
+
+
+    //----------------------------------------------------------------------------------------------------------------------
+    //           Global utility functions
+    //----------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * @brief Get a hexadecimal representation of size bytes, starting at data
+     * @param data A pointer to the data bytes to format
+     * @param size The amount of data bytes to format
+     * @return A string with the base-16 representation of the data bytes
+     * @note 2024-08-18 BUGFIX: replaced char array with std::string, as ISO C++ standard does not permit variable size arrays
+     */
+    OPENXLSX_EXPORT std::string BinaryAsHexString(const void *data, const size_t size);
+
+    /**
+     * @brief Calculate the two-byte XLSX password hash for password
+     * @param password the string to hash
+     * @return the two byte value calculated according to the XLSX password hashing algorithm
+     */
+    OPENXLSX_EXPORT uint16_t ExcelPasswordHash (std::string password);
+    /**
+     * @brief Same as ExcelPasswordHash but format the output as a 4-digit hexadecimal string
+     * @param password the string to hash
+     * @return a string that can be stored in OOXML as a password hash
+     */
+    OPENXLSX_EXPORT std::string ExcelPasswordHashAsString (std::string password);
+
+    /**
+     * @brief eliminate from pathA leading subdirectories shared with pathB and find a path from pathB to pathA destination
+     * @param pathA return a relative path to here
+     * @param pathB escape this path via "../" until the common branch with pathA is reached
+     * @return a string that leads via a relative path from pathA to pathB
+     * @throw XLInternalError if pathA and pathB have no common leading (sub)directory
+     */
+    std::string getPathARelativeToPathB(std::string const& pathA, std::string const& pathB);
+
+    /**
+     * @brief eliminate from path any . and .. subdirectories by ignoring them (.) or escaping to the parent directory (..)
+     * @param path the path to normalize in this way
+     * @return a normalized path (no longer contains . or .. entries)
+     * @throw XLInternalError upon invalid path - e.g. containing "//" or trying to escape via ".." beyond the context of path
+     */
+    std::string eliminateDotAndDotDotFromPath(const std::string& path);
 
 }    // namespace OpenXLSX
 
-#pragma warning(pop)
+#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
+#   pragma warning(pop)
+#endif // _MSC_VER
+
 #endif    // OPENXLSX_XLDOCUMENT_HPP

@@ -46,10 +46,14 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #ifndef OPENXLSX_XLCELL_HPP
 #define OPENXLSX_XLCELL_HPP
 
-#pragma warning(push)
-#pragma warning(disable : 4251)
-#pragma warning(disable : 4275)
+#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
+#   pragma warning(push)
+#   pragma warning(disable : 4251)
+#   pragma warning(disable : 4275)
+#endif // _MSC_VER
 
+#include <iostream> // std::ostream
+#include <ostream>  // std::basic_ostream
 #include <memory>
 
 // ===== OpenXLSX Includes ===== //
@@ -57,12 +61,20 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #include "XLCellReference.hpp"
 #include "XLCellValue.hpp"
 #include "XLFormula.hpp"
+#include "XLSharedStrings.hpp"
+#include "XLStyles.hpp"          // XLStyleIndex
 
 // ========== CLASS AND ENUM TYPE DEFINITIONS ========== //
 namespace OpenXLSX
 {
+    // ===== Flags that can be passed to XLCell::clear as parameter keep, flags can be combined with bitwise OR
+    //                                  // Do not clear the cell's:
+    constexpr const uint32_t XLKeepCellStyle   =  1; // style (attribute s)
+    constexpr const uint32_t XLKeepCellType    =  2; // type (attribute t)
+    constexpr const uint32_t XLKeepCellValue   =  4; // value (child node v)
+    constexpr const uint32_t XLKeepCellFormula =  8; // formula (child node f)
+
     class XLCellRange;
-    class XLSharedStrings;
 
     /**
      * @brief An implementation class encapsulating the properties and behaviours of a spreadsheet cell.
@@ -88,7 +100,7 @@ namespace OpenXLSX
          * @param cellNode
          * @param sharedStrings
          */
-        XLCell(const XMLNode& cellNode, XLSharedStrings* sharedStrings);
+        XLCell(const XMLNode& cellNode, const XLSharedStrings& sharedStrings);
 
         /**
          * @brief Copy constructor
@@ -109,7 +121,7 @@ namespace OpenXLSX
          * @brief Destructor
          * @note Using the default destructor
          */
-        ~XLCell();
+        virtual ~XLCell();
 
         /**
          * @brief Copy assignment operator
@@ -117,31 +129,41 @@ namespace OpenXLSX
          * @return A reference to the new object
          * @note Copies only the cell contents, not the pointer to parent worksheet etc.
          */
-        XLCell& operator=(const XLCell& other);
+        virtual XLCell& operator=(const XLCell& other);
 
         /**
-         * @brief Move assignment operator [deleted]
+         * @brief Move assignment operator
          * @param other The XLCell object to be move assigned
          * @return A reference to the new object
          * @note The move assignment constructor has been deleted, as it makes no sense to move a cell.
          */
-        XLCell& operator=(XLCell&& other) noexcept;
+        virtual XLCell& operator=(XLCell&& other) noexcept;
 
         /**
-         * @brief This copy assignment operators takes a range as the argument. The purpose is to copy the range to a
-         * new location, with the target cell being the top left cell in the range.
-         * @param range The range to be copied
-         * @return A reference to the new cell object.
-         * @note Copies only the cell contents (values).
-         * @todo Consider moving this function to the XLCellValueProxy class. It would make more sense there.
+         * @brief Copy contents of a cell, value & formula
+         * @param other The XLCell object from which to copy
          */
-        XLCell& operator=(const XLCellRange& range);
+        void copyFrom(XLCell const& other);
 
         /**
-         * @brief
+         * @brief test if cell object has no (valid) content
+         * @return
+         */
+        bool empty() const;
+
+        /**
+         * @brief opposite of empty()
          * @return
          */
         explicit operator bool() const;
+
+        /**
+         * @brief clear all cell content and attributes except for the cell reference (attribute r)
+         * @param keep do not clear cell properties whose flags are set in keep (XLKeepCellStyle, XLKeepCellType,
+         *              XLKeepCellValue, XLKeepCellFormula), flags can be combined with bitwise OR
+         * @note due to the way OOXML separates comments from the cells, this function will *not* clear a cell comment - refer to XLComments& XLSheet::comments() for that
+         */
+        void clear(uint32_t keep);
 
         /**
          * @brief
@@ -162,8 +184,14 @@ namespace OpenXLSX
         XLCellReference cellReference() const;
 
         /**
-         * @brief
-         * @return
+         * @brief get the XLCell object from the current cell offset
+         * @return A reference to the XLCell object.
+         */
+        XLCell offset(uint16_t rowOffset, uint16_t colOffset) const;
+
+        /**
+         * @brief test if cell has a formula (XML) node, even if it is an empty string
+         * @return true if XML has a formula node, empty or not - otherwise false
          */
         bool hasFormula() const;
 
@@ -171,26 +199,118 @@ namespace OpenXLSX
          * @brief
          * @return
          */
-//        std::string formula() const;
-
         XLFormulaProxy& formula();
 
+        /**
+         * @brief
+         * @return
+         */
         const XLFormulaProxy& formula() const;
 
         /**
          * @brief
-         * @param newFormula
          */
-//        void setFormula(const std::string& newFormula);
+        std::string getString() const { return value().getString(); }
+
+        /**
+         * @brief Get the array index of xl/styles.xml:<styleSheet>:<cellXfs> for the style used in this cell.
+         *        This value is stored in the s attribute of a cell like so: s="2"
+         * @returns The index of the applicable format style
+         */
+        XLStyleIndex cellFormat() const;
+
+        /**
+         * @brief Set the cell style (attribute s) with a reference to the array index of xl/styles.xml:<styleSheet>:<cellXfs>
+         * @param cellFormatIndex The style to set, corresponding to the nidex of XLStyles::cellStyles()
+         * @returns True on success, false on failure
+         */
+        bool setCellFormat(XLStyleIndex cellFormatIndex);
+
+        /**
+         * @brief Print the XML contents of the XLCell using the underlying XMLNode print function
+         */
+        void print(std::basic_ostream<char>& ostr) const;
 
     private:
+        /**
+         * @brief
+         * @param lhs
+         * @param rhs
+         * @return
+         */
+        static bool isEqual(const XLCell& lhs, const XLCell& rhs);
+
         //---------- Private Member Variables ---------- //
         std::unique_ptr<XMLNode> m_cellNode;      /**< A pointer to the root XMLNode for the cell. */
-        XLSharedStrings*         m_sharedStrings; /**< */
+        XLSharedStringsRef       m_sharedStrings; /**< */
         XLCellValueProxy         m_valueProxy;    /**< */
-        XLFormulaProxy           m_formulaProxy; /**< */
+        XLFormulaProxy           m_formulaProxy;  /**< */
     };
 
+    class OPENXLSX_EXPORT XLCellAssignable : public XLCell
+    {
+    public:
+        /**
+         * @brief Default constructor. Constructs a null object.
+         */
+        XLCellAssignable() : XLCell() {}
+
+        /**
+         * @brief Copy constructor. Constructs an assignable XLCell from an existing cell
+         * @param other the cell to construct from
+         */
+        XLCellAssignable (XLCell const & other);
+
+        /**
+         * @brief Move constructor. Constructs an assignable XLCell from a temporary (r)value
+         * @param other the cell to construct from
+         */
+        XLCellAssignable (XLCell && other);
+
+        // /**
+        //  * @brief Inherit all constructors with parameters from XLCell
+        //  */
+        // template<class base>
+        // // explicit XLCellAssignable(base b) : XLCell(b)
+        // // NOTE: BUG: explicit keyword triggers tons of compiler errors when << operator attempts to use an XLCell (implicit conversion works because << is overloaded for XLCellAssignable)
+        // XLCellAssignable(base b) : XLCell(b)
+        // {}
+
+        /**
+         * @brief Copy assignment operator
+         * @param other The XLCell object to be copy assigned
+         * @return A reference to the new object
+         * @note Copies only the cell contents, not the pointer to parent worksheet etc.
+         */
+        XLCellAssignable& operator=(const XLCell& other) override;
+        XLCellAssignable& operator=(const XLCellAssignable& other);
+
+        /**
+         * @brief Move assignment operator -> overrides XLCell copy operator, becomes a copy operator
+         * @param other The XLCell object to be copy assigned
+         * @return A reference to the new object
+         * @note Copies only the cell contents, not the pointer to parent worksheet etc.
+         */
+        XLCellAssignable& operator=(XLCell&& other) noexcept override;
+        XLCellAssignable& operator=(XLCellAssignable&& other) noexcept;
+
+        /**
+         * @brief Templated assignment operator.
+         * @tparam T The type of the value argument.
+         * @param value The value.
+         * @return A reference to the assigned-to object.
+         */
+        template<typename T,
+                 typename = std::enable_if_t<
+                     std::is_integral_v<T> || std::is_floating_point_v<T> || std::is_same_v<std::decay_t<T>, std::string> ||
+                     std::is_same_v<std::decay_t<T>, std::string_view> || std::is_same_v<std::decay_t<T>, const char*> ||
+                     std::is_same_v<std::decay_t<T>, char*> || std::is_same_v<T, XLDateTime>>>
+        XLCellAssignable& operator=(T value)
+        {
+            XLCell::value() = value; // forward implementation to templated XLCellValue& XLCellValue::operator=(T value)
+            return *this;
+        }
+    };
 }    // namespace OpenXLSX
 
 // ========== FRIEND FUNCTION IMPLEMENTATIONS ========== //
@@ -202,10 +322,7 @@ namespace OpenXLSX
      * @param rhs
      * @return
      */
-    inline bool operator==(const XLCell& lhs, const XLCell& rhs)
-    {
-        return lhs.m_cellNode == rhs.m_cellNode;
-    }
+    inline bool operator==(const XLCell& lhs, const XLCell& rhs) { return XLCell::isEqual(lhs, rhs); }
 
     /**
      * @brief
@@ -213,12 +330,37 @@ namespace OpenXLSX
      * @param rhs
      * @return
      */
-    inline bool operator!=(const XLCell& lhs, const XLCell& rhs)
+    inline bool operator!=(const XLCell& lhs, const XLCell& rhs) { return !XLCell::isEqual(lhs, rhs); }
+
+    /**
+     * @brief      ostream output of XLCell content as string
+     * @param os   the ostream destination
+     * @param c    the cell to output to the stream
+     * @return
+     */
+    inline std::ostream& operator<<(std::ostream& os, const XLCell& c)
     {
-        return !(lhs.m_cellNode == rhs.m_cellNode);
+        os << c.getString();
+        // TODO: send to stream different data types based on cell data type
+        return os;
     }
 
+    /**
+     * @brief      ostream output of XLCellAssignable content as string
+     * @param os   the ostream destination
+     * @param c    the cell to output to the stream
+     * @return
+     */
+    inline std::ostream& operator<<(std::ostream& os, const XLCellAssignable& c)
+    {
+        os << c.getString();
+        // TODO: send to stream different data types based on cell data type
+        return os;
+    }
 }    // namespace OpenXLSX
 
-#pragma warning(pop)
+#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
+#   pragma warning(pop)
+#endif // _MSC_VER
+
 #endif    // OPENXLSX_XLCELL_HPP

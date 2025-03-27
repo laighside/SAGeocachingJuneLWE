@@ -1,16 +1,18 @@
 #ifndef ZIPPYHEADERONLY_ZIPPY_HPP
 #define ZIPPYHEADERONLY_ZIPPY_HPP
 
-#pragma warning(push)
-#pragma warning(disable : 4334)
-#pragma warning(disable : 4996)
-#pragma warning(disable : 4127)
-#pragma warning(disable : 4267)
-#pragma warning(disable : 4100)
-#pragma warning(disable : 4245)
-#pragma warning(disable : 4267)
-#pragma warning(disable : 4242)
-#pragma warning(disable : 4244)
+#ifdef _MSC_VER // avoid other compilers complaining about MSVC-only pragmas being unknown
+#   pragma warning(push)
+#   pragma warning(disable : 4334)
+#   pragma warning(disable : 4996)
+#   pragma warning(disable : 4127)
+#   pragma warning(disable : 4267)
+#   pragma warning(disable : 4100)
+#   pragma warning(disable : 4245)
+#   pragma warning(disable : 4267)
+#   pragma warning(disable : 4242)
+#   pragma warning(disable : 4244)
+#endif // _MSC_VER
 
 #include <algorithm>
 #include <cstddef>
@@ -27,9 +29,57 @@
 #    include <direct.h>
 #endif
 
-#include <nowide/cstdio.hpp>
+#ifdef ENABLE_NOWIDE // DONE: test this on windows
+#    include <nowide/cstdio.hpp>
+#    define FILESYSTEM_NAMESPACE nowide
+#else
+#    define FILESYSTEM_NAMESPACE std
+#endif
 
-namespace
+// 2024-09-15: moved Zippy exceptions to top of module to be able to use them earlier - forward declaration didn't seem to work
+namespace Zippy
+{
+    /**
+     * @brief The ZipRuntimeError class is a custom exception class derived from the std::runtime_error class.
+     * @details In case of an error in the Zippy library, an ZipRuntimeError object will be thrown, with a message
+     * describing the details of the error.
+     */
+    class ZipRuntimeError : public std::runtime_error
+    {
+    public:
+        /**
+         * @brief Constructor.
+         * @param err A string with a description of the error.
+         */
+        inline explicit ZipRuntimeError(const std::string& err) : runtime_error(err) {}
+
+        /**
+         * @brief Destructor.
+         */
+        inline ~ZipRuntimeError() override = default;
+    };
+
+    /**
+     * @brief
+     */
+    class ZipLogicError : public std::logic_error
+    {
+    public:
+        /**
+         * @brief
+         * @param err
+         */
+        inline explicit ZipLogicError(const std::string& err) : logic_error(err) {}
+
+        /**
+         * @brief
+         */
+        inline ~ZipLogicError() override = default;
+    };
+
+}    // namespace Zippy
+
+namespace ns_miniz
 {
     /* miniz.c 2.0.8 - public domain deflate/inflate, zlib-subset, ZIP reading/writing/appending, PNG writing
    See "unlicense" statement at the end of this file.
@@ -144,6 +194,64 @@ namespace
      (i.e. 32-bit stat() fails for me on files > 0x7FFFFFFF bytes).
 */
 #pragma once
+
+    /* 2024-09-15: added fileExists and moveFile functions to verify that FILESYSTEM_NAMESPACE::rename actually succeeded
+     *  ==> print an error to stderr if sourceFile still exists after a "successful" rename
+     *  ==> throw an exception if destinationFile was not created
+     */
+
+    /* Function: fileExists
+     * Purpose: test if fileName exists on the filesystem, using unicode-compatible functions (FILESYSTEM_NAMESPACE)
+     * Parameters:
+     *     fileName        the file path to check
+     * Returns:
+     *     true    if file exists
+     *     false    if it does not
+     */
+    bool fileExists( const char *fileName )
+    {
+        FILE *f = FILESYSTEM_NAMESPACE::fopen(fileName, "rb");
+        if (f != nullptr) {
+            fclose(f);
+            return true;                         // it exists
+        }
+        return false;    // default: file does not exist
+    }
+    /* End of Function: fileExists */
+
+    /* Function: moveFile
+     * Purpose: attempt file rename, using unicode-compatible functions (FILESYSTEM_NAMESPACE)
+     *           with additional test if source file is gone and destinationFile exists after move
+     * Parameters:
+     *     sourceFile       move this file
+     *     destinationFile  to this location
+     * Returns: N/A
+     * Throws:: std::filesystem::filesystem_error upon failure - sourceFile will remain in that case
+     */
+    void moveFile(const char *sourceFile, const char *destinationFile)
+    {
+        bool success = false;
+        if (0 == FILESYSTEM_NAMESPACE::rename(sourceFile, destinationFile)) { // initially: try move
+            // if rename reported success, test if source file is gone
+            if (fileExists(sourceFile)) {
+                std::cerr << "zippy " << __func__ << " WARNING: FILESYSTEM_NAMESPACE::rename reported success"
+                /**/                                 << " but sourceFile \"" << sourceFile << "\" still exists" << std::endl;
+                if( 0 == FILESYSTEM_NAMESPACE::remove( sourceFile ) ) // on success: attempt to unlink the source file - can't do anything if this fails, however
+                    std::cerr << "zippy " << __func__ << " WARNING: unlink failed on " << sourceFile << std::endl;
+            }
+            if (fileExists(destinationFile)) // confirm that destination file exists after rename
+                success = true;
+        }
+        // else: rename failed, success is still false
+
+        if (!success) {
+            using namespace std::literals::string_literals;
+            std::string strErr = "zippy "s + std::string(__func__) + " ERROR: failed to rename "s + std::string(sourceFile) + " to " + std::string(destinationFile);
+            std::cerr << strErr << std::endl;
+            throw Zippy::ZipRuntimeError(strErr);
+        }
+    }
+    /* End of Function: moveFile */
 
     /* Defines to completely disable specific portions of miniz.c:
        If all macros here are defined the only functionality remaining will be CRC-32, adler-32, tinfl, and tdefl. */
@@ -1013,7 +1121,15 @@ namespace
     {
 #    endif
 
-        enum {
+        // ===== 2024-08-18 minor bugfix: assign an explicit type to below nameless enum to address:
+        // | [..] In function ‘ns_miniz::mz_zip_reader_extract_iter_state* ns_miniz::mz_zip_reader_extract_iter_new(mz_zip_archive*, mz_uint, mz_uint)’:
+        // | [..]: warning: enumerated and non-enumerated type in conditional expression [-Wextra]
+        // |   597 | #define MZ_MIN(a, b) (((a) < (b)) ? (a) : (b))
+        // |                              ~~~~~~~~~~~~^~~~~~~~~~~
+        // | [..]: note: in expansion of macro ‘MZ_MIN’
+        // |  6581 |                     pState->read_buf_size = MZ_MIN(pState->file_stat.m_comp_size, MZ_ZIP_MAX_IO_BUF_SIZE);
+        // |       |                                             ^~~~~~
+        enum : uint64_t {
             /* Note: These enums can be reduced as needed to save memory or stack space - they are pretty conservative. */
             MZ_ZIP_MAX_IO_BUF_SIZE               = 64 * 1024,
             MZ_ZIP_MAX_ARCHIVE_FILENAME_SIZE     = 512,
@@ -4546,15 +4662,16 @@ common_exit:
 #        if defined(_MSC_VER) || defined(__MINGW64__)
     static FILE* mz_fopen(const char* pFilename, const char* pMode)
     {
-        FILE* pFile = nowide::fopen(pFilename, pMode);
+        FILE* pFile = FILESYSTEM_NAMESPACE::fopen(pFilename, pMode);
         return pFile;
     }
     static FILE* mz_freopen(const char* pPath, const char* pMode, FILE* pStream)
     {
-        FILE* pFile = nowide::freopen(pPath, pMode, pStream);
+        FILE* pFile = FILESYSTEM_NAMESPACE::freopen(pPath, pMode, pStream);
         if (!pFile) return NULL;
         return pFile;
     }
+
 #            ifndef MINIZ_NO_TIME
 #                include <sys/utime.h>
 #            endif
@@ -4568,12 +4685,13 @@ common_exit:
 #            define MZ_FILE_STAT _stat
 #            define MZ_FFLUSH fflush
 #            define MZ_FREOPEN mz_freopen
-#            define MZ_DELETE_FILE remove
+#            define MZ_DELETE_FILE FILESYSTEM_NAMESPACE::remove
+#            define MZ_RENAME_FILE FILESYSTEM_NAMESPACE::rename
 #        elif defined(__MINGW32__)
 #            ifndef MINIZ_NO_TIME
 #                include <sys/utime.h>
 #            endif
-#            define MZ_FOPEN(f, m) nowide::fopen(f, m)
+#            define MZ_FOPEN(f, m) FILESYSTEM_NAMESPACE::fopen(f, m)
 #            define MZ_FCLOSE fclose
 #            define MZ_FREAD fread
 #            define MZ_FWRITE fwrite
@@ -4582,13 +4700,14 @@ common_exit:
 #            define MZ_FILE_STAT_STRUCT _stat
 #            define MZ_FILE_STAT _stat
 #            define MZ_FFLUSH fflush
-#            define MZ_FREOPEN(f, m, s) nowide::freopen(f, m, s)
-#            define MZ_DELETE_FILE nowide::remove
+#            define MZ_FREOPEN(f, m, s) FILESYSTEM_NAMESPACE::freopen(f, m, s)
+#            define MZ_DELETE_FILE FILESYSTEM_NAMESPACE::remove
+#            define MZ_RENAME_FILE FILESYSTEM_NAMESPACE::rename
 #        elif defined(__TINYC__)
 #            ifndef MINIZ_NO_TIME
 #                include <sys/utime.h>
 #            endif
-#            define MZ_FOPEN(f, m) nowide::fopen(f, m)
+#            define MZ_FOPEN(f, m) FILESYSTEM_NAMESPACE::fopen(f, m)
 #            define MZ_FCLOSE fclose
 #            define MZ_FREAD fread
 #            define MZ_FWRITE fwrite
@@ -4597,8 +4716,9 @@ common_exit:
 #            define MZ_FILE_STAT_STRUCT stat
 #            define MZ_FILE_STAT stat
 #            define MZ_FFLUSH fflush
-#            define MZ_FREOPEN(f, m, s) nowide::freopen(f, m, s)
-#            define MZ_DELETE_FILE nowide::remove
+#            define MZ_FREOPEN(f, m, s) FILESYSTEM_NAMESPACE::freopen(f, m, s)
+#            define MZ_DELETE_FILE FILESYSTEM_NAMESPACE::remove
+#            define MZ_RENAME_FILE FILESYSTEM_NAMESPACE::rename
 #        elif defined(__GNUC__) && _LARGEFILE64_SOURCE
 #            ifndef MINIZ_NO_TIME
 #                include <utime.h>
@@ -4613,7 +4733,8 @@ common_exit:
 #            define MZ_FILE_STAT stat64
 #            define MZ_FFLUSH fflush
 #            define MZ_FREOPEN(p, m, s) freopen64(p, m, s)
-#            define MZ_DELETE_FILE remove
+#            define MZ_DELETE_FILE FILESYSTEM_NAMESPACE::remove
+#            define MZ_RENAME_FILE FILESYSTEM_NAMESPACE::rename
 #        elif defined(__APPLE__)
 #            ifndef MINIZ_NO_TIME
 
@@ -4621,7 +4742,7 @@ common_exit:
 
 #            endif
 
-#            define MZ_FOPEN(f, m) nowide::fopen(f, m)
+#            define MZ_FOPEN(f, m) FILESYSTEM_NAMESPACE::fopen(f, m)
 #            define MZ_FCLOSE fclose
 #            define MZ_FREAD fread
 #            define MZ_FWRITE fwrite
@@ -4630,15 +4751,16 @@ common_exit:
 #            define MZ_FILE_STAT_STRUCT stat
 #            define MZ_FILE_STAT stat
 #            define MZ_FFLUSH fflush
-#            define MZ_FREOPEN(p, m, s) nowide::freopen(p, m, s)
-#            define MZ_DELETE_FILE nowide::remove
+#            define MZ_FREOPEN(p, m, s) FILESYSTEM_NAMESPACE::freopen(p, m, s)
+#            define MZ_DELETE_FILE FILESYSTEM_NAMESPACE::remove
+#            define MZ_RENAME_FILE FILESYSTEM_NAMESPACE::rename
 
 #        else
 #            pragma message("Using fopen, ftello, fseeko, stat() etc. path for file I/O - this path may not support large files.")
 #            ifndef MINIZ_NO_TIME
 #                include <utime.h>
 #            endif
-#            define MZ_FOPEN(f, m) nowide::fopen(f, m)
+#            define MZ_FOPEN(f, m) FILESYSTEM_NAMESPACE::fopen(f, m)
 #            define MZ_FCLOSE fclose
 #            define MZ_FREAD fread
 #            define MZ_FWRITE fwrite
@@ -4652,10 +4774,18 @@ common_exit:
 #            define MZ_FILE_STAT_STRUCT stat
 #            define MZ_FILE_STAT stat
 #            define MZ_FFLUSH fflush
-#            define MZ_FREOPEN(f, m, s) nowide::freopen(f, m, s)
-#            define MZ_DELETE_FILE nowide::remove
+#            define MZ_FREOPEN(f, m, s) FILESYSTEM_NAMESPACE::freopen(f, m, s)
+#            define MZ_DELETE_FILE FILESYSTEM_NAMESPACE::remove
+#            define MZ_RENAME_FILE FILESYSTEM_NAMESPACE::rename
 #        endif /* #ifdef _MSC_VER */
 #    endif /* #ifdef MINIZ_NO_STDIO */
+
+// 2024-09-15: override all previous settings for MZ_RENAME_FILE with moveFile - which correctly invokes FILESYSTEM_NAMESPACE
+//             The purpose is to check rename when it reports success (if sourcefile persists, output a warning & attempt to remove it manually)
+#    ifdef MZ_RENAME_FILE
+#        undef MZ_RENAME_FILE
+#        define MZ_RENAME_FILE moveFile
+#    endif
 
 #    define MZ_TOLOWER(c) ((((c) >= 'A') && ((c) <= 'Z')) ? ((c) - 'A' + 'a') : (c))
 
@@ -9680,49 +9810,9 @@ handle_failure:
 
 #endif /*#ifndef MINIZ_NO_ARCHIVE_APIS*/
 
-}    // namespace
+}    // namespace ns_miniz
 
-namespace Zippy
-{
-    /**
-     * @brief The ZipRuntimeError class is a custom exception class derived from the std::runtime_error class.
-     * @details In case of an error in the Zippy library, an ZipRuntimeError object will be thrown, with a message
-     * describing the details of the error.
-     */
-    class ZipRuntimeError : public std::runtime_error
-    {
-    public:
-        /**
-         * @brief Constructor.
-         * @param err A string with a description of the error.
-         */
-        inline explicit ZipRuntimeError(const std::string& err) : runtime_error(err) {}
-
-        /**
-         * @brief Destructor.
-         */
-        inline ~ZipRuntimeError() override = default;
-    };
-
-    /**
-     * @brief
-     */
-    class ZipLogicError : public std::logic_error
-    {
-    public:
-        /**
-         * @brief
-         * @param err
-         */
-        inline explicit ZipLogicError(const std::string& err) : logic_error(err) {}
-
-        /**
-         * @brief
-         */
-        inline ~ZipLogicError() override = default;
-    };
-
-}    // namespace Zippy
+// 2024-09-15: removed Zippy ZipRuntimeError here to move it to the top of module because forward declaration did not work
 
 namespace Zippy::Impl
 {
@@ -9752,6 +9842,8 @@ namespace Zippy::Impl
 
 namespace Zippy
 {
+    using namespace ns_miniz;
+
     class ZipArchive;
 
     class ZipEntry;
@@ -10465,7 +10557,8 @@ namespace Zippy
             // ===== Validate the temporary file
             mz_zip_error errordata;
             if (!mz_zip_validate_file_archive(fileName.c_str(), 0, &errordata)) {
-                throw ZipRuntimeError(mz_zip_get_error_string(errordata));
+                // throw ZipRuntimeError(mz_zip_get_error_string(errordata));
+                throw ZipRuntimeError(std::string(mz_zip_get_error_string(errordata)) + " (m_ArchivePath: " + m_ArchivePath + ")");
             }
 
             // ===== If everything is OK, open the newly created archive.
@@ -10489,7 +10582,8 @@ namespace Zippy
             }
             m_ArchivePath = fileName;
             if (!mz_zip_reader_init_file(&m_Archive, m_ArchivePath.c_str(), 0)) {
-                throw ZipRuntimeError(mz_zip_get_error_string(m_Archive.m_last_error));
+                // throw ZipRuntimeError(mz_zip_get_error_string(m_Archive.m_last_error));
+                throw ZipRuntimeError(std::string(mz_zip_get_error_string(m_Archive.m_last_error)) + " (m_ArchivePath: " + m_ArchivePath + ")");
             }
             m_IsOpen = true;
 
@@ -10497,7 +10591,8 @@ namespace Zippy
             for (unsigned int i = 0; i < mz_zip_reader_get_num_files(&m_Archive); i++) {
                 ZipEntryInfo info;
                 if (!mz_zip_reader_file_stat(&m_Archive, i, &info)) {
-                    throw ZipRuntimeError(mz_zip_get_error_string(m_Archive.m_last_error));
+                    // throw ZipRuntimeError(mz_zip_get_error_string(m_Archive.m_last_error));
+                    throw ZipRuntimeError(std::string(mz_zip_get_error_string(m_Archive.m_last_error)) + " (m_ArchivePath: " + m_ArchivePath + ")");
                 }
 
                 m_ZipEntries.emplace_back(Impl::ZipEntry(info));
@@ -10526,8 +10621,9 @@ namespace Zippy
             if (IsOpen()) {
                 mz_zip_reader_end(&m_Archive);
             }
-            m_ZipEntries.clear();
             m_ArchivePath = "";
+            m_IsOpen = false;       // 2024-12-18: minor bugfix, m_IsOpen was not set to false
+            m_ZipEntries.clear();
         }
 
         /**
@@ -10732,13 +10828,31 @@ namespace Zippy
             if (filename.empty()) {
                 filename = m_ArchivePath;
             }
+#           ifdef _WIN32
+               std::replace( filename.begin(), filename.end(), '\\', '/' ); // pull request #210, alternate fix: fopen etc work fine with forward slashes
+#           endif
+
+            // ===== Determine path of the current file
+            size_t pathPos = filename.rfind('/');
+
+            // pull request #191, support AmigaOS style paths
+#           ifdef __amigaos__
+                constexpr const char * localFolder = "";    // local folder on AmigaOS can not be explicitly expressed in a path
+                if (pathPos == std::string::npos) pathPos = filename.rfind(':'); // if no '/' found, attempt to find amiga drive root path
+#           else
+                constexpr const char * localFolder = "./"; // local folder on _WIN32 && __linux__ is .
+#           endif
+            std::string tempPath{};
+            if (pathPos != std::string::npos) tempPath = filename.substr(0, pathPos + 1);
+            else tempPath = localFolder; // prepend explicit identification of local folder in case path did not contain a folder
 
             // ===== Generate a random file name with the same path as the current file
-            std::string tempPath = filename.substr(0, filename.rfind('/') + 1) + Impl::GenerateRandomName(20);
+            tempPath = tempPath + Impl::GenerateRandomName(20);
 
             // ===== Prepare an temporary archive file with the random filename;
             mz_zip_archive tempArchive = mz_zip_archive();
-            mz_zip_writer_init_file(&tempArchive, tempPath.c_str(), 0);
+            if (!mz_zip_writer_init_file(&tempArchive, tempPath.c_str(), 0))              // pull request #210
+                throw ZipRuntimeError(mz_zip_get_error_string(tempArchive.m_last_error)); //  "
 
             // ===== Iterate through the ZipEntries and add entries to the temporary file
             for (auto& file : m_ZipEntries) {
@@ -10772,8 +10886,8 @@ namespace Zippy
 
             // ===== Close the current archive, delete the file with input filename (if it exists), rename the temporary and call Open.
             Close();
-            nowide::remove(filename.c_str());
-            nowide::rename(tempPath.c_str(), filename.c_str());
+            MZ_DELETE_FILE(filename.c_str());
+            MZ_RENAME_FILE(tempPath.c_str(), filename.c_str());
             Open(filename);
         }
 
@@ -10783,9 +10897,9 @@ namespace Zippy
          */
         void Save(std::ostream& stream)
         {
-            if (!IsOpen()) throw ZipLogicError("Cannot call Save on empty ZipArchive object!");
-
-            // TODO: To be implemented
+            if (!IsOpen()) throw ZipLogicError("Cannot call ZipArchive::Save(std::ostream&) on empty ZipArchive object!");
+            throw ZipLogicError("ZipArchive::Save(std::ostream&) is not yet implemented!"); // TODO: To be implemented
+            (void) stream; // 2024-08-18: suppress -Wunused-parameter
         }
 
         /**
@@ -10819,7 +10933,10 @@ namespace Zippy
             // ===== If data has not been extracted from the archive (i.e., m_EntryData is empty),
             // ===== extract the data from the archive to the ZipEntry object.
             if (result->m_EntryData.empty()) {
-                result->m_EntryData.resize(result->UncompressedSize());
+                if (result->UncompressedSize())
+                    result->m_EntryData.resize(result->UncompressedSize());
+                else
+                    result->m_EntryData.resize(1); // 2024-06-03 BUFIX: std::vector::data() can be nullptr when ::size() is 0, leading to a failure to load an empty file
                 mz_zip_reader_extract_file_to_mem(&m_Archive, name.c_str(), result->m_EntryData.data(), result->m_EntryData.size(), 0);
             }
 
@@ -10870,7 +10987,9 @@ namespace Zippy
          */
         void ExtractDir(const std::string& dir, const std::string& dest)
         {
-            if (!IsOpen()) throw ZipLogicError("Cannot call ExtractDir on empty ZipArchive object!");
+            if (!IsOpen()) throw ZipLogicError("Cannot call ZipArchive::ExtractDir(const std::string&, const std::string&) on empty ZipArchive object!");
+            throw ZipLogicError("ZipArchive::ExtractDir(const std::string&, const std::string&) is not yet implemented!"); // TODO: To be implemented
+            (void) dir; (void) dest; // 2024-08-18: suppress -Wunused-parameter
         }
 
         /**
@@ -10880,7 +10999,9 @@ namespace Zippy
          */
         void ExtractAll(const std::string& dest)
         {
-            if (!IsOpen()) throw ZipLogicError("Cannot call ExtractAll on empty ZipArchive object!");
+            if (!IsOpen()) throw ZipLogicError("Cannot call ZipArchive::ExtractAll(const std::string&) on empty ZipArchive object!");
+            throw ZipLogicError("ZipArchive::ExtractAll(std::string const &) is not yet implemented!"); // TODO: To be implemented
+            (void) dest; // 2024-08-18: suppress -Wunused-parameter
         }
 
         /**
@@ -10976,5 +11097,8 @@ namespace Zippy
     };
 }    // namespace Zippy
 
-#pragma warning(pop)
+#ifdef _MSC_VER // avoid other compilers complaining about MSVC-only pragmas being unknown
+#   pragma warning(pop)
+#endif // _MSC_VER
+
 #endif    // ZIPPYHEADERONLY_ZIPPY_HPP

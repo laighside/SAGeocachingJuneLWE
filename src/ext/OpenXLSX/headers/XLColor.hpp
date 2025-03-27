@@ -46,11 +46,14 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #ifndef OPENXLSX_XLCOLOR_HPP
 #define OPENXLSX_XLCOLOR_HPP
 
-#pragma warning(push)
-#pragma warning(disable : 4251)
-#pragma warning(disable : 4275)
+#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
+#   pragma warning(push)
+#   pragma warning(disable : 4251)
+#   pragma warning(disable : 4275)
+#endif // _MSC_VER
 
 // ===== External Includes ===== //
+#include <cstdint>    // Pull request #276
 #include <string>
 
 // ===== OpenXLSX Includes ===== //
@@ -67,11 +70,14 @@ namespace OpenXLSX
         //           Public Member Functions
         //----------------------------------------------------------------------------------------------------------------------
 
+        friend bool operator==(const XLColor& lhs, const XLColor& rhs);
+        friend bool operator!=(const XLColor& lhs, const XLColor& rhs);
+
     public:
         /**
          * @brief
          */
-        XLColor() = default;
+        XLColor();
 
         /**
          * @brief
@@ -100,13 +106,13 @@ namespace OpenXLSX
          * @brief
          * @param other
          */
-        XLColor(const XLColor& other) = default;
+        XLColor(const XLColor& other);
 
         /**
          * @brief
          * @param other
          */
-        XLColor(XLColor&& other) noexcept = default;
+        XLColor(XLColor&& other) noexcept;
 
         /**
          * @brief
@@ -118,14 +124,14 @@ namespace OpenXLSX
          * @param other
          * @return
          */
-        XLColor& operator=(const XLColor& other) = default;
+        XLColor& operator=(const XLColor& other);
 
         /**
          * @brief
          * @param other
          * @return
          */
-        XLColor& operator=(XLColor&& other) noexcept = default;
+        XLColor& operator=(XLColor&& other) noexcept;
 
         /**
          * @brief
@@ -196,5 +202,31 @@ namespace OpenXLSX
 
 }    // namespace OpenXLSX
 
-#pragma warning(pop)
+namespace OpenXLSX
+{
+    /**
+     * @brief
+     * @param lhs
+     * @param rhs
+     * @return
+     */
+    inline bool operator==(const XLColor& lhs, const XLColor& rhs)
+    {
+        return lhs.alpha() == rhs.alpha() && lhs.red() == rhs.red() && lhs.green() == rhs.green() && lhs.blue() == rhs.blue();
+    }
+
+    /**
+     * @brief
+     * @param lhs
+     * @param rhs
+     * @return
+     */
+    inline bool operator!=(const XLColor& lhs, const XLColor& rhs) { return !(lhs == rhs); }
+
+}    // namespace OpenXLSX
+
+#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
+#   pragma warning(pop)
+#endif // _MSC_VER
+
 #endif    // OPENXLSX_XLCOLOR_HPP

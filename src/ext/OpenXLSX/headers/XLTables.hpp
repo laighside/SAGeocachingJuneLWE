@@ -43,117 +43,90 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 
  */
 
-#ifndef OPENXLSX_XLCOLUMN_HPP
-#define OPENXLSX_XLCOLUMN_HPP
-
-#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(push)
-#   pragma warning(disable : 4251)
-#   pragma warning(disable : 4275)
-#endif // _MSC_VER
+#ifndef OPENXLSX_XLTABLES_HPP
+#define OPENXLSX_XLTABLES_HPP
 
 // ===== External Includes ===== //
-#include <memory>
+#include <cstdint>    // uint8_t, uint16_t, uint32_t
+#include <ostream>    // std::basic_ostream
+// #include <type_traits>
+// #include <variant>
 
 // ===== OpenXLSX Includes ===== //
 #include "OpenXLSX-Exports.hpp"
-#include "XLStyles.hpp"          // XLStyleIndex
-#include "XLXmlParser.hpp"
+// #include "XLDocument.hpp"
+#include "XLException.hpp"
+#include "XLXmlData.hpp"
+#include "XLXmlFile.hpp"
 
 namespace OpenXLSX
 {
     /**
-     * @brief
+     * @brief The XLTables class is the base class for worksheet tables
      */
-    class OPENXLSX_EXPORT XLColumn
+    class OPENXLSX_EXPORT XLTables : public XLXmlFile
     {
+        friend class XLWorksheet;   // for access to XLXmlFile::getXmlPath
     public:
         /**
          * @brief Constructor
-         * @param columnNode A pointer to the XMLNode for the column.
          */
-        explicit XLColumn(const XMLNode& columnNode);
+        XLTables() : XLXmlFile(nullptr) {};
 
         /**
-         * @brief Copy Constructor [deleted]
+         * @brief The constructor.
+         * @param xmlData the source XML of the table file
          */
-        XLColumn(const XLColumn& other);
+        XLTables(XLXmlData* xmlData);
 
         /**
-         * @brief Move Constructor
-         * @note The move constructor has been explicitly deleted.
+         * @brief The copy constructor.
+         * @param other The object to be copied.
+         * @note The default copy constructor is used, i.e. only shallow copying of pointer data members.
          */
-        XLColumn(XLColumn&& other) noexcept;
+        XLTables(const XLTables& other) = default;
 
         /**
-         * @brief Destructor
+         * @brief
+         * @param other
          */
-        ~XLColumn();
+        XLTables(XLTables&& other) noexcept = default;
 
         /**
-         * @brief Copy assignment operator [deleted]
+         * @brief The destructor
+         * @note The default destructor is used, since cleanup of pointer data members is not required.
          */
-        XLColumn& operator=(const XLColumn& other);
+        ~XLTables() = default;
+
+        /**
+         * @brief Assignment operator
+         * @return A reference to the new object.
+         * @note The default assignment operator is used, i.e. only shallow copying of pointer data members.
+         */
+        XLTables& operator=(const XLTables&) = default;
 
         /**
          * @brief
          * @param other
          * @return
          */
-        XLColumn& operator=(XLColumn&& other) noexcept = default;
+        XLTables& operator=(XLTables&& other) noexcept = default;
+
+        // /**
+        //  * @brief getters
+        //  */
+        // std::string get(std::string cellRef) const;
+        // 
+        // /**
+        //  * @brief setters
+        //  */
+        // bool set(std::string cellRef);
 
         /**
-         * @brief Get the width of the column.
-         * @return The width of the column.
+         * @brief Print the XML contents of this XLTables instance using the underlying XMLNode print function
          */
-        float width() const;
-
-        /**
-         * @brief Set the width of the column
-         * @param width The width of the column
-         */
-        void setWidth(float width);
-
-        /**
-         * @brief Is the column hidden?
-         * @return The state of the column.
-         */
-        bool isHidden() const;
-
-        /**
-         * @brief Set the column to be shown or hidden.
-         * @param state The state of the column.
-         */
-        void setHidden(bool state);
-
-        /**
-         * @brief Get the XMLNode object for the column.
-         * @return The XMLNode for the column
-         */
-        XMLNode& columnNode() const;
-
-        /**
-         * @brief Get the array index of xl/styles.xml:<styleSheet>:<cellXfs> for the style assigned to the column.
-         *        This value is stored in the col attributes like so: style="2"
-         * @returns The index of the applicable format style
-         */
-        XLStyleIndex format() const;
-
-        /**
-         * @brief Set the column style as a reference to the array index of xl/styles.xml:<styleSheet>:<cellXfs>
-         * @param cellFormatIndex The style to set, corresponding to the index of XLStyles::cellStyles()
-         * @returns true on success, false on failure
-         */
-        bool setFormat(XLStyleIndex cellFormatIndex);
-
-    private:
-        std::unique_ptr<XMLNode> m_columnNode; /**< A pointer to the XMLNode object for the column. */
+        void print(std::basic_ostream<char>& ostr) const;
     };
-
 }    // namespace OpenXLSX
 
-#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
-#   pragma warning(pop)
-#endif // _MSC_VER
-
-#endif    // OPENXLSX_XLCOLUMN_HPP
+#endif    // OPENXLSX_XLTABLES_HPP

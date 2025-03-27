@@ -2,11 +2,13 @@
 // Created by Kenneth Balslev on 27/08/2021.
 //
 
-// ===== OpenXLSX Includes ===== //
-#include "XLFormula.hpp"
+// ===== External Includes ===== //
+#include <cassert>
 #include <pugixml.hpp>
 
-#include <cassert>
+// ===== OpenXLSX Includes ===== //
+#include "XLFormula.hpp"
+#include <XLException.hpp>
 
 using namespace OpenXLSX;
 
@@ -43,10 +45,7 @@ XLFormula& XLFormula::operator=(XLFormula&& other) noexcept = default;
 /**
  * @details Return the m_formulaString member variable.
  */
-std::string XLFormula::get() const
-{
-    return m_formulaString;
-}
+std::string XLFormula::get() const { return m_formulaString; }
 
 /**
  * @details Set the m_formulaString member to an empty string.
@@ -58,11 +57,16 @@ XLFormula& XLFormula::clear()
 }
 
 /**
+ * @details
+ */
+XLFormula::operator std::string() const { return get(); }
+
+/**
  * @details Constructor. Set the m_cell and m_cellNode objects.
  */
 XLFormulaProxy::XLFormulaProxy(XLCell* cell, XMLNode* cellNode) : m_cell(cell), m_cellNode(cellNode)
 {
-    assert(cell); // NOLINT
+    assert(cell);    // NOLINT
 }
 
 /**
@@ -98,20 +102,19 @@ XLFormulaProxy& XLFormulaProxy::operator=(const XLFormulaProxy& other)
 XLFormulaProxy& XLFormulaProxy::operator=(XLFormulaProxy&& other) noexcept = default;
 
 /**
+ * @details
+ */
+XLFormulaProxy::operator std::string() const { return get(); }
+
+/**
  * @details Returns the underlying XLFormula object, by calling getFormula().
  */
-XLFormulaProxy::operator XLFormula()
-{
-    return getFormula();
-}
+XLFormulaProxy::operator XLFormula() const { return getFormula(); }
 
 /**
  * @details Call the .get() function in the underlying XLFormula object.
  */
-std::string XLFormulaProxy::get() const
-{
-    return getFormula().get();
-}
+std::string XLFormulaProxy::get() const { return getFormula().get(); }
 
 /**
  * @details If a formula node exists, it will be erased.
@@ -119,11 +122,11 @@ std::string XLFormulaProxy::get() const
 XLFormulaProxy& XLFormulaProxy::clear()
 {
     // ===== Check that the m_cellNode is valid.
-    assert(m_cellNode);              // NOLINT
-    assert(!m_cellNode->empty());    // NOLINT
+    assert(m_cellNode != nullptr);      // NOLINT
+    assert(not m_cellNode->empty());    // NOLINT
 
     // ===== Remove the value node.
-    if (m_cellNode->child("f")) m_cellNode->remove_child("f");
+    if (not m_cellNode->child("f").empty()) m_cellNode->remove_child("f");
     return *this;
 }
 
@@ -131,22 +134,39 @@ XLFormulaProxy& XLFormulaProxy::clear()
  * @details Convenience function for setting the formula. This method is called from the templated
  * string assignment operator.
  */
-void XLFormulaProxy::setFormulaString(const char* formulaString) {
+void XLFormulaProxy::setFormulaString(const char* formulaString, bool resetValue) // NOLINT
+{
     // ===== Check that the m_cellNode is valid.
-    assert(m_cellNode);              // NOLINT
-    assert(!m_cellNode->empty());    // NOLINT
+    assert(m_cellNode != nullptr);      // NOLINT
+    assert(not m_cellNode->empty());    // NOLINT
 
-    // ===== If the cell node doesn't have a value child node, create it.
-    if (!m_cellNode->child("f")) m_cellNode->append_child("f");
-    if (!m_cellNode->child("v")) m_cellNode->append_child("v");
+    if (formulaString[0] == 0) {    // if formulaString is empty
+        m_cellNode->remove_child("f");    // clear the formula node
+        return;                           // and exit
+    }
 
-    // ===== Remove the type and shared index attributes, if they exists.
+    // ===== If the cell node doesn't have formula or value child nodes, create them.
+    if (m_cellNode->child("f").empty()) m_cellNode->append_child("f");
+    if (m_cellNode->child("v").empty()) m_cellNode->append_child("v");
+
+    // ===== Remove the formula type and shared index attributes, if they exist.
     m_cellNode->child("f").remove_attribute("t");
     m_cellNode->child("f").remove_attribute("si");
 
-    // ===== Set the text of the value node.
+    // ===== Set the text of the formula and value nodes.
     m_cellNode->child("f").text().set(formulaString);
-    m_cellNode->child("v").text().set(0);
+    if (resetValue) m_cellNode->child("v").text().set(0);
+
+    // BEGIN pull request #189
+    // ===== Remove cell type attribute so that it can be determined by Office Suite when next calculating the formula.
+    m_cellNode->remove_attribute("t");
+
+    // ===== Remove inline string <is> tag, in case previous type was "inlineStr".
+    m_cellNode->remove_child("is");
+
+    // ===== Ensure that the formula node <f> is the first child, listed before the value <v> node.
+    m_cellNode->prepend_move(m_cellNode->child("f"));
+    // END pull request #189
 }
 
 /**
@@ -155,20 +175,22 @@ void XLFormulaProxy::setFormulaString(const char* formulaString) {
  */
 XLFormula XLFormulaProxy::getFormula() const
 {
-    assert(m_cellNode);              // NOLINT
-    assert(!m_cellNode->empty());    // NOLINT
+    assert(m_cellNode != nullptr);      // NOLINT
+    assert(not m_cellNode->empty());    // NOLINT
 
-    auto formulaNode = m_cellNode->child("f");
+    const auto formulaNode = m_cellNode->child("f");
 
     // ===== If the formula node doesn't exist, return an empty XLFormula object.
-    if (!formulaNode)
-        return XLFormula();
+    if (formulaNode.empty()) return XLFormula();
 
     // ===== If the formula type is 'shared' or 'array', throw an exception.
-    if (formulaNode.attribute("t") && std::string(formulaNode.attribute("t").value()) == "shared")
-        throw XLFormulaError("Shared formulas not supported.");
-    if (formulaNode.attribute("t") && std::string(formulaNode.attribute("t").value()) == "array")
-        throw XLFormulaError("Array formulas not supported.");
+    if (not formulaNode.attribute("t").empty() ) {    // 2024-05-28: de-duplicated check (only relevant for performance,
+                                                      //  xml_attribute::value() returns an empty string for empty attributes)
+        if (std::string(formulaNode.attribute("t").value()) == "shared")
+            throw XLFormulaError("Shared formulas not supported.");
+        if (std::string(formulaNode.attribute("t").value()) == "array")
+            throw XLFormulaError("Array formulas not supported.");
+    }
 
     return XLFormula(formulaNode.text().get());
 }

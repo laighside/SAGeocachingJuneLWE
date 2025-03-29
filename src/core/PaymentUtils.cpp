@@ -13,6 +13,7 @@
 #include "PaymentUtils.h"
 
 #include "../prices.h"
+#include "../registration/DinnerUtils.h"
 
 #include <mysql_driver.h>
 #include <mysql_connection.h>
@@ -22,7 +23,6 @@
 #include <cppconn/resultset.h>
 #include <cppconn/statement.h>
 #include <cppconn/prepared_statement.h>
-
 
 std::vector<PaymentUtils::paymentEntry> PaymentUtils::getUserPayments(sql::Connection *con, const std::string &userKey) {
     std::vector<paymentEntry> result;
@@ -127,11 +127,11 @@ int PaymentUtils::getUserCost(sql::Connection *con, const std::string &userKey) 
     delete prep_stmt;
 
     // dinner costs
-    prep_stmt = con->prepareStatement("SELECT number_adults, number_children FROM sat_dinner WHERE idempotency = ?;");
+    prep_stmt = con->prepareStatement("SELECT dinner_form_id, dinner_options_adults FROM sat_dinner WHERE idempotency = ?;");
     prep_stmt->setString(1, userKey);
     res = prep_stmt->executeQuery();
-    if (res->next()){
-        result += res->getInt(1) * PRICE_DINNER_ADULT + res->getInt(2) * PRICE_DINNER_CHILD;
+    while (res->next()) {
+        result += DinnerUtils::getDinnerCost(con, res->getInt(1), res->getString(2));
     }
     delete res;
     delete prep_stmt;

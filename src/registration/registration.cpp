@@ -20,6 +20,7 @@
 #include "../core/JlweCore.h"
 #include "../core/JlweUtils.h"
 #include "../core/PaymentUtils.h"
+#include "DinnerUtils.h"
 
 struct team_items {
     std::string username;
@@ -27,7 +28,7 @@ struct team_items {
     std::string user_key;
     int event_people;
     int camping_people;
-    int dinner_people;
+    std::vector<int> dinner_people;
 };
 
 team_items * findTeam(std::vector<team_items> * team_list, const std::string &username) {
@@ -44,6 +45,7 @@ int main () {
         JlweCore jlwe;
 
         sql::Statement *stmt;
+        sql::PreparedStatement *prep_stmt;
         sql::ResultSet *res;
 
         HtmlTemplate html(false);
@@ -58,6 +60,9 @@ int main () {
             }
 
             html.outputAdminMenu();
+
+            // List of dinner forms
+            std::vector<DinnerUtils::dinner_form> dinner_forms = DinnerUtils::getDinnerFormList(jlwe.getMysqlCon());
 
             // List of what teams have bought so far
             std::vector<team_items> team_list;
@@ -74,6 +79,7 @@ int main () {
             std::cout << "<h2 style=\"text-align:center\">List of Registrations</h2>\n";
             std::cout << "<p style=\"text-align:right;\">Show Saved registrations only: " << FormElements::htmlSwitch("savedToggleCB", true) << "</p>\n";
 
+            std::cout << "<h3 style=\"text-align:center\">Event registrations</h3>\n";
             std::cout << "<table class=\"reg_table\" align=\"center\" style=\"width: 100%;\"><tr>\n";
             std::cout << "<th>Email</th><th>Username</th><th>Phone number</th><th>#Adults</th><th>#Children</th><th>Total cost</th><th>Paid</th><th>Payment</th><th>Status</th><th></th>\n";
             std::cout << "</tr>\n";
@@ -128,7 +134,7 @@ int main () {
                             this_team->event_people = res->getInt(6) + res->getInt(7);
                         }
                     } else {
-                        team_list.push_back({res->getString(4), res->getString(3), userKey, res->getInt(6) + res->getInt(7), -1, -1});
+                        team_list.push_back({res->getString(4), res->getString(3), userKey, res->getInt(6) + res->getInt(7), -1, std::vector<int>(dinner_forms.size(), -1)});
                     }
                 }
             }
@@ -145,7 +151,7 @@ int main () {
             delete res;
             delete stmt;
 
-            std::cout << "<h2 style=\"text-align:center\">Camping Registrations</h2>\n";
+            std::cout << "<h3 style=\"text-align:center\">Camping</h3>\n";
             std::cout << "<table class=\"reg_table\" align=\"center\" style=\"width: 100%;\"><tr>\n";
             std::cout << "<th>Email</th><th>Username</th><th>Phone number</th><th>Type</th><th>#People</th><th>Dates</th><th>Total cost</th><th>Paid</th><th>Payment</th><th>Status</th><th></th>\n";
             std::cout << "</tr>\n";
@@ -201,7 +207,7 @@ int main () {
                             this_team->camping_people = res->getInt(7);
                         }
                     } else {
-                        team_list.push_back({res->getString(4), res->getString(3), userKey, -1, res->getInt(7), -1});
+                        team_list.push_back({res->getString(4), res->getString(3), userKey, -1, res->getInt(7), std::vector<int>(dinner_forms.size(), -1)});
                     }
                 }
             }
@@ -218,74 +224,81 @@ int main () {
             delete res;
             delete stmt;
 
-            std::cout << "<h2 style=\"text-align:center\">Dinner Registrations</h2>\n";
-            std::cout << "<table class=\"reg_table\" align=\"center\" style=\"width: 100%;\"><tr>\n";
-            std::cout << "<th>Email</th><th>Username</th><th>Phone number</th><th>#Adults</th><th>#Children</th><th>Total cost</th><th>Paid</th><th>Payment</th><th>Status</th><th></th>\n";
-            std::cout << "</tr>\n";
 
-            int dinner_adult_count = 0;
-            int dinner_child_count = 0;
-            stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT registration_id,idempotency,email_address,gc_username,phone_number,number_adults,number_children,payment_type,status FROM sat_dinner;");
-            while (res->next()) {
-                std::string userKey = res->getString(2);
-                bool saved = (res->getString(9) == "S");
-                bool isEventInc = (res->getString(8) == "event");
+            for (unsigned int i = 0; i < dinner_forms.size(); i++) {
+                std::cout << "<h3 style=\"text-align:center\">" + Encoder::htmlEntityEncode(dinner_forms.at(i).title) + "</h3>\n";
+                std::cout << "<table class=\"reg_table\" align=\"center\" style=\"width: 100%;\"><tr>\n";
+                std::cout << "<th>Email</th><th>Username</th><th>Phone number</th><th>#Adults</th><th>#Children</th><th>Total cost</th><th>Paid</th><th>Payment</th><th>Status</th><th></th>\n";
+                std::cout << "</tr>\n";
 
-                std::cout << "<tr" << (saved ? "" : " class=\"not_s\" style=\"background-color: #ba8866;\"") <<">\n";
-                std::cout << "<td" << (isEventInc ? " style=\"font-style:italic;\"" : "") << ">" << Encoder::htmlEntityEncode(res->getString(3)) << "</td>\n";
-                std::cout << "<td" << (isEventInc ? " style=\"font-style:italic;\"" : "") << ">" << Encoder::htmlEntityEncode(res->getString(4)) << "</td>\n";
-                std::cout << "<td" << (isEventInc ? " style=\"font-style:italic;\"" : "") << ">" << Encoder::htmlEntityEncode(res->getString(5)) << "</td>\n";
-                std::cout << "<td>" << res->getInt(6) << "</td>\n";
-                std::cout << "<td>" << res->getInt(7) << "</td>\n";
-                bool needToPay = false;
-                if (isEventInc) {
-                    std::cout << "<td colspan=\"3\" style=\"font-style:italic;\">Included in main event</td>\n";
-                } else {
-                    int user_cost = PaymentUtils::getUserCost(jlwe.getMysqlCon(), userKey);
-                    int payment_recived = PaymentUtils::getTotalPaymentReceived(jlwe.getMysqlCon(), userKey);
-                    needToPay = ((user_cost - payment_recived) > 0);
-                    bool overpaid = ((user_cost - payment_recived) < 0);
-                    std::string background_color = ((needToPay && saved) ? "#FFC0C0" : ((overpaid && saved) ? "#80FFFF" : ""));
-                    std::cout << "<td" << (background_color.size() > 0 ? (" style=\"background-color:" + background_color + ";\"") : "") << ">" << PaymentUtils::currencyToString(user_cost) << "</td>\n";
-                    std::cout << "<td" << (background_color.size() > 0 ? (" style=\"background-color:" + background_color + ";\"") : "") << ">" << PaymentUtils::currencyToString(payment_recived) << "</td>\n";
-                    std::cout << "<td>" << Encoder::htmlEntityEncode(res->getString(8)) << "</td>\n";
-                }
-                std::string status = "Unknown";
-                if (res->getString(9) == "S") status = "Saved";
-                if (res->getString(9) == "C") status = "Cancelled";
-                if (res->getString(9) == "D") status = "Deleted";
-                if (res->getString(9) == "P") status = "Pending";
-                std::cout << "<td>" << status << "</td>\n";
+                int dinner_adult_count = 0;
+                int dinner_child_count = 0;
+                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT registration_id,idempotency,email_address,gc_username,phone_number,number_adults,number_children,payment_type,status FROM sat_dinner WHERE dinner_form_id = ?;");
+                prep_stmt->setInt(1, dinner_forms.at(i).dinner_id);
+                res = prep_stmt->executeQuery();
+                while (res->next()) {
+                    std::string userKey = res->getString(2);
+                    bool saved = (res->getString(9) == "S");
+                    bool isEventInc = (res->getString(8) == "event");
 
-                std::vector<FormElements::dropDownMenuItem> menuItems;
-                menuItems.push_back({"location.href='/cgi-bin/registration/payment_history.cgi?key=" + Encoder::javascriptAttributeEncode(Encoder::urlEncode(userKey)) + "'", "View details", true});
-                menuItems.push_back({"sendReminderEmail('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "', 'payment_reminder_email.cgi')", "Send Payment Reminder", needToPay && saved && !isEventInc && (res->getString(8) == "bank")});
-                menuItems.push_back({"cancelRegistration('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "')", "Cancel Registration", saved && !isEventInc});
-                std::cout << "<td>" << FormElements::dropDownMenu(rowId, menuItems) << "</td></tr>\n";
-
-                rowId++;
-                if (saved) {
-                    dinner_adult_count += res->getInt(6);
-                    dinner_child_count += res->getInt(7);
-
-                    team_items * this_team = findTeam(&team_list, res->getString(4));
-                    if (this_team) {
-                        if (this_team->dinner_people >= 0) {
-                            this_team->dinner_people += res->getInt(6) + res->getInt(7);
-                        } else {
-                            this_team->dinner_people = res->getInt(6) + res->getInt(7);
-                        }
+                    std::cout << "<tr" << (saved ? "" : " class=\"not_s\" style=\"background-color: #ba8866;\"") <<">\n";
+                    std::cout << "<td" << (isEventInc ? " style=\"font-style:italic;\"" : "") << ">" << Encoder::htmlEntityEncode(res->getString(3)) << "</td>\n";
+                    std::cout << "<td" << (isEventInc ? " style=\"font-style:italic;\"" : "") << ">" << Encoder::htmlEntityEncode(res->getString(4)) << "</td>\n";
+                    std::cout << "<td" << (isEventInc ? " style=\"font-style:italic;\"" : "") << ">" << Encoder::htmlEntityEncode(res->getString(5)) << "</td>\n";
+                    std::cout << "<td>" << res->getInt(6) << "</td>\n";
+                    std::cout << "<td>" << res->getInt(7) << "</td>\n";
+                    bool needToPay = false;
+                    if (isEventInc) {
+                        std::cout << "<td colspan=\"3\" style=\"font-style:italic;\">Included in main event</td>\n";
                     } else {
-                        team_list.push_back({res->getString(4), res->getString(3), userKey, -1, -1, res->getInt(6) + res->getInt(7)});
+                        int user_cost = PaymentUtils::getUserCost(jlwe.getMysqlCon(), userKey);
+                        int payment_recived = PaymentUtils::getTotalPaymentReceived(jlwe.getMysqlCon(), userKey);
+                        needToPay = ((user_cost - payment_recived) > 0);
+                        bool overpaid = ((user_cost - payment_recived) < 0);
+                        std::string background_color = ((needToPay && saved) ? "#FFC0C0" : ((overpaid && saved) ? "#80FFFF" : ""));
+                        std::cout << "<td" << (background_color.size() > 0 ? (" style=\"background-color:" + background_color + ";\"") : "") << ">" << PaymentUtils::currencyToString(user_cost) << "</td>\n";
+                        std::cout << "<td" << (background_color.size() > 0 ? (" style=\"background-color:" + background_color + ";\"") : "") << ">" << PaymentUtils::currencyToString(payment_recived) << "</td>\n";
+                        std::cout << "<td>" << Encoder::htmlEntityEncode(res->getString(8)) << "</td>\n";
                     }
-                }
+                    std::string status = "Unknown";
+                    if (res->getString(9) == "S") status = "Saved";
+                    if (res->getString(9) == "C") status = "Cancelled";
+                    if (res->getString(9) == "D") status = "Deleted";
+                    if (res->getString(9) == "P") status = "Pending";
+                    std::cout << "<td>" << status << "</td>\n";
 
+                    std::vector<FormElements::dropDownMenuItem> menuItems;
+                    menuItems.push_back({"location.href='/cgi-bin/registration/payment_history.cgi?key=" + Encoder::javascriptAttributeEncode(Encoder::urlEncode(userKey)) + "'", "View details", true});
+                    menuItems.push_back({"sendReminderEmail('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "', 'payment_reminder_email.cgi')", "Send Payment Reminder", needToPay && saved && !isEventInc && (res->getString(8) == "bank")});
+                    menuItems.push_back({"cancelRegistration('" + Encoder::javascriptAttributeEncode(userKey) + "', '" + Encoder::javascriptAttributeEncode(res->getString(3)) + "')", "Cancel Registration", saved && !isEventInc});
+                    std::cout << "<td>" << FormElements::dropDownMenu(rowId, menuItems) << "</td></tr>\n";
+
+                    rowId++;
+                    if (saved) {
+                        dinner_adult_count += res->getInt(6);
+                        dinner_child_count += res->getInt(7);
+
+                        team_items * this_team = findTeam(&team_list, res->getString(4));
+                        if (this_team) {
+                            if (this_team->dinner_people[i] >= 0) {
+                                this_team->dinner_people[i] += res->getInt(6) + res->getInt(7);
+                            } else {
+                                this_team->dinner_people[i] = res->getInt(6) + res->getInt(7);
+                            }
+                        } else {
+                            std::vector<int> new_dinner_people(dinner_forms.size(), -1);
+                            new_dinner_people[i] = res->getInt(6) + res->getInt(7);
+                            team_list.push_back({res->getString(4), res->getString(3), userKey, -1, -1, new_dinner_people});
+                        }
+                    }
+
+                }
+                delete res;
+                delete prep_stmt;
+                std::cout << "<td colspan=\"3\" style=\"font-weight:bold;text-align:right;\">Total</td><td style=\"font-weight:bold;\">" << dinner_adult_count << "</td><td style=\"font-weight:bold;\">" << dinner_child_count << "</td>\n";
+                std::cout << "</table>\n";
             }
-            delete res;
-            delete stmt;
-            std::cout << "<td colspan=\"3\" style=\"font-weight:bold;text-align:right;\">Total</td><td style=\"font-weight:bold;\">" << dinner_adult_count << "</td><td style=\"font-weight:bold;\">" << dinner_child_count << "</td>\n";
-            std::cout << "</table>\n";
+
 
             std::sort(team_list.begin(), team_list.end(), [](const team_items &a, const team_items &b)
             {
@@ -298,7 +311,10 @@ int main () {
 
             std::cout << "<h2 style=\"text-align:center;margin-top:50px;margin-bottom:0px;\">Who hasn't bought what</h2>\n";
             std::cout << "<table class=\"reg_table\" align=\"center\"><tr>\n";
-            std::cout << "<th>Username</th><th>Event</th><th>Camping</th><th>Dinner</th><th></th>\n";
+            std::cout << "<th>Username</th><th>Event</th><th>Camping</th>";
+            for (unsigned int j = 0; j < dinner_forms.size(); j++)
+                std::cout << "<th>" << Encoder::htmlEntityEncode(dinner_forms.at(j).title) << "</th>";
+            std::cout << "<th></th>\n";
             std::cout << "</tr>\n";
             for (unsigned int i = 0; i < team_list.size(); i++) {
                 std::cout << "<tr>\n";
@@ -313,10 +329,12 @@ int main () {
                 } else {
                     std::cout << "<td></td>\n";
                 }
-                if (team_list.at(i).dinner_people >= 0) {
-                    std::cout << "<td style=\"text-align:center;\">" << team_list.at(i).dinner_people << "</td>\n";
-                } else {
-                    std::cout << "<td></td>\n";
+                for (unsigned int j = 0; j < dinner_forms.size(); j++) {
+                    if (team_list.at(i).dinner_people.at(j) >= 0) {
+                        std::cout << "<td style=\"text-align:center;\">" << team_list.at(i).dinner_people.at(j) << "</td>\n";
+                    } else {
+                        std::cout << "<td></td>\n";
+                    }
                 }
 
                 std::vector<FormElements::dropDownMenuItem> menuItems;

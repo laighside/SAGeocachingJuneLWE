@@ -25,28 +25,42 @@
 #include "../core/HtmlTemplate.h"
 #include "../core/JlweCore.h"
 #include "../core/JlweUtils.h"
+#include "../core/KeyValueParser.h"
+
+struct dinner_form {
+    int dinner_id;
+    std::string title;
+    time_t order_close_time;
+    std::string html_path;
+};
 
 void outputCampingCutoffTime(time_t camping_cutoff, time_t time_now) {
-    std::cout << "<p>Camping must be booked by <span class=\"date_only\" data-value=\"" + std::to_string(camping_cutoff) + "\">" + FormElements::timeToDateString(camping_cutoff) + "</span> at the latest.</p>\n";
+    std::cout << "<p>Camping must be booked by <span class=\"date_only\" data-value=\"" + std::to_string(camping_cutoff) + "\">" + FormElements::timeToDateString(camping_cutoff) + "</span> at the latest.\n";
     if (camping_cutoff < time_now)
-        std::cout << "<p style=\"color:red;font-weight:bold;\">Camping bookings have now closed.</p>\n";
+        std::cout << " - <span style=\"color:red;font-weight:bold;\">Bookings have now closed.</span>\n";
+    std::cout << "</p>\n";
 }
 
-void outputDinnerCutoffTime(time_t dinner_cutoff, time_t time_now) {
-    std::cout << "<p>Dinner bookings close on <span class=\"date_only\" data-value=\"" + std::to_string(dinner_cutoff) + "\">" + FormElements::timeToDateString(dinner_cutoff) + "</span></p>\n";
+void outputDinnerCutoffTime(time_t dinner_cutoff, time_t time_now, std::string title) {
+    std::cout << "<p>Orders for " + Encoder::htmlEntityEncode(title) + " close on <span class=\"date_only\" data-value=\"" + std::to_string(dinner_cutoff) + "\">" + FormElements::timeToDateString(dinner_cutoff) + "</span>";
     if (dinner_cutoff < time_now)
-        std::cout << "<p style=\"color:red;font-weight:bold;\">Dinner bookings have now closed.</p>\n";
+        std::cout << " - <span style=\"color:red;font-weight:bold;\">Orders have now closed.</span>\n";
+    std::cout << "</p>\n";
 }
 
-void outputEventTab(const std::string &event_registration_html, time_t camping_cutoff, time_t dinner_cutoff, time_t time_now, bool dinner_form_enabled) {
+void outputEventTab(const std::string &event_registration_html, time_t camping_cutoff, time_t time_now, std::vector<dinner_form> * dinner_forms) { // bool dinner_form_enabled
     std::cout << "<div class=\"formTab\" id=\"eventTab\">\n";
 
-    std::cout << "<p>This form allows to register for the event, book camping and order Saturday night's dinner in one transaction. However, camping and dinner can still be booked separately at a later date if you are unsure of your plans at this stage. <a href=\"/camping\">Click here to book <span style=\"font-weight:bold;\">camping</span> separately.</a> <a href=\"/dinner\">Click here to book <span style=\"font-weight:bold;\">dinner</span> separately.</a></p>\n";
-    //std::cout << "<p>This form allows to register for the event and book camping in one transaction. However, camping can still be booked separately at a later date if you are unsure of your plans at this stage. <a href=\"/camping\">Click here to book <span style=\"font-weight:bold;\">camping</span> separately.</a></p>\n";
+    if (dinner_forms->size()) {
+        std::cout << "<p>This form allows to register for the event, book camping and order dinner in one transaction. However, camping and dinner can still be booked separately at a later date if you are unsure of your plans at this stage.</p>\n";
+    } else {
+        std::cout << "<p>This form allows to register for the event and book camping in one transaction. However, camping can still be booked separately at a later date if you are unsure of your plans at this stage.</p>\n";
+    }
 
     outputCampingCutoffTime(camping_cutoff, time_now);
-    if (dinner_form_enabled)
-        outputDinnerCutoffTime(dinner_cutoff, time_now);
+    for (unsigned int i = 0; i < dinner_forms->size(); i++)
+        if (dinner_forms->at(i).order_close_time)
+            outputDinnerCutoffTime(dinner_forms->at(i).order_close_time, time_now, dinner_forms->at(i).title);
 
     std::cout << "<p>The cost is $<span id=\"display_price_event_adult\"></span> per player. 10 years and under can participate for free.<br/>\n";
     //std::cout << "<p>The cost is $<span id=\"display_price_event_adult\"></span> per adult and $<span id=\"display_price_event_child\"></span> per child (children under 5 years are free).<br/>\n";
@@ -61,12 +75,19 @@ void outputEventTab(const std::string &event_registration_html, time_t camping_c
     std::cout << FormElements::textInput("real_names_adults", "text", "Name(s) of all the adults in your team:", "Names...");
     std::cout << FormElements::textInput("real_names_children", "text", "Name(s) of all the children in your team:", "Names...");
 
-    std::cout << FormElements::radioButtons("past_jlwe", "Have you attended a June LWE event before?", {{"past_jlwe_yes", "Yes", "yes", "setRadioClass(this.name, '');", false, false}, {"past_jlwe_no", "No", "no", "setRadioClass(this.name, '');", false, false}});
+    std::cout << FormElements::radioButtons("past_jlwe", "Have you attended a June LWE event before?", {{"past_jlwe_yes", "Yes", "yes", "setRadioClass(this.name, '');", false, false, ""}, {"past_jlwe_no", "No", "no", "setRadioClass(this.name, '');", false, false, ""}});
     //std::cout << FormElements::radioButtons("lanyard", "Do you have a June LWE lanyard? (you should if you were at the 2018 or 2019 events)", {{"lanyard_yes", "Yes (please bring it with you to this year's event)", "yes", "setRadioClass(this.name, '');", false, false}, {"lanyard_no", "No", "no", "setRadioClass(this.name, '');", false, false}});
 
-    std::cout << FormElements::radioButtons("camping", "Would you like to book a camping site?", {{"camping_yes", "Yes, I wish to reserve a camping site", "yes", "setRadioClass(this.name, '');", false, false}, {"camping_no", "No, I will be saying offsite or sharing with someone else", "no", "setRadioClass(this.name, '');", false, false}});
-    if (dinner_form_enabled)
-        std::cout << FormElements::radioButtons("dinner", "Will you be attending the dinner event on Saturday night?", {{"dinner_yes", "Yes, I would like to order a meal", "yes", "setRadioClass(this.name, '');", false, false}, {"dinner_no", "No/Unsure", "no", "setRadioClass(this.name, '');", false, false}});
+    // camping
+    bool camping_closed = (camping_cutoff < time_now);
+    std::cout << FormElements::radioButtons("camping", "Would you like to book a camping site?", {{"camping_yes", "Yes, I wish to reserve a camping site" + std::string(camping_closed ? " <span style=\"font-weight:bold;color:black;\">(bookings have closed)</span>" : ""), "yes", "setRadioClass(this.name, '');", false, camping_closed, ""}, {"camping_no", "No, I will be saying offsite or sharing with someone else", "no", "setRadioClass(this.name, '');", false, false, ""}});
+
+    // dinner
+    for (unsigned int i = 0; i < dinner_forms->size(); i++) {
+        std::string id_str = std::to_string(dinner_forms->at(i).dinner_id);
+        bool ordering_closed = (dinner_forms->at(i).order_close_time) && (dinner_forms->at(i).order_close_time < time_now);
+        std::cout << FormElements::radioButtons("dinner_" + id_str, Encoder::htmlEntityEncode("Will you be attending the " + dinner_forms->at(i).title + "?"), {{"dinner_yes_" + id_str, "Yes, I would like to order a meal" + std::string(ordering_closed ? " <span style=\"font-weight:bold;color:black;\">(orders have closed)</span>" : ""), "yes", "setRadioClass(this.name, '');", false, ordering_closed, ""}, {"dinner_no_" + id_str, "No/Unsure", "no", "setRadioClass(this.name, '');", false, false, ""}});
+    }
 
     std::cout << "</div>\n";
 }
@@ -118,31 +139,31 @@ void outputCampingTab(const std::string &camping_registration_html, bool camping
     std::cout << "</div>\n";
 }
 
-void outputDinnerTab(const std::string &dinner_registration_html, bool dinner_only, time_t dinner_cutoff, time_t time_now) {
-    std::cout << "<div class=\"formTab\" id=\"dinnerTab\">\n";
+void outputDinnerTab(const std::string &dinner_registration_html, bool dinner_only, dinner_form * form, time_t time_now) {
+    std::cout << "<div class=\"formTab\" id=\"dinnerTab_" + std::to_string(form->dinner_id) + "\">\n";
 
-    std::cout << "<p>Adult dinners are $<span id=\"display_price_dinner_adult\"></span> per meal.<br/>\n";
-    std::cout << "Child dinners are $<span id=\"display_price_dinner_child\"></span> per meal. (up to 12 years old)</p>\n";
+    std::cout << "<h2>" << Encoder::htmlEntityEncode(form->title) << "</h2>\n";
 
-    outputDinnerCutoffTime(dinner_cutoff, time_now);
+    if (form->order_close_time)
+        outputDinnerCutoffTime(form->order_close_time, time_now, form->title);
 
     std::cout << dinner_registration_html << "\n";
 
     if (dinner_only)
         std::cout << FormElements::emailUsernamePhoneBoxes(false);
 
-    std::cout << "<div id=\"dinner_items_block\" style=\"margin-top:30px;\"></div>\n";
+    std::cout << "<div id=\"dinner_items_block_"  + std::to_string(form->dinner_id) + "\" style=\"margin-top:30px;\"></div>\n";
 
-    std::cout << FormElements::textArea("dinner_comments", "Comments/Questions:");
+    std::cout << FormElements::textArea("dinner_comments_" + std::to_string(form->dinner_id), "Comments/Questions:");
 
     std::cout << "<script type=\"text/javascript\">\n";
-    std::cout << "loadDinnerItems(\"/cgi-bin/registration/get_form_content.cgi\", \"dinner_items_block\");\n";
+    std::cout << "loadDinnerItems(\"/cgi-bin/registration/get_form_content.cgi?dinner_id="  + std::to_string(form->dinner_id) + "\", \"dinner_items_block_"  + std::to_string(form->dinner_id) + "\", "  + std::to_string(form->dinner_id) + ");\n";
     std::cout << "</script>\n";
 
     std::cout << "</div>\n";
 }
 
-void outputSummaryTab() {
+void outputSummaryTab(std::vector<dinner_form> * dinner_forms) {
     std::cout << "<div class=\"formTab\" id=\"summaryTab\">\n";
 
     std::cout << "<h2>Summary:</h2>\n";
@@ -153,17 +174,23 @@ void outputSummaryTab() {
     std::cout << "<table id=\"cost_table\">\n";
     std::cout << "<tr><th colspan=\"2\">Costs</th></tr>\n";
     std::cout << "<tr id=\"event_row\">\n";
-    std::cout << "<td id=\"summary_event_desc\">Event</td>\n";
+    std::cout << "<td id=\"summary_event_desc\">Event registration<br />\n";
+    std::cout << "<span class=\"subtext\" id=\"summary_event_subtext\"></span></td>\n";
     std::cout << "<td id=\"summary_event_cost\" class=\"currency_cell\">$0.00</td>\n";
     std::cout << "</tr>\n";
     std::cout << "<tr id=\"camping_row\">\n";
-    std::cout << "<td id=\"summary_camping_desc\">Camping</td>\n";
+    std::cout << "<td id=\"summary_camping_desc\">Camping<br />\n";
+    std::cout << "<span class=\"subtext\" id=\"summary_camping_subtext\"></span></td>\n";
     std::cout << "<td id=\"summary_camping_cost\" class=\"currency_cell\">$0.00</td>\n";
     std::cout << "</tr>\n";
-    std::cout << "<tr id=\"dinner_row\">\n";
-    std::cout << "<td id=\"summary_dinner_desc\">Saturday dinner</td>\n";
-    std::cout << "<td id=\"summary_dinner_cost\" class=\"currency_cell\">$0.00</td>\n";
-    std::cout << "</tr>\n";
+    for (unsigned int i = 0; i < dinner_forms->size(); i++) {
+        std::string id_str = std::to_string(dinner_forms->at(i).dinner_id);
+        std::cout << "<tr id=\"dinner_row_" + id_str + "\">\n";
+        std::cout << "<td id=\"summary_dinner_desc_" + id_str + "\">" + Encoder::htmlEntityEncode(dinner_forms->at(i).title) + "<br />\n";
+        std::cout << "<span class=\"subtext\" id=\"summary_dinner_subtext_" + id_str + "\"></span></td>\n";
+        std::cout << "<td id=\"summary_dinner_cost_" + id_str + "\" class=\"currency_cell\">$0.00</td>\n";
+        std::cout << "</tr>\n";
+    }
     std::cout << "<tr id=\"card_surcharge_row\">\n";
     std::cout << "<td id=\"summary_card_surcharge_desc\">Card processing fee</td>\n";
     std::cout << "<td id=\"summary_card_surcharge_cost\" class=\"currency_cell\">$0.00</td>\n";
@@ -174,7 +201,7 @@ void outputSummaryTab() {
     std::cout << "</tr>\n";
     std::cout << "</table>\n";
 
-    std::cout << FormElements::radioButtons("payment", "Select payment method:", {{"payment_card", "Credit/debit card", "card", "setRadioClass(this.name, '');", false, false}, {"payment_bank", "Bank transfer", "bank", "setRadioClass(this.name, '');", false, false}}); //, {"payment_cash", "Cash at the event", "cash", "setRadioClass(this.name, '');", false, false}
+    std::cout << FormElements::radioButtons("payment", "Select payment method:", {{"payment_card", "Credit/debit card", "card", "setRadioClass(this.name, '');", false, false, ""}, {"payment_bank", "Bank transfer", "bank", "setRadioClass(this.name, '');", false, false, ""}}); //, {"payment_cash", "Cash at the event", "cash", "setRadioClass(this.name, '');", false, false}
 
     std::cout << "<div id=\"cash_payment_note\"><p style=\"margin-bottom: 0px;\">We prefer bank or card payment. However payment at the event is an option where bank and card are not suitable. Please contact us to discuss at contact@jlwe.org<br/>\n";
     std::cout << "<span style=\"font-weight:bold;\">Please note the following conditions apply if you choose to pay at the event:</span></p>\n";
@@ -200,16 +227,23 @@ int main () {
     try {
         // work out if the user has requested the event, camping or dinner form
         std::string page_request = CgiEnvironment::getRequestUri();
-        bool camping_form = false;
-        bool dinner_form = false;
+        bool camping_form_only = false;
+        bool dinner_form_only = false;
         if (page_request.substr(0, 8) == "/camping")
-            camping_form = true;
+            camping_form_only = true;
         if (page_request.substr(0, 7) == "/dinner")
-            dinner_form = true;
+            dinner_form_only = true;
 
         JlweCore jlwe;
+        KeyValueParser urlQueries(CgiEnvironment::getQueryString(), true);
+
+        int query_dinner_id = 0;
+        try {
+            query_dinner_id = std::stoi(urlQueries.getValue("id"));
+        } catch (...) {}
 
         sql::Statement *stmt;
+        sql::PreparedStatement *prep_stmt;
         sql::ResultSet *res;
 
         HtmlTemplate html(true);
@@ -243,18 +277,41 @@ int main () {
             }
         }
 
-        bool dinner_form_enabled = (jlwe.getGlobalVar("dinner_form_enabled") == "1");
+        // get list of dinner forms
+        std::vector<dinner_form> dinner_forms;
+        if (!camping_form_only) { // but don't bother if we only want camping
+            stmt = jlwe.getMysqlCon()->createStatement();
+            res = stmt->executeQuery("SELECT dinner_id,title,unix_timestamp(order_close_time),html_path FROM dinner_forms WHERE enabled > 0;");
+            while (res->next()) {
+                dinner_forms.push_back({res->getInt(1), res->getString(2), res->getInt64(3), res->getString(4)});
+            }
+            delete res;
+            delete stmt;
+        }
+
+        bool dinner_form_enabled = (dinner_forms.size() > 0);
         // Can't have a dinner only order if there is no dinner
-        if (!dinner_form_enabled && dinner_form) {
-            std::cout << "<p style=\"color:red;text-align:center;fsont-weight:bold;\">Error: dinner_form_enabled is set to false. Please contact us on " << std::string(jlwe.config.at("adminEmail")) << "</p>\n";
+        if (!dinner_form_enabled && dinner_form_only) {
+            std::cout << "<p style=\"color:red;text-align:center;font-weight:bold;\">Error: There are no dinner forms enabled. Please contact us on " << std::string(jlwe.config.at("adminEmail")) << "</p>\n";
             html.outputFooter();
             return 0;
         }
+        // If dinner only, then a form id needs to be given
+        if (dinner_form_only && (dinner_forms.size() > 1) && (query_dinner_id == 0)) {
+            std::cout << "<p style=\"color:red;text-align:center;font-weight:bold;\">Error: dinner form id needs to be set. Please contact us on " << std::string(jlwe.config.at("adminEmail")) << "</p>\n";
+            html.outputFooter();
+            return 0;
+        }
+
+        // No need for id number if there's only one dinner form
+        if (dinner_forms.size() == 1)
+            query_dinner_id = dinner_forms.at(0).dinner_id;
 
         std::cout << FormElements::includeJavascript("https://js.stripe.com/v3/");
         std::cout << FormElements::includeJavascript("/cgi-bin/stripe_keys.cgi");
         std::cout << FormElements::includeJavascript("/js/utils.js");
         std::cout << FormElements::includeJavascript("/js/form_tools.js");
+        std::cout << FormElements::includeJavascript("/js/form_elements.js");
         std::cout << FormElements::includeJavascript("/js/registration_form.js?v=2024");
         std::cout << FormElements::includeJavascript("/js/dinner.js?v=2024");
         std::cout << FormElements::includeJavascript("/js/uuid.js");
@@ -265,12 +322,24 @@ int main () {
 
         std::cout << "<div id=\"loader\" class=\"loader\" style=\"display:none;\"><div></div></div>\n";
 
-        if (camping_form) {
+        if (camping_form_only) {
             std::cout << "<h1>Camping Registration</h1>\n";
             std::cout << "<p style=\"font-weight:bold;\">This form is for booking camping only. If you have already booked camping as part of your event registration, you do not need to fill out this form.</p>\n";
-        } else if (dinner_form) {
-            std::cout << "<h1>Saturday Dinner Registration</h1>\n";
-            std::cout << "<p style=\"font-weight:bold;\">This form is for dinner orders only. If you have already ordered dinner as part of your event registration, you do not need to fill out this form.</p>\n";
+        } else if (dinner_form_only) {
+            bool form_found = false;
+            for (unsigned int i = 0; i < dinner_forms.size(); i++) {
+                if (dinner_forms.at(i).dinner_id == query_dinner_id) {
+                    form_found = true;
+                    std::cout << "<h1>" << Encoder::htmlEntityEncode(dinner_forms.at(i).title) << "</h1>\n";
+                    std::cout << "<p style=\"font-weight:bold;\">This form is for " << Encoder::htmlEntityEncode(dinner_forms.at(i).title) << " orders only. If you have already ordered dinner as part of your event registration, you do not need to fill out this form.</p>\n";
+                }
+            }
+            if (!form_found) {
+                std::cout << "<h1>Dinner orders</h1>\n";
+                std::cout << "<p style=\"color:red;text-align:center;font-weight:bold;\">Error: Invalid form ID.</p>\n";
+                html.outputFooter();
+                return 0;
+            }
         } else {
             std::cout << "<h1>Event Registration</h1>\n";
         }
@@ -281,10 +350,6 @@ int main () {
         time_t camping_cutoff = 0;
         try {
             camping_cutoff = std::stoll(jlwe.getGlobalVar("camping_cutoff_date"));
-        } catch (...) {}
-        time_t dinner_cutoff = 0;
-        try {
-            dinner_cutoff = std::stoll(jlwe.getGlobalVar("dinner_cutoff_date"));
         } catch (...) {}
         time_t jlwe_date = 0;
         try {
@@ -308,7 +373,7 @@ int main () {
         }
 
 
-        std::string event_registration_html, camping_registration_html, dinner_registration_html;
+        std::string event_registration_html, camping_registration_html;
         stmt = jlwe.getMysqlCon()->createStatement();
         res = stmt->executeQuery("SELECT html FROM webpages WHERE path = '*event_registration';");
         while (res->next()){
@@ -323,24 +388,31 @@ int main () {
         }
         delete res;
         delete stmt;
-        stmt = jlwe.getMysqlCon()->createStatement();
-        res = stmt->executeQuery("SELECT html FROM webpages WHERE path = '*dinner_registration';");
-        while (res->next()){
-            dinner_registration_html = res->getString(1);
-        }
-        delete res;
-        delete stmt;
-
 
         std::cout << "<form id=\"regForm\">\n";
 
-        if (!camping_form && !dinner_form)
-            outputEventTab(event_registration_html, camping_cutoff, dinner_cutoff, time_now, dinner_form_enabled);
-        if (!dinner_form)
-            outputCampingTab(camping_registration_html, camping_form, camping_cutoff, time_now, saturday_date, &jlwe);
-        if (!camping_form && dinner_form_enabled)
-            outputDinnerTab(dinner_registration_html, dinner_form, dinner_cutoff, time_now);
-        outputSummaryTab();
+        if (!camping_form_only && !dinner_form_only)
+            outputEventTab(event_registration_html, camping_cutoff, time_now, &dinner_forms);
+        if (!dinner_form_only)
+            outputCampingTab(camping_registration_html, camping_form_only, camping_cutoff, time_now, saturday_date, &jlwe);
+        for (unsigned int i = 0; i < dinner_forms.size(); i++) {
+            std::string dinner_registration_html;
+            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT html FROM webpages WHERE path = ?;");
+            prep_stmt->setString(1, dinner_forms.at(i).html_path);
+            res = prep_stmt->executeQuery();
+            while (res->next()) {
+                dinner_registration_html = res->getString(1);
+            }
+            delete res;
+            delete prep_stmt;
+
+            if (dinner_form_only && dinner_forms.at(i).dinner_id == query_dinner_id) {
+                outputDinnerTab(dinner_registration_html, true, &dinner_forms.at(i), time_now);
+            } else if (!dinner_form_only) {
+                outputDinnerTab(dinner_registration_html, false, &dinner_forms.at(i), time_now);
+            }
+        }
+        outputSummaryTab(&dinner_forms);
 
         std::cout << FormElements::formMessages();
         std::cout << FormElements::formButtons();
@@ -350,22 +422,44 @@ int main () {
         std::cout << FormElements::includeJavascript("/js/format_date_time.js?v=2024");
 
         std::cout << "<script type=\"text/javascript\">\n";
-        std::cout << "var event_form = " << ((camping_form == false && dinner_form == false) ? "true" : "false") << ";\n";
+        std::cout << "var event_form = " << ((camping_form_only == false && dinner_form_only == false) ? "true" : "false") << ";\n";
 
-        std::cout << "var camping = " << (camping_form ? "true" : "false") << ";\n";
-        std::cout << "var dinner = " << (dinner_form ? "true" : "false") << ";\n";
-        std::cout << "var dinner_form_enabled = " << (dinner_form_enabled ? "true" : "false") << ";\n";
-        if (camping_form || dinner_form) {
-            std::cout << "var summary_page = 1;\n";
+        std::cout << "var camping = " << (camping_form_only ? "true" : "false") << ";\n";
+        if (dinner_form_only) {
+            std::cout << "var dinner = [";
+            for (unsigned int i = 0; i < dinner_forms.size(); i++) {
+                if (i != 0)
+                    std::cout << ",";
+                if (dinner_forms.at(i).dinner_id == query_dinner_id) {
+                    std::cout << "true";
+                } else {
+                    std::cout << "false";
+                }
+            }
+            std::cout << "];\n";
         } else {
-            std::cout << "var summary_page = " << (dinner_form_enabled ? "3" : "2") << ";\n"; // index of the summary of costs page (3 with dinner, 2 dinner disabled)
+            std::cout << "var dinner = [];\n";
         }
 
-        if (!camping_form && !dinner_form)
+        std::cout << "var dinner_forms = [";
+        for (int i = 0; i < dinner_forms.size(); i++) {
+            if (i != 0)
+                std::cout << ",";
+            std::cout << "{dinner_id:" + std::to_string(dinner_forms.at(i).dinner_id) + ",title:\"" + Encoder::javascriptAttributeEncode(dinner_forms.at(i).title) + "\"}";
+        }
+        std::cout << "];\n";
+
+        if (camping_form_only || dinner_form_only) {
+            std::cout << "var summary_page = 1;\n";
+        } else {
+            std::cout << "var summary_page = " << std::to_string(2 + dinner_forms.size()) << ";\n"; // index of the summary of costs page (3 with dinner, 2 dinner disabled)
+        }
+
+        if (!camping_form_only && !dinner_form_only)
             std::cout << "var formPostURL = stripeSessionURL + '?type=event';\n";
-        if (camping_form)
+        if (camping_form_only)
             std::cout << "var formPostURL = stripeSessionURL + '?type=camping_only';\n";
-        if (dinner_form)
+        if (dinner_form_only)
             std::cout << "var formPostURL = stripeSessionURL + '?type=dinner_only';\n";
 
         std::cout << "showTab(currentTab); // Display the current tab\n";

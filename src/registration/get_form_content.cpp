@@ -15,9 +15,11 @@
 #include <string>
 #include <vector>
 
+#include "../core/CgiEnvironment.h"
 #include "../core/JlweCore.h"
 #include "../core/JlweUtils.h"
 #include "../core/JsonUtils.h"
+#include "../core/KeyValueParser.h"
 
 #include "../ext/nlohmann/json.hpp"
 
@@ -25,29 +27,51 @@ struct menu_item {
     int id;
     std::string name;
     std::string name_plural;
+    bool null_name_plural; // hack to store null values in name_plural
+    int course_id;
+    bool null_course_id; // hack to store null values in course
+    int meal_category_id;
+    bool null_meal_category_id; // hack to store null values in meal_category
     int price;
 };
 
 int main () {
     try {
         JlweCore jlwe;
+        KeyValueParser urlQueries(CgiEnvironment::getQueryString(), true);
 
-        sql::Statement *stmt;
         sql::PreparedStatement *prep_stmt;
         sql::ResultSet *res;
 
         std::vector<menu_item> menu_items;
 
-        stmt = jlwe.getMysqlCon()->createStatement();
-        res = stmt->executeQuery("SELECT id,name,name_plural,price FROM dinner_menu ORDER BY id;");
+        int dinner_id = 0;
+        try {
+            dinner_id = std::stoi(urlQueries.getValue("dinner_id"));
+        } catch (...) {}
+
+        prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT id,name,name_plural,course_id,meal_category_id,price FROM dinner_menu WHERE dinner_form_id = ? ORDER BY id;");
+        prep_stmt->setInt(1, dinner_id);
+        res = prep_stmt->executeQuery();
         while (res->next()) {
-            menu_items.push_back({res->getInt(1), res->getString(2), res->getString(3), res->getInt(4)});
+            menu_items.push_back({res->getInt(1), res->getString(2), res->getString(3), res->isNull(3), res->getInt(4), res->isNull(4), res->getInt(5), res->isNull(5), res->getInt(6)});
         }
         delete res;
-        delete stmt;
+        delete prep_stmt;
 
         nlohmann::json jsonDinner;
         jsonDinner["items"] = nlohmann::json::array();
+
+        jsonDinner["config"] = nullptr;
+        prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT config FROM dinner_forms WHERE dinner_id = ?;");
+        prep_stmt->setInt(1, dinner_id);
+        res = prep_stmt->executeQuery();
+        if (res->next()) {
+            if (res->isNull(1) == false)
+                jsonDinner["config"] = nlohmann::json::parse(std::string(res->getString(1)));
+        }
+        delete res;
+        delete prep_stmt;
 
         for (unsigned int i = 0; i < menu_items.size(); i++) {
             menu_item m = menu_items.at(i);
@@ -56,7 +80,9 @@ int main () {
 
             jsonItem["id"] = m.id;
             jsonItem["name"] = m.name;
-            jsonItem["name_plural"] = m.name_plural;
+            if (m.null_name_plural) jsonItem["name_plural"] = nullptr; else jsonItem["name_plural"] = m.name_plural;
+            if (m.null_course_id) jsonItem["course_id"] = nullptr; else jsonItem["course_id"] = m.course_id;
+            if (m.null_meal_category_id) jsonItem["meal_category_id"] = nullptr; else jsonItem["meal_category_id"] = m.meal_category_id;
             jsonItem["price"] = m.price;
             jsonItem["options"] = nlohmann::json::array();
 

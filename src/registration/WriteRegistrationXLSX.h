@@ -59,12 +59,14 @@ public:
     void addCampingSheet(sql::Connection *con, bool full_mode, time_t jlwe_date);
 
     /*!
-     * \brief Creates the "Sat Dinner" sheet
+     * \brief Creates a dinner event sheet
      *
      * \param con The MySQL connection object
+     * \param dinner_form_id The ID number of the dinner event to make the sheet for
+     * \param dinner_title The title of the sheet
      * \param full_mode Set to true to make a sheet with the full data, false to make a simplified sheet
      */
-    void addDinnerSheet(sql::Connection *con, bool full_mode = true);
+    void addDinnerSheet(sql::Connection *con, int dinner_form_id, const std::string &dinner_title, bool full_mode = true);
 
     /*!
      * \brief Get a list of logs from a GPX file

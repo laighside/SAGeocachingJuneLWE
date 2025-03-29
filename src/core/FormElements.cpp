@@ -86,7 +86,7 @@ std::string FormElements::radioButtons(const std::string &name, const std::strin
 }
 
 std::string FormElements::radioButton(const std::string &id, const std::string &name, const std::string &label, const std::string &value, const std::string &oninput, bool checked, bool disabled, const std::string &sub_comment) {
-    std::string result = "<span class=\"checkbox_container" + std::string(sub_comment.size() ? " checkbox_container_spaced" : "") + "\"><label id=\"" + id + "_label\">\n";
+    std::string result = "<span class=\"checkbox_container" + std::string(sub_comment.size() ? " checkbox_container_spaced" : "") + "\"><label id=\"" + id + "_label\" " + (disabled ? "style=\"color:#cccccc;\"" : "") + ">\n";
     result += "    <span id=\"" + id + "_label_text\">" + label + "</span>\n";
     if (sub_comment.size()) {
         result += "    <br/><span id=\"" + id + "_label_comment\" class=\"checkbox_container_comment\">" + sub_comment + "</span>\n";

@@ -34,11 +34,16 @@ function loadRegForm() {
     if (ls_phone)
         document.getElementById("phone").value = ls_phone;
 
-    setInnerTextIfExists(document.getElementById("display_price_event_adult"), price_event_adult);
-    setInnerTextIfExists(document.getElementById("display_price_event_child"), price_event_child);
-    setInnerHTMLIfExists(document.getElementById("display_price_camping"), price_camping_html);
-    setInnerTextIfExists(document.getElementById("display_price_dinner_adult"), price_dinner_adult);
-    setInnerTextIfExists(document.getElementById("display_price_dinner_child"), price_dinner_child);
+    if (typeof price_event_adult !== 'undefined')
+        setInnerTextIfExists(document.getElementById("display_price_event_adult"), price_event_adult);
+    if (typeof price_event_child !== 'undefined')
+        setInnerTextIfExists(document.getElementById("display_price_event_child"), price_event_child);
+    if (typeof price_camping_html !== 'undefined')
+        setInnerHTMLIfExists(document.getElementById("display_price_camping"), price_camping_html);
+    if (typeof price_dinner_adult !== 'undefined')
+        setInnerTextIfExists(document.getElementById("display_price_dinner_adult"), price_dinner_adult);
+    if (typeof price_dinner_child !== 'undefined')
+        setInnerTextIfExists(document.getElementById("display_price_dinner_child"), price_dinner_child);
 
     document.getElementById("payment_card").oninput = function (){paymentTypeChanged("payment")};
     document.getElementById("payment_bank").oninput = function (){paymentTypeChanged("payment")};
@@ -50,12 +55,21 @@ function loadRegForm() {
         if (!option.available && option.available !== 0) {
             // available not set, do nothing
         } else if (option.available <= 0) {
-            document.getElementById("camping_" + option.id_string + "_label_text").innerHTML += " <span style=\"font-weight:bold;color:black;\">(sold out)</span>";
-            document.getElementById("camping_" + option.id_string).disabled = true;
-            document.getElementById("camping_" + option.id_string + "_label").style.color = '#cccccc';
-            document.getElementById("camping_" + option.id_string).checked = false;
+            var checkbox_element = document.getElementById("camping_" + option.id_string);
+            if (checkbox_element) {
+                checkbox_element.disabled = true;
+                checkbox_element.checked = false;
+            }
+            var label_text_element = document.getElementById("camping_" + option.id_string + "_label_text");
+            if (label_text_element)
+                label_text_element.innerHTML += " <span style=\"font-weight:bold;color:black;\">(sold out)</span>";
+            var checkbox_label_element = document.getElementById("camping_" + option.id_string + "_label");
+            if (checkbox_label_element)
+                checkbox_label_element.style.color = '#cccccc';
         } else if (option.available <= 10) {
-            document.getElementById("camping_" + option.id_string + "_label_text").innerHTML += " <span style=\"font-weight:bold;\">(only " + option.available.toString() + " left)</span>";
+            var label_text_element = document.getElementById("camping_" + option.id_string + "_label_text");
+            if (label_text_element)
+                label_text_element.innerHTML += " <span style=\"font-weight:bold;\">(only " + option.available.toString() + " left)</span>";
         }
     });
 
@@ -71,15 +85,15 @@ function loadRegForm() {
     });
 
     var remaining_camping_label = document.getElementById("remaining_camping_label");
-    if (typeof(remaining_camping_label) != 'undefined' && remaining_camping_label != null) {
+    if (remaining_camping_label) {
         if (powered_camping_sites_remain > 10) {
-            document.getElementById("remaining_camping_label").style.display = "none";
+            remaining_camping_label.style.display = "none";
         } else if (powered_camping_sites_remain <= 0) {
-            document.getElementById("remaining_camping_label").innerHTML = "There are no powered sites remaining.";
+            remaining_camping_label.innerHTML = "There are no powered sites remaining.";
         } else if (powered_camping_sites_remain == 1) {
-            document.getElementById("remaining_camping_label").innerHTML = "There is only 1 powered site remaining. Book ASAP before we run out.";
+            remaining_camping_label.innerHTML = "There is only 1 powered site remaining. Book ASAP before we run out.";
         } else {
-            document.getElementById("remaining_camping_label").innerHTML = "There are only " + powered_camping_sites_remain.toString() + " powered sites remaining. Book ASAP before we run out.";
+            remaining_camping_label.innerHTML = "There are only " + powered_camping_sites_remain.toString() + " powered sites remaining. Book ASAP before we run out.";
         }
     }
 }
@@ -153,13 +167,14 @@ function validateForm() {
             addFormMessage("Camping:", "Please select if you wish to book camping site or not");
             valid = false;
         }
-        if (dinner_form_enabled) {
-            if (isRadioChecked("dinner") == false) {
-              setRadioClass("dinner", "invalid");
-              addFormMessage("Saturday Dinner:", "Please select if you will attending the Saturday dinner event or not");
+        for (var i = 0; i < dinner_forms.length; i++) {
+            if (isRadioChecked("dinner_" + dinner_forms[i].dinner_id.toString()) == false) {
+              setRadioClass("dinner_" + dinner_forms[i].dinner_id.toString(), "invalid");
+              addFormMessage("Dinner:", "Please select if you would like to order a meal for the " + dinner_forms[i].title + " or not");
               valid = false;
             }
         }
+
         return valid;
 
     }
@@ -181,9 +196,11 @@ function validateForm() {
         return valid;
     }
 
-    if (tabs[currentTab].id == "dinnerTab") {
-        // always valid
-        return valid;
+    for (var i = 0; i < dinner_forms.length; i++) {
+        if (tabs[currentTab].id == "dinnerTab_" + dinner_forms[i].dinner_id.toString()) {
+            // always valid
+            return valid;
+        }
     }
 
     if (currentTab == summary_page) {
@@ -206,7 +223,8 @@ function leavingTab(tabNumber) {
     // Save camping/dinner status if leaving the 1st tab
     if (tabNumber == 0 && event_form == true) {
         camping = document.getElementById("camping_yes").checked;
-        dinner = dinner_form_enabled ? document.getElementById("dinner_yes").checked : false;
+        for (var i = 0; i < dinner_forms.length; i++)
+            dinner[i] = document.getElementById("dinner_yes_" + dinner_forms[i].dinner_id.toString()).checked;
         document.getElementById("number_people_camping").value = parseInt(document.getElementById("number_adults").value) + parseInt(document.getElementById("number_children").value);
     }
 }
@@ -220,12 +238,12 @@ function skipTabs(n) {
     // Loop is to deal with user either going forward or backwards through the form.
     if (event_form) {
         var i;
-        for (i = 0; i < 3; i++) {
+        for (i = 0; i < 5; i++) {
             if (currentTab == 1 && camping == false) {
                 currentTab = currentTab + n;
             }
-            if (dinner_form_enabled) {
-                if (currentTab == 2 && dinner == false) {
+            for (var j = 0; j < dinner_forms.length; j++) {
+                if (currentTab == (2 + j) && dinner[j] === false) {
                     currentTab = currentTab + n;
                 }
             }
@@ -233,6 +251,7 @@ function skipTabs(n) {
     }
 }
 
+// This isn't used but probably should be
 function dinnerOptionsToString(options) {
     var output = "";
     if (options) {
@@ -264,7 +283,7 @@ function updateSummary() {
     if (event_form) {
         var num_adults = parseInt(document.getElementById("number_adults").value);
         var num_children = parseInt(document.getElementById("number_children").value);
-        document.getElementById("summary_event_desc").innerHTML = "Event registration<br /><span>&nbsp;&nbsp;&nbsp;" + num_adults.toString() + " " + (num_adults === 1 ? "Adult" : "Adults") + ", " + num_children.toString() + " " + (num_children === 1 ? "Child" : "Children") + "</span>";
+        document.getElementById("summary_event_subtext").innerText = num_adults.toString() + " " + (num_adults === 1 ? "Adult" : "Adults") + ", " + num_children.toString() + " " + (num_children === 1 ? "Child" : "Children");
         event_cost = num_adults * price_event_adult + num_children * price_event_child;
         document.getElementById("summary_event_cost").innerHTML = "$" + event_cost.toFixed(2);
     } else {
@@ -290,7 +309,7 @@ function updateSummary() {
         camping_cost = getCampingPrice(camping_type_price_code, number_people_camping, camping_nights) / 100;
         camping_desc = camping_type_name + ", " + number_people_camping.toString() + " " + (number_people_camping === 1 ? "person" : "people") + ", " + camping_nights.toString() + " night" + (camping_nights === 1 ? "" : "s");
 
-        document.getElementById("summary_camping_desc").innerHTML = "Camping<br /><span>&nbsp;&nbsp;&nbsp;" + camping_desc + "</span>";
+        document.getElementById("summary_camping_subtext").innerHTML = camping_desc;
         document.getElementById("summary_camping_cost").innerHTML = "$" + camping_cost.toFixed(2);
 
         document.getElementById("camping_row").style.display = 'table-row';
@@ -298,32 +317,33 @@ function updateSummary() {
       document.getElementById("camping_row").style.display = 'none';
     }
 
-    var dinner_cost = 0;
-    if (dinner) {
-        if (saveOptions) {
-            saveOptions(1);
-            saveOptions(2);
-        }
-        var dinner_number_adults = parseInt(document.getElementById("item_1_count").value);
-        var dinner_number_children = parseInt(document.getElementById("item_2_count").value);
-        var dinner_table_html = "Saturday dinner<br /><span>&nbsp;&nbsp;&nbsp;" + dinner_number_adults.toString() + " Adult meal" + (dinner_number_adults === 1 ? "" : "s") + dinnerOptionsToString(dinner_selected_options["1"]) + "<br/>";
-        dinner_table_html += "&nbsp;&nbsp;&nbsp;" + dinner_number_children.toString() + " Child meal" + (dinner_number_children === 1 ? "" : "s") + dinnerOptionsToString(dinner_selected_options["2"]) + "</span>";
-        document.getElementById("summary_dinner_desc").innerHTML = dinner_table_html;
-        dinner_cost = dinner_number_adults * price_dinner_adult + dinner_number_children * price_dinner_child;
-        document.getElementById("summary_dinner_cost").innerHTML = "$" + dinner_cost.toFixed(2);
+    var total_dinner_cost = 0;
+    for (var j = 0; j < dinner_forms.length; j++) {
+        if (dinner[j] && saveAllDinnerOptions && getDinnerCost && getDinnerSubtext) {
 
-        document.getElementById("dinner_row").style.display = 'table-row';
-    } else {
-        document.getElementById("dinner_row").style.display = 'none';
+            saveAllDinnerOptions(dinner_forms[j].dinner_id);
+            var receipt_subtext = getDinnerSubtext(dinner_forms[j].dinner_id);
+            var dinner_cost = getDinnerCost(dinner_forms[j].dinner_id) / 100;
+            total_dinner_cost += dinner_cost;
+
+            document.getElementById("summary_dinner_subtext_" + dinner_forms[j].dinner_id.toString()).innerHTML = receipt_subtext;
+            document.getElementById("summary_dinner_cost_" + dinner_forms[j].dinner_id.toString()).innerHTML = "$" + dinner_cost.toFixed(2);
+
+            document.getElementById("dinner_row_" + dinner_forms[j].dinner_id.toString()).style.display = 'table-row';
+        } else {
+            document.getElementById("dinner_row_" + dinner_forms[j].dinner_id.toString()).style.display = 'none';
+        }
+
     }
 
-    total_cost = event_cost + camping_cost + dinner_cost;
+
+    total_cost = event_cost + camping_cost + total_dinner_cost;
     total_cost_with_card_surcharge = (total_cost + 0.3) / (1 - 0.0175);
     var card_surcharge_cost = total_cost_with_card_surcharge - total_cost;
     document.getElementById("summary_card_surcharge_cost").innerHTML = "$" + card_surcharge_cost.toFixed(2);
     paymentTypeChanged('null');
 
-    if (camping || dinner) {
+    if (camping || dinner.reduce(function(accumulator, currentValue) {return (accumulator || currentValue)}, false)) {
         document.getElementById("payment_cash").disabled = true;
         document.getElementById("payment_cash_label").style.color = '#cccccc';
         document.getElementById("payment_cash").checked = false;
@@ -382,17 +402,18 @@ function submitForm() {
         };
     }
 
-    var dinner_json = dinner;
-    if (dinner) {
-        var dinner_number_adults = parseInt(document.getElementById("item_1_count").value);
-        var dinner_number_children = parseInt(document.getElementById("item_2_count").value);
-        dinner_json = {
-            dinner_number_adults: dinner_number_adults,
-            dinner_number_children: dinner_number_children,
-            dinner_options_adults: dinner_selected_options["1"],
-            dinner_options_children: dinner_selected_options["2"],
-            dinner_comment: document.getElementById("dinner_comments").value
-        };
+    var dinner_json = {};
+
+    for (var j = 0; j < dinner_forms.length; j++) {
+        if (dinner[j]) {
+            dinner_json[dinner_forms[j].dinner_id] = {};
+            if (dinner_has_categories[dinner_forms[j].dinner_id] === true) {
+                dinner_json[dinner_forms[j].dinner_id].categories = dinner_selected_options[dinner_forms[j].dinner_id].categories;
+            } else if (dinner_has_categories[dinner_forms[j].dinner_id] === false) {
+                dinner_json[dinner_forms[j].dinner_id].meals = dinner_selected_options[dinner_forms[j].dinner_id].categories;
+            }
+            dinner_json[dinner_forms[j].dinner_id].comment = document.getElementById("dinner_comments_" + dinner_forms[j].dinner_id.toString()).value;
+        }
     }
 
     var jsonOut = {

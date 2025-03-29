@@ -82,7 +82,7 @@ int main () {
                                 makeEmail.addHtml("<p>Hi " + Encoder::htmlEntityEncode(PaymentUtils::getUserName(jlwe.getMysqlCon(), userid)) + ",</p>\n");
 
                                 if (payment_type == "cash")
-                                    makeEmail.addHtml("<p>We have received " + PaymentUtils::currencyToString(payment_amount) + " via cash payment.</p>\n");
+                                    makeEmail.addHtml("<p>We have received " + PaymentUtils::currencyToString(payment_amount) + "</p>\n");
                                 if (payment_type == "bank")
                                     makeEmail.addHtml("<p>We have received " + PaymentUtils::currencyToString(payment_amount) + " via bank transfer.</p>\n");
 
@@ -153,9 +153,9 @@ int main () {
             delete stmt;
 
             stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT idempotency, gc_username FROM sat_dinner WHERE payment_type != 'event' AND status = 'S';");
+            res = stmt->executeQuery("SELECT idempotency, gc_username, dinner_form_id FROM sat_dinner WHERE payment_type != 'event' AND status = 'S';");
             while (res->next()) {
-                std::cout << "<option value=\"" << Encoder::htmlAttributeEncode(res->getString(2)) << " (Dinner)\" id=\"" << Encoder::htmlAttributeEncode(res->getString(1)) << "\">\n";
+                std::cout << "<option value=\"" << Encoder::htmlAttributeEncode(res->getString(2)) << " (Dinner " << res->getInt(3) << ")\" id=\"" << Encoder::htmlAttributeEncode(res->getString(1)) << "\">\n";
             }
             delete res;
             delete stmt;
@@ -217,11 +217,16 @@ int main () {
             std::cout << "                    } else {\n";
             std::cout << "                        user_html += 'none<br/>';\n";
             std::cout << "                    }\n";
-            std::cout << "                    user_html += 'Dinner: ';\n";
             std::cout << "                    if (jsonObj.dinner != null && typeof jsonObj.dinner == 'object') {\n";
-            std::cout << "                        user_html += jsonObj.dinner.dinner_number_adult.toString() + ' adult meals, ' + jsonObj.dinner.dinner_number_child.toString() + ' child meals</p>';\n";
+            std::cout << "                        if (jsonObj.dinner.length > 0) {\n";
+            std::cout << "                            for (var i = 0; i < jsonObj.dinner.length; i++)\n";
+            std::cout << "                                user_html += jsonObj.dinner[i].title + ': ' + jsonObj.dinner[i].meals.toString() + ' meals<br />';\n";
+            std::cout << "                            user_html += '</p>';\n";
+            std::cout << "                        } else {\n";
+            std::cout << "                            user_html += 'Dinner: none</p>';\n";
+            std::cout << "                        }\n";
             std::cout << "                    } else {\n";
-            std::cout << "                        user_html += 'none</p>';\n";
+            std::cout << "                        user_html += 'Dinner: none</p>';\n";
             std::cout << "                    }\n";
             std::cout << "                    user_html += 'Merchandise: ';\n";
             std::cout << "                    if (jsonObj.merch != null && typeof jsonObj.merch == 'object') {\n";

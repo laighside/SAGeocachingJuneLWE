@@ -175,13 +175,39 @@ CREATE TABLE `csp_reports` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
+-- Table structure for table `dinner_forms`
+--
+
+CREATE TABLE `dinner_forms` (
+  `dinner_id` int NOT NULL AUTO_INCREMENT,
+  `title` text NOT NULL,
+  `enabled` int NOT NULL,
+  `order_close_time` datetime DEFAULT NULL,
+  `html_path` text,
+  `config` json NOT NULL,
+  PRIMARY KEY (`dinner_id`),
+  UNIQUE KEY `dinner_id_UNIQUE` (`dinner_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `dinner_forms`
+--
+
+LOCK TABLES `dinner_forms` WRITE;
+INSERT INTO `dinner_forms` VALUES ('1', 'Saturday night dinner', '1', NULL, '*dinner_registration', '{}');
+UNLOCK TABLES;
+
+--
 -- Table structure for table `dinner_menu`
 --
 
 CREATE TABLE `dinner_menu` (
   `id` int NOT NULL AUTO_INCREMENT,
+  `dinner_form_id` int NOT NULL,
   `name` varchar(100) NOT NULL,
-  `name_plural` varchar(100) NOT NULL,
+  `name_plural` varchar(100) DEFAULT NULL,
+  `course_id` int DEFAULT NULL,
+  `meal_category_id` int DEFAULT NULL,
   `price` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -191,7 +217,7 @@ CREATE TABLE `dinner_menu` (
 --
 
 LOCK TABLES `dinner_menu` WRITE;
-INSERT INTO `dinner_menu` VALUES (1, 'Adult meal', 'Adult meals', 0),(2, 'Child meal', 'Child meals', 0);
+INSERT INTO `dinner_menu` VALUES (1, 1, 'Adult meal', 'Adult meals', NULL, NULL, 0),(2, 1, 'Child meal', 'Child meals', NULL, NULL, 0);
 UNLOCK TABLES;
 
 --
@@ -558,6 +584,7 @@ CREATE TABLE `sat_dinner` (
   `email_address` varchar(500) NOT NULL,
   `gc_username` varchar(1000) NOT NULL,
   `phone_number` varchar(50) NOT NULL,
+  `dinner_form_id` int NOT NULL,
   `livemode` tinyint NOT NULL,
   `number_adults` int NOT NULL DEFAULT '1',
   `number_children` int NOT NULL DEFAULT '0',
@@ -568,7 +595,6 @@ CREATE TABLE `sat_dinner` (
   `dinner_options_adults` text,
   `dinner_options_children` text,
   PRIMARY KEY (`registration_id`),
-  UNIQUE KEY `idempotency_UNIQUE` (`idempotency`),
   UNIQUE KEY `registration_id_UNIQUE` (`registration_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

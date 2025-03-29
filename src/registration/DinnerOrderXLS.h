@@ -36,7 +36,7 @@ public:
 private:
 
     // These functions fill in the Excel worksheets with the registration data
-    static void makeOrdersSheet(OpenXLSX::XLWorksheet &sheet, sql::Connection *con, bool adult);
+    static void makeOrdersSheet(OpenXLSX::XLWorksheet &sheet, sql::Connection *con, int dinner_form_id, int category_id, nlohmann::json configJson);
     static void makeTotalsSheet(OpenXLSX::XLWorksheet &sheet, sql::Connection *con);
 };
 

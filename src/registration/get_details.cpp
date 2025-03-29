@@ -20,6 +20,7 @@
 #include "../core/JsonUtils.h"
 #include "../core/KeyValueParser.h"
 #include "../core/PaymentUtils.h"
+#include "DinnerUtils.h"
 
 #include "../ext/nlohmann/json.hpp"
 
@@ -82,26 +83,34 @@ int main () {
                 delete res;
                 delete prep_stmt;
 
-                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT email_address,gc_username,phone_number,livemode,number_adults,number_children FROM sat_dinner WHERE idempotency = ?;");
-                prep_stmt->setString(1, userKey);
-                res = prep_stmt->executeQuery();
-                if (res->next()) {
-                    if (!regFound) {
-                        jsonDocument["email_address"] = res->getString(1);
-                        jsonDocument["gc_username"] = res->getString(2);
-                        jsonDocument["phone_number"] = res->getString(3);
-                        jsonDocument["livemode"] = res->getInt(4);
-                        jsonDocument["payment_total"] = PaymentUtils::getUserCost(jlwe.getMysqlCon(), userKey);
-                        jsonDocument["payment_received"] = PaymentUtils::getTotalPaymentReceived(jlwe.getMysqlCon(), userKey);
+                jsonDocument["dinner"] = nlohmann::json::array();
+                std::vector<DinnerUtils::dinner_form> dinner_forms = DinnerUtils::getDinnerFormList(jlwe.getMysqlCon());
+                for (unsigned int i = 0; i < dinner_forms.size(); i++) {
+                    prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT email_address,gc_username,phone_number,livemode,number_adults,number_children FROM sat_dinner WHERE idempotency = ? AND dinner_form_id = ?;");
+                    prep_stmt->setString(1, userKey);
+                    prep_stmt->setInt(2, dinner_forms.at(i).dinner_id);
+                    res = prep_stmt->executeQuery();
+                    if (res->next()) {
+                        if (!regFound) {
+                            jsonDocument["email_address"] = res->getString(1);
+                            jsonDocument["gc_username"] = res->getString(2);
+                            jsonDocument["phone_number"] = res->getString(3);
+                            jsonDocument["livemode"] = res->getInt(4);
+                            jsonDocument["payment_total"] = PaymentUtils::getUserCost(jlwe.getMysqlCon(), userKey);
+                            jsonDocument["payment_received"] = PaymentUtils::getTotalPaymentReceived(jlwe.getMysqlCon(), userKey);
+                        }
+
+                        nlohmann::json dinnerObject;
+                        dinnerObject["dinner_id"] = dinner_forms.at(i).dinner_id;
+                        dinnerObject["title"] = dinner_forms.at(i).title;
+                        dinnerObject["meals"] = res->getInt(5) + res->getInt(6);
+                        jsonDocument["dinner"].push_back(dinnerObject);
+
+                        regFound = true;
                     }
-
-                    jsonDocument["dinner"]["dinner_number_adult"] = res->getInt(5);
-                    jsonDocument["dinner"]["dinner_number_child"] = res->getInt(6);
-
-                    regFound = true;
+                    delete res;
+                    delete prep_stmt;
                 }
-                delete res;
-                delete prep_stmt;
 
                 prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT email_address,gc_username,phone_number,livemode,(SELECT COUNT(*) FROM merch_order_items WHERE merch_order_items.order_id=merch_orders.order_id) FROM merch_orders WHERE idempotency = ?;");
                 prep_stmt->setString(1, userKey);

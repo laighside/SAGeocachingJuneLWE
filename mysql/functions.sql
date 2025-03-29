@@ -402,13 +402,13 @@ DELIMITER ;
  */
 DROP FUNCTION IF EXISTS insertDinner;
 DELIMITER $$
-CREATE FUNCTION insertDinner(idempotencyIn VARCHAR(100), email_addressIn VARCHAR(100), gc_usernameIn VARCHAR(100), phone_numberIn VARCHAR(100), livemodeIn TINYINT, number_adultsIn int, number_childrenIn int, dinner_commentIn VARCHAR(1000), payment_typeIn VARCHAR(10), userIP VARCHAR(50), username VARCHAR(50), dinner_options_adultsIn TEXT, dinner_options_childrenIn TEXT) RETURNS INT
+CREATE FUNCTION insertDinner(idempotencyIn VARCHAR(100), email_addressIn VARCHAR(100), gc_usernameIn VARCHAR(100), phone_numberIn VARCHAR(100), dinner_form_idIn INT, livemodeIn TINYINT, number_adultsIn int, number_childrenIn int, dinner_commentIn VARCHAR(1000), payment_typeIn VARCHAR(10), userIP VARCHAR(50), username VARCHAR(50), dinner_options_adultsIn TEXT, dinner_options_childrenIn TEXT) RETURNS INT
     NOT DETERMINISTIC
 BEGIN
-    IF (EXISTS(SELECT * FROM sat_dinner WHERE idempotency = idempotencyIn)) THEN
-        RETURN (SELECT registration_id FROM sat_dinner WHERE idempotency = idempotencyIn);
+    IF (EXISTS(SELECT * FROM sat_dinner WHERE idempotency = idempotencyIn AND dinner_form_id = dinner_form_idIn)) THEN
+        RETURN (SELECT registration_id FROM sat_dinner WHERE idempotency = idempotencyIn AND dinner_form_id = dinner_form_idIn);
     ELSE
-        INSERT INTO sat_dinner (ip_address, timestamp, idempotency, email_address, gc_username, phone_number, livemode, number_adults, number_children, dinner_comment, payment_type, dinner_options_adults, dinner_options_children) VALUES (userIP, NOW(), idempotencyIn, email_addressIn, gc_usernameIn, phone_numberIn, livemodeIn, number_adultsIn, number_childrenIn, dinner_commentIn, payment_typeIn, dinner_options_adultsIn, dinner_options_childrenIn);
+        INSERT INTO sat_dinner (ip_address, timestamp, idempotency, email_address, gc_username, phone_number, dinner_form_id, livemode, number_adults, number_children, dinner_comment, payment_type, dinner_options_adults, dinner_options_children) VALUES (userIP, NOW(), idempotencyIn, email_addressIn, gc_usernameIn, phone_numberIn, dinner_form_idIn, livemodeIn, number_adultsIn, number_childrenIn, dinner_commentIn, payment_typeIn, dinner_options_adultsIn, dinner_options_childrenIn);
         RETURN LAST_INSERT_ID();
     END IF;
 END$$

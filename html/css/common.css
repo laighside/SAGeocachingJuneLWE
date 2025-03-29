@@ -342,8 +342,9 @@ user-select: none;
   text-align: left;
   border-bottom-width: 0px;
 }
-#cost_table td > span {
+#cost_table .subtext {
   font-size: 14px;
+  margin-left: 15px;
 }
 #cost_table .currency_cell {
   vertical-align: top;
@@ -904,6 +905,10 @@ user-select: none;
 }
 .formOptionBox > div {
   margin-left: 20px;
+}
+.formOptionBox > h3 {
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 

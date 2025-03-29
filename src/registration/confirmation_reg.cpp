@@ -135,8 +135,8 @@ int main () {
                             makeEmail.addHtml("<p>Thankyou for reserving a camping site at the June Long Weekend event.</p>\n");
                             subject = "Camping Invoice";
                         } else if (regType == "dinner_only") {
-                            makeEmail.addHtml("<p>Thankyou for booking a meal at the Saturday night dinner of the June Long Weekend event.</p>\n");
-                            subject = "Saturday Dinner Invoice";
+                            makeEmail.addHtml("<p>Thankyou for booking a meal at the June Long Weekend event.</p>\n");
+                            subject = "Dinner Invoice";
                         } else {
                             makeEmail.addHtml("<p>Thankyou for registering for the June Long Weekend event.</p>\n");
                         }
@@ -192,7 +192,7 @@ int main () {
                     if (regType == "camping_only") {
                         result += "<p>Camping site booking for <span style=\"font-weight:bold;\">" + Encoder::htmlEntityEncode(gc_username) + "</span> has been received.</p>\n";
                     } else if (regType == "dinner_only") {
-                        result += "<p>Saturday dinner booking for <span style=\"font-weight:bold;\">" + Encoder::htmlEntityEncode(gc_username) + "</span> has been received.</p>\n";
+                        result += "<p>Dinner booking for <span style=\"font-weight:bold;\">" + Encoder::htmlEntityEncode(gc_username) + "</span> has been received.</p>\n";
                     } else {
                         result += "<p>Registration for <span style=\"font-weight:bold;\">" + Encoder::htmlEntityEncode(gc_username) + "</span> has been received.</p>\n";
                     }

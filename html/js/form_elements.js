@@ -91,6 +91,22 @@ function makeIconButton(onClick, imageUrl, altText) {
 }
 
 /**
+ * Makes a button with just text on it
+ *
+ * @param {Function} onClick Function to call when the button is clicked
+ * @param {String} text The text to put on the button
+ * @returns {Object} The element to add to the document
+ */
+function makeTextButton(onClick, text) {
+    var button = document.createElement("input");
+    button.type = "button";
+    button.value = text;
+    if (onClick)
+        button.addEventListener('click', onClick);
+    return button;
+}
+
+/**
  * Convenience function that creates a HTML element: <type id=id>text</type>
  *
  * @param {String} type The type of element

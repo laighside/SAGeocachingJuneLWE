@@ -27,11 +27,52 @@
 #include "../email/Email.h"
 #include "../email/EmailTemplates.h"
 #include "../prices.h"
+#include "DinnerUtils.h"
 
 #include "../ext/nlohmann/json.hpp"
 
 // Page that customers are sent to once the order is completed
 #define CONFIRMATION_PAGE_URL "/cgi-bin/registration/confirmation_reg.cgi"
+
+struct dinner_form {
+    int dinner_id;
+    std::string title;
+    time_t order_close_time;
+    std::string config;
+    bool in_use;
+};
+
+// hacky function to check the incoming dinner meal selection JSON
+nlohmann::json validateMeal(nlohmann::json json_in) {
+    nlohmann::json json_out;
+    if (json_in.contains("name") && json_in.at("name").is_string())
+        json_out["name"] = json_in.at("name");
+
+    if (json_in.contains("courses") && json_in.at("courses").is_object()) {
+        json_out["courses"] = nlohmann::json::object();
+        for (nlohmann::json::iterator it = json_in.at("courses").begin(); it != json_in.at("courses").end(); ++it) {
+            std::string key = it.key();
+            int value = it.value();
+            json_out["courses"][key] = value;
+        }
+    }
+
+    if (json_in.contains("item_options") && json_in.at("item_options").is_object()) {
+        json_out["item_options"] = nlohmann::json::object();
+        for (nlohmann::json::iterator it = json_in.at("item_options").begin(); it != json_in.at("item_options").end(); ++it) {
+            std::string key = it.key();
+            if (it.value().is_string()) {
+                std::string value = it.value();
+                json_out["item_options"][key] = value;
+            } else if (it.value().is_array()) {
+                std::vector<bool> value = it.value();
+                json_out["item_options"][key] = value;
+            }
+        }
+    }
+
+    return json_out;
+}
 
 int main () {
     try {
@@ -44,6 +85,7 @@ int main () {
             return 0;
         }
 
+        sql::Statement *stmt;
         sql::PreparedStatement *prep_stmt;
         sql::ResultSet *res;
 
@@ -74,13 +116,11 @@ int main () {
         bool have_lanyard = jsonDocument.value("have_lanyard", false);
 
         bool camping = false;
-        bool dinner = false;
 
-        int dinner_number_adults = 0;
-        int dinner_number_children = 0;
-        std::string dinner_comment = "";
-        nlohmann::json dinner_options_adults = nlohmann::json::array();
-        nlohmann::json dinner_options_children = nlohmann::json::array();
+        std::vector<std::string> dinner_comments;
+        std::vector<std::string> dinner_orders;
+        std::vector<int> dinner_number_adults;
+        std::vector<int> dinner_number_children;
 
         std::string camping_type = "unpowered";
         std::string camping_comment = "";
@@ -88,53 +128,95 @@ int main () {
         int leave_date = 0;
         int number_people = 0;
 
-        int id_number = 0;
-
         bool isValid = true;
         bool isFullEvent = (regType == "event");
         std::string error_message = "";
 
+        // get list of dinner forms
+        std::vector<dinner_form> dinner_forms;
+        stmt = jlwe.getMysqlCon()->createStatement();
+        res = stmt->executeQuery("SELECT dinner_id,title,unix_timestamp(order_close_time),config FROM dinner_forms WHERE enabled > 0;");
+        while (res->next()) {
+            dinner_forms.push_back({res->getInt(1), res->getString(2), res->getInt64(3), res->getString(4), false});
+        }
+        delete res;
+        delete stmt;
+
+
         // dinner details
-        if (jsonDocument.contains("dinner")) {
-            if (jsonDocument.at("dinner").is_boolean()) {
-                dinner = jsonDocument.at("dinner");
-            } else if (jsonDocument.at("dinner").is_object()) {
-                dinner = true;
-                nlohmann::json dinnerObject = jsonDocument.at("dinner");
+        if (jsonDocument.contains("dinner") && jsonDocument.at("dinner").is_object()) {
+            for (unsigned int i = 0; i < dinner_forms.size(); i++) {
+                if (jsonDocument.at("dinner").contains(std::to_string(dinner_forms.at(i).dinner_id))) {
+                    dinner_forms[i].in_use = true;
+                    //dinner_forms_in_use++;
+                    nlohmann::json dinnerObject = jsonDocument.at("dinner").at(std::to_string(dinner_forms.at(i).dinner_id));
 
-                // Check that the meal options are vaild and remove any extra objects that might be in the JSON
-                // This can probably be done better
-                if (dinnerObject.contains("dinner_options_adults") && dinnerObject["dinner_options_adults"].is_array()) {
-                    for (nlohmann::json::iterator it = dinnerObject["dinner_options_adults"].begin(); it != dinnerObject["dinner_options_adults"].end(); ++it) {
-                        nlohmann::json meal;
-                        meal["11"] = it.value()["11"];
-                        meal["12"] = it.value()["12"];
-                        meal["13"] = it.value()["13"];
-                        meal["14"] = it.value()["14"];
-                        dinner_options_adults.push_back(meal);
+                    nlohmann::json configJson = nlohmann::json::parse(dinner_forms.at(i).config);
+                    std::vector<DinnerUtils::dinner_menu_item> menu_items = DinnerUtils::getDinnerMenuItems(jlwe.getMysqlCon(), dinner_forms.at(i).dinner_id);
+
+                    unsigned int adults = 0;
+                    unsigned int children = 0;
+
+                    nlohmann::json orderObject = {};
+                    if (dinnerObject.contains("categories") && configJson.contains("categories")) {
+
+                        // Check that the meal options are valid and remove any extra objects that might be in the JSON
+                        // Essently does this: orderObject["categories"] = dinnerObject.at("categories");
+                        // This can probably be done better
+                        for (nlohmann::json::iterator course_it = configJson.at("courses").begin(); course_it != configJson.at("courses").end(); ++course_it) {
+                            int category_id = course_it.value().at("category_id");
+                            if (dinnerObject.at("categories").contains(std::to_string(category_id)) && dinnerObject.at("categories").at(std::to_string(category_id)).is_array()) {
+
+                                nlohmann::json meal_array_out = nlohmann::json::array();
+                                for (nlohmann::json::iterator meal_it = dinnerObject.at("categories").at(std::to_string(category_id)).begin(); meal_it != dinnerObject.at("categories").at(std::to_string(category_id)).end(); ++meal_it) {
+                                    meal_array_out.push_back(validateMeal(meal_it.value()));
+                                }
+
+                                orderObject["categories"][std::to_string(category_id)] = meal_array_out;
+                            }
+                        }
+
+                        // hack to get total counts for adult and child meals
+                        if (dinnerObject.at("categories").contains("10") && dinnerObject.at("categories").at("10").is_array())
+                            adults = dinnerObject.at("categories").at("10").size();
+                        if (dinnerObject.at("categories").contains("20") && dinnerObject.at("categories").at("20").is_array())
+                            children = dinnerObject.at("categories").at("20").size();
                     }
-                }
-                if (dinnerObject.contains("dinner_options_children") && dinnerObject["dinner_options_children"].is_array()) {
-                    for (nlohmann::json::iterator it = dinnerObject["dinner_options_children"].begin(); it != dinnerObject["dinner_options_children"].end(); ++it) {
-                        nlohmann::json meal;
-                        meal["21"] = it.value()["21"];
-                        meal["22"] = it.value()["22"];
-                        meal["23"] = it.value()["23"];
-                        meal["24"] = it.value()["24"];
-                        dinner_options_children.push_back(meal);
+
+                    if (dinnerObject.contains("meals")) {
+
+                        // Check that the meal options are valid and remove any extra objects that might be in the JSON
+                        // Essently does this: orderObject["meals"] = dinnerObject.at("meals");
+                        // This can probably be done better
+                        for (unsigned int j = 0; j < menu_items.size(); j++) {
+                            int meal_id = menu_items.at(j).id;
+                            if (dinnerObject.at("meals").contains(std::to_string(meal_id)) && dinnerObject.at("meals").at(std::to_string(meal_id)).is_array()) {
+
+                                nlohmann::json meal_array_out = nlohmann::json::array();
+                                for (nlohmann::json::iterator meal_it = dinnerObject.at("meals").at(std::to_string(meal_id)).begin(); meal_it != dinnerObject.at("meals").at(std::to_string(meal_id)).end(); ++meal_it) {
+                                    meal_array_out.push_back(validateMeal(meal_it.value()));
+                                }
+
+                                orderObject["meals"][std::to_string(meal_id)] = meal_array_out;
+                            }
+                        }
+
+                        // hack to get total counts for adult and child meals
+                        if (dinnerObject.at("meals").contains("1") && dinnerObject.at("meals").at("1").is_array())
+                            adults = dinnerObject.at("meals").at("1").size();
+                        if (dinnerObject.at("meals").contains("2") && dinnerObject.at("meals").at("2").is_array())
+                            children = dinnerObject.at("meals").at("2").size();
                     }
-                }
 
-                if (dinnerObject.contains("dinner_number_adults") && dinnerObject["dinner_number_adults"].is_number_integer())
-                    dinner_number_adults = dinnerObject["dinner_number_adults"];
-                if (dinnerObject.contains("dinner_number_children") && dinnerObject["dinner_number_children"].is_number_integer())
-                    dinner_number_children = dinnerObject["dinner_number_children"];
-
-                dinner_comment = dinnerObject.value("dinner_comment", "");
-
-                if (regType == "dinner_only") {
-                    number_adults = dinner_number_adults;
-                    number_children = dinner_number_children;
+                    dinner_comments.push_back(dinnerObject.value("comment", ""));
+                    dinner_orders.push_back(orderObject.dump());
+                    dinner_number_adults.push_back(adults);
+                    dinner_number_children.push_back(children);
+                } else {
+                    dinner_comments.push_back("");
+                    dinner_orders.push_back("");
+                    dinner_number_adults.push_back(0);
+                    dinner_number_children.push_back(0);
                 }
             }
         }
@@ -216,10 +298,6 @@ int main () {
         try {
             camping_cutoff = std::stoll(jlwe.getGlobalVar("camping_cutoff_date"));
         } catch (...) {}
-        time_t dinner_cutoff = 0;
-        try {
-            dinner_cutoff = std::stoll(jlwe.getGlobalVar("dinner_cutoff_date"));
-        } catch (...) {}
 
         // check main event details
         if (isFullEvent) {
@@ -235,24 +313,14 @@ int main () {
         }
 
         // check dinner
-        if (dinner) {
-            if (dinner_number_adults < 0 || dinner_number_children < 0) {
-                isValid = false;
-                error_message = "Number of dinners ordered must not be negative";
-            }
-
-            if (dinner_number_adults != dinner_options_adults.size()) {
-                isValid = false;
-                error_message = "Number of adult meals does not match number of meal choices";
-            }
-            if (dinner_number_children != dinner_options_children.size()) {
-                isValid = false;
-                error_message = "Number of child meals does not match number of meal choices";
-            }
-
-            if ((time(nullptr) > dinner_cutoff)) {
-                isValid = false;
-                error_message = "Dinner bookings have now closed. You are too late to order a meal.";
+        for (unsigned int i = 0; i < dinner_forms.size(); i++) {
+            if (dinner_forms.at(i).in_use) {
+                if (dinner_forms.at(i).order_close_time) {
+                    if ((time(nullptr) > dinner_forms.at(i).order_close_time)) {
+                        isValid = false;
+                        error_message = "Orders for the " + dinner_forms.at(i).title + " have now closed. You are too late to order a meal.";
+                    }
+                }
             }
         }
 
@@ -339,7 +407,12 @@ int main () {
                 prep_stmt->setInt(10, past_jlwe);
                 prep_stmt->setInt(11, have_lanyard);
                 prep_stmt->setString(12, (camping ? "yes" : "no"));
-                prep_stmt->setString(13, (dinner ? "yes" : "no"));
+
+                int dinnerCount = 0;
+                for (unsigned int i = 0; i < dinner_forms.size(); i++)
+                    if (dinner_forms.at(i).in_use) dinnerCount++;
+                prep_stmt->setString(13, std::to_string(dinnerCount));
+
                 prep_stmt->setString(14, payment_type);
                 prep_stmt->setString(15, jlwe.getCurrentUserIP());
                 prep_stmt->setString(16, jlwe.getCurrentUsername());
@@ -377,33 +450,36 @@ int main () {
                 saveCamping = true;
             }
 
-            bool saveDinner = false;
-            if (dinner) {
-                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT insertDinner(?,?,?,?,?,?,?,?,?,?,?,?,?);");
-                prep_stmt->setString(1, idempotencySafe);
-                prep_stmt->setString(2, email);
-                prep_stmt->setString(3, gc_username);
-                prep_stmt->setString(4, phone);
-                prep_stmt->setInt(5, (mode == "live"));
-                prep_stmt->setInt(6, dinner_number_adults);
-                prep_stmt->setInt(7, dinner_number_children);
-                prep_stmt->setString(8, dinner_comment);
-                prep_stmt->setString(9, isFullEvent ? "event" : payment_type);
-                prep_stmt->setString(10, jlwe.getCurrentUserIP());
-                prep_stmt->setString(11, jlwe.getCurrentUsername());
-                prep_stmt->setString(12, dinner_options_adults.dump());
-                prep_stmt->setString(13, dinner_options_children.dump());
-                res = prep_stmt->executeQuery();
-                if (res->next() && res->getInt(1))
-                    saveDinner = true;
-                delete res;
-                delete prep_stmt;
-            } else {
-                saveDinner = true;
+            int saveDinnerCount = 0;
+            for (unsigned int i = 0; i < dinner_forms.size(); i++) {
+                if (dinner_forms.at(i).in_use) {
+                    prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT insertDinner(?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+                    prep_stmt->setString(1, idempotencySafe);
+                    prep_stmt->setString(2, email);
+                    prep_stmt->setString(3, gc_username);
+                    prep_stmt->setString(4, phone);
+                    prep_stmt->setInt(5, dinner_forms[i].dinner_id);
+                    prep_stmt->setInt(6, (mode == "live"));
+                    prep_stmt->setInt(7, dinner_number_adults[i]);
+                    prep_stmt->setInt(8, dinner_number_children[i]);
+                    prep_stmt->setString(9, dinner_comments[i]);
+                    prep_stmt->setString(10, isFullEvent ? "event" : payment_type);
+                    prep_stmt->setString(11, jlwe.getCurrentUserIP());
+                    prep_stmt->setString(12, jlwe.getCurrentUsername());
+                    prep_stmt->setString(13, dinner_orders[i]);
+                    prep_stmt->setString(14, "");
+                    res = prep_stmt->executeQuery();
+                    if (res->next() && res->getInt(1))
+                        saveDinnerCount++;
+                    delete res;
+                    delete prep_stmt;
+                } else {
+                    saveDinnerCount++;
+                }
             }
 
 
-            if (saveEvent && saveDinner && saveCamping) { // if everything saved to MySQL successfully
+            if (saveEvent && (saveDinnerCount == dinner_forms.size()) && saveCamping) { // if everything saved to MySQL successfully
                 if (payment_type == "card") {
                     std::string post_data = "payment_method_types[]=card&customer_email=" + Encoder::urlEncode(email) + "&success_url=" + std::string(jlwe.config.at("http")) + std::string(jlwe.config.at("websiteDomain")) + std::string(CONFIRMATION_PAGE_URL) + "?session_id={CHECKOUT_SESSION_ID}&cancel_url=" + std::string(jlwe.config.at("http")) + std::string(jlwe.config.at("websiteDomain")) + std::string(CONFIRMATION_PAGE_URL) + "?session_id={CHECKOUT_SESSION_ID}%26cancel=true";
                     int total_cost = 0;
@@ -430,12 +506,15 @@ int main () {
                         }
                     }
 
-                    if (dinner) {
-                        int payment_dinner_total = dinner_number_adults * PRICE_DINNER_ADULT + dinner_number_children * PRICE_DINNER_CHILD;
-                        if (payment_dinner_total > 0) {
-                            std::string description = std::to_string(dinner_number_adults) + "+adult+dinners+and+" + std::to_string(dinner_number_children) + "+child+dinners";
-                            post_data += "&line_items[][name]=Saturday+dinner&line_items[][description]=" + description + "&line_items[][images][]=https://jlwe.org/img/dinner_icon.png&line_items[][amount]=" + std::to_string(payment_dinner_total) + "&line_items[][currency]=aud&line_items[][quantity]=1";
-                            total_cost += payment_dinner_total;
+                    for (unsigned int i = 0; i < dinner_forms.size(); i++) {
+                        if (dinner_forms.at(i).in_use) {
+                            int payment_dinner_total = DinnerUtils::getDinnerCost(jlwe.getMysqlCon(), dinner_forms.at(i).dinner_id, dinner_orders[i]);
+                            if (payment_dinner_total > 0) {
+                                std::string dinner_event_name_encoded = JlweUtils::replaceString(dinner_forms.at(i).title, " ", "+");
+                                std::string description = std::to_string(dinner_number_adults[i]) + "+adult+dinner" + (dinner_number_adults[i] == 1 ? "" : "s") + "+and+" + std::to_string(dinner_number_children[i]) + "+child+dinner" + (dinner_number_children[i] == 1 ? "" : "s");
+                                post_data += "&line_items[][name]=" + dinner_event_name_encoded + "&line_items[][description]=" + description + "&line_items[][images][]=https://jlwe.org/img/dinner_icon.png&line_items[][amount]=" + std::to_string(payment_dinner_total) + "&line_items[][currency]=aud&line_items[][quantity]=1";
+                                total_cost += payment_dinner_total;
+                            }
                         }
                     }
 

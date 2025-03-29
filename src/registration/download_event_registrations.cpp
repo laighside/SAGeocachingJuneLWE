@@ -20,6 +20,7 @@
 #include "../core/JlweCore.h"
 #include "../core/JlweUtils.h"
 #include "../core/KeyValueParser.h"
+#include "DinnerUtils.h"
 
 #include "WriteRegistrationXLSX.h"
 
@@ -42,11 +43,14 @@ int main () {
                 jlwe_date = std::stoll(jlwe.getGlobalVar("jlwe_date"));
             } catch (...) {}
 
+            std::vector<DinnerUtils::dinner_form> dinner_forms = DinnerUtils::getDinnerFormList(jlwe.getMysqlCon());
+
             WriteRegistrationXLSX xlsx(jlwe.config.at("ooxmlTemplatePath"));
 
             xlsx.addEventRegistrationsSheet(jlwe.getMysqlCon(), full, cache_logs);
             xlsx.addCampingSheet(jlwe.getMysqlCon(), full, jlwe_date);
-            xlsx.addDinnerSheet(jlwe.getMysqlCon(), full);
+            for (unsigned int i = 0; i < dinner_forms.size(); i++)
+                xlsx.addDinnerSheet(jlwe.getMysqlCon(), dinner_forms.at(i).dinner_id, dinner_forms.at(i).title, full);
 
             // Save the file
             std::string xlsx_file = xlsx.saveXlsxFile("JLWE Event Registrations", jlwe.config.at("websiteDomain"));

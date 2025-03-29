@@ -352,7 +352,7 @@ void WriteRegistrationXLSX::addCampingSheet(sql::Connection *con, bool full_mode
     this->addWorksheetFromXML(sheetData, "Camping");
 }
 
-void WriteRegistrationXLSX::addDinnerSheet(sql::Connection *con, bool full_mode) {
+void WriteRegistrationXLSX::addDinnerSheet(sql::Connection *con, int dinner_form_id, const std::string &dinner_title, bool full_mode) {
     std::string sheetData = "";
     sheetData += "<sheetViews>\n";
     sheetData += "  <sheetView workbookViewId=\"0\">\n";
@@ -404,8 +404,9 @@ void WriteRegistrationXLSX::addDinnerSheet(sql::Connection *con, bool full_mode)
 
     sheetData += "</row>\n";
 
-    sql::Statement *stmt = con->createStatement();
-    sql::ResultSet *res = stmt->executeQuery("SELECT UNIX_TIMESTAMP(timestamp),IP_address,registration_id,idempotency,email_address,gc_username,phone_number,number_adults,number_children,dinner_comment,payment_type,stripe_session_id, dinner_options_adults, dinner_options_children FROM sat_dinner WHERE status = 'S';");
+    sql::PreparedStatement *prep_stmt = con->prepareStatement("SELECT UNIX_TIMESTAMP(timestamp),IP_address,registration_id,idempotency,email_address,gc_username,phone_number,number_adults,number_children,dinner_comment,payment_type,stripe_session_id, dinner_options_adults, dinner_options_children FROM sat_dinner WHERE status = 'S' AND dinner_form_id = ?;");
+    prep_stmt->setInt(1, dinner_form_id);
+    sql::ResultSet *res = prep_stmt->executeQuery();
     while (res->next()) {
         std::string userKey = res->getString(4);
         int cost_total = PaymentUtils::getUserCost(con, userKey);
@@ -458,9 +459,9 @@ void WriteRegistrationXLSX::addDinnerSheet(sql::Connection *con, bool full_mode)
         sheetData += "</row>\n";
     }
     delete res;
-    delete stmt;
+    delete prep_stmt;
 
     sheetData += "</sheetData>\n";
 
-    this->addWorksheetFromXML(sheetData, "Sat Dinner");
+    this->addWorksheetFromXML(sheetData, dinner_title);
 }

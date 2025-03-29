@@ -24,6 +24,7 @@
 #include "../core/JlweCore.h"
 #include "../core/JlweUtils.h"
 #include "../core/PaymentUtils.h"
+#include "DinnerUtils.h"
 
 bool paymentSortByTime (PaymentUtils::paymentEntry i, PaymentUtils::paymentEntry j) { return (i.timestamp<j.timestamp); }
 
@@ -176,17 +177,21 @@ int main () {
                 delete res;
                 delete prep_stmt;
 
-                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT number_adults,number_children,dinner_comment FROM sat_dinner WHERE idempotency = ?;");
-                prep_stmt->setString(1, userKey);
-                res = prep_stmt->executeQuery();
-                if (res->next()) {
-                    std::cout << "<p><span style=\"font-weight:bold;\">Saturday Dinner</span><br />\n";
-                    std::cout << "Number of Adults: " << res->getInt(1) << "<br />\n";
-                    std::cout << "Number of Children: " << res->getInt(2)  << "<br />\n";
-                    std::cout << "Comment: " << Encoder::htmlEntityEncode(res->getString(3)) << "</p>\n";
+                std::vector<DinnerUtils::dinner_form> dinner_forms = DinnerUtils::getDinnerFormList(jlwe.getMysqlCon());
+                for (unsigned int i = 0; i < dinner_forms.size(); i++) {
+                    prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT number_adults,number_children,dinner_comment FROM sat_dinner WHERE idempotency = ? AND dinner_form_id = ?;");
+                    prep_stmt->setString(1, userKey);
+                    prep_stmt->setInt(2, dinner_forms.at(i).dinner_id);
+                    res = prep_stmt->executeQuery();
+                    if (res->next()) {
+                        std::cout << "<p><span style=\"font-weight:bold;\">" << Encoder::htmlEntityEncode(dinner_forms.at(i).title) << "</span><br />\n";
+                        std::cout << "Number of Adults: " << res->getInt(1) << "<br />\n";
+                        std::cout << "Number of Children: " << res->getInt(2)  << "<br />\n";
+                        std::cout << "Comment: " << Encoder::htmlEntityEncode(res->getString(3)) << "</p>\n";
+                    }
+                    delete res;
+                    delete prep_stmt;
                 }
-                delete res;
-                delete prep_stmt;
 
 
                 std::cout << "<p><span style=\"font-weight:bold;\">Payment History</span><br />\n";

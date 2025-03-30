@@ -74,6 +74,19 @@ nlohmann::json validateMeal(nlohmann::json json_in) {
     return json_out;
 }
 
+// Makes the post data for a single item to be put in the data sent to Stripe
+std::string make_stripe_line_item(int idx, std::string name, std::string description, int price, int quantity, std::string image_url = "") {
+    std::string line_item = "";
+    line_item += "line_items[" + std::to_string(idx) + "][price_data][product_data][name]=" + name;
+    line_item += "&line_items[" + std::to_string(idx) + "][price_data][product_data][description]=" + description;
+    if (image_url.size())
+        line_item += "&line_items[" + std::to_string(idx) + "][price_data][product_data][images][]=" + image_url;
+    line_item += "&line_items[" + std::to_string(idx) + "][price_data][unit_amount]=" + std::to_string(price);
+    line_item += "&line_items[" + std::to_string(idx) + "][price_data][currency]=aud";
+    line_item += "&line_items[" + std::to_string(idx) + "][quantity]=" + std::to_string(quantity);
+    return line_item;
+}
+
 int main () {
     try {
         JlweCore jlwe;
@@ -481,14 +494,15 @@ int main () {
 
             if (saveEvent && (saveDinnerCount == dinner_forms.size()) && saveCamping) { // if everything saved to MySQL successfully
                 if (payment_type == "card") {
-                    std::string post_data = "payment_method_types[]=card&customer_email=" + Encoder::urlEncode(email) + "&success_url=" + std::string(jlwe.config.at("http")) + std::string(jlwe.config.at("websiteDomain")) + std::string(CONFIRMATION_PAGE_URL) + "?session_id={CHECKOUT_SESSION_ID}&cancel_url=" + std::string(jlwe.config.at("http")) + std::string(jlwe.config.at("websiteDomain")) + std::string(CONFIRMATION_PAGE_URL) + "?session_id={CHECKOUT_SESSION_ID}%26cancel=true";
+                    std::string post_data = "mode=payment&payment_method_types[]=card&customer_email=" + Encoder::urlEncode(email) + "&success_url=" + std::string(jlwe.config.at("http")) + std::string(jlwe.config.at("websiteDomain")) + std::string(CONFIRMATION_PAGE_URL) + "?session_id={CHECKOUT_SESSION_ID}&cancel_url=" + std::string(jlwe.config.at("http")) + std::string(jlwe.config.at("websiteDomain")) + std::string(CONFIRMATION_PAGE_URL) + "?session_id={CHECKOUT_SESSION_ID}%26cancel=true";
                     int total_cost = 0;
 
+                    int line_items_idx = 0;
                     if (isFullEvent) {
                         int payment_event_total = number_adults * PRICE_EVENT_ADULT + number_children * PRICE_EVENT_CHILD;
                         if (payment_event_total > 0) {
                             std::string description = "Event+registration+for+" + Encoder::urlEncode(gc_username) + " (" + std::to_string(number_adults) + "+adult(s)+and+" + std::to_string(number_children) + "+children)";
-                            post_data += "&line_items[][name]=Event+registration&line_items[][description]=" + description + "&line_items[][images][]=https://jlwe.org/img/jlwe_logo.png&line_items[][amount]=" + std::to_string(payment_event_total) + "&line_items[][currency]=aud&line_items[][quantity]=1";
+                            post_data += "&" + make_stripe_line_item(line_items_idx++, "Event+registration", description, payment_event_total, 1, std::string(jlwe.config.at("http")) + std::string(jlwe.config.at("websiteDomain")) + "/img/jlwe_logo.png");
                             total_cost += payment_event_total;
                         }
                     }
@@ -501,7 +515,7 @@ int main () {
                         description = camping_display_name_encoded + ",+" + std::to_string(number_people) + "+" + (number_people > 1 ? "people" : "person") + ",+" + std::to_string(camping_nights) + "+night" + (camping_nights > 1 ? "s" : "");
 
                         if (payment_camping_total > 0) {
-                            post_data += "&line_items[][name]=Camping&line_items[][description]=" + description + "&line_items[][images][]=https://jlwe.org/img/camping_icon.png&line_items[][amount]=" + std::to_string(payment_camping_total) + "&line_items[][currency]=aud&line_items[][quantity]=1";
+                            post_data += "&" + make_stripe_line_item(line_items_idx++, "Camping", description, payment_camping_total, 1, std::string(jlwe.config.at("http")) + std::string(jlwe.config.at("websiteDomain")) + "/img/camping_icon.png");
                             total_cost += payment_camping_total;
                         }
                     }
@@ -512,7 +526,7 @@ int main () {
                             if (payment_dinner_total > 0) {
                                 std::string dinner_event_name_encoded = JlweUtils::replaceString(dinner_forms.at(i).title, " ", "+");
                                 std::string description = std::to_string(dinner_number_adults[i]) + "+adult+dinner" + (dinner_number_adults[i] == 1 ? "" : "s") + "+and+" + std::to_string(dinner_number_children[i]) + "+child+dinner" + (dinner_number_children[i] == 1 ? "" : "s");
-                                post_data += "&line_items[][name]=" + dinner_event_name_encoded + "&line_items[][description]=" + description + "&line_items[][images][]=https://jlwe.org/img/dinner_icon.png&line_items[][amount]=" + std::to_string(payment_dinner_total) + "&line_items[][currency]=aud&line_items[][quantity]=1";
+                                post_data += "&" + make_stripe_line_item(line_items_idx++, dinner_event_name_encoded, description, payment_dinner_total, 1, std::string(jlwe.config.at("http")) + std::string(jlwe.config.at("websiteDomain")) + "/img/dinner_icon.png");
                                 total_cost += payment_dinner_total;
                             }
                         }
@@ -520,8 +534,7 @@ int main () {
 
                     int card_surcharge_cost = static_cast<int>(static_cast<double>(total_cost + 30) / (1 - 0.0175)) - total_cost;
                     if (card_surcharge_cost > 0)
-                        post_data += "&line_items[][name]=Card+processing+fee&line_items[][description]=Stripe+card+payment+processing+fee&line_items[][amount]=" + std::to_string(card_surcharge_cost) + "&line_items[][currency]=aud&line_items[][quantity]=1";
-
+                        post_data += "&" + make_stripe_line_item(line_items_idx++, "Card+processing+fee", "Stripe+card+payment+processing+fee", card_surcharge_cost, 1);
 
                     prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT insertStripeFee(?,?,?,?);");
                     prep_stmt->setString(1, idempotencySafe);
@@ -557,7 +570,8 @@ int main () {
                             std::cout << JsonUtils::makeJsonHeader() + jsonOut.dump();
                         } else {
                             std::string stripe_id = stripeJsonDocument.at("id");
-                            std::string payment_intent = stripeJsonDocument.at("payment_intent");
+                            std::string stripe_url = stripeJsonDocument.value("url", "");
+                            //std::string payment_intent = stripeJsonDocument.at("payment_intent");
 
                             prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT addStripeSessionID(?,?);");
                             prep_stmt->setString(1, idempotencySafe);
@@ -573,6 +587,7 @@ int main () {
                                 jsonOut["message"] = "Registration received, redirecting to Stripe for payment";
                                 jsonOut["registrationId"] = idempotencySafe;
                                 jsonOut["stripeSessionId"] = stripe_id;
+                                if (stripe_url.size()) jsonOut["stripeUrl"] = stripe_url; else jsonOut["stripeUrl"] = nullptr;
                                 std::cout << JsonUtils::makeJsonHeader() + jsonOut.dump();
                             } else {
                                 nlohmann::json jsonOut;

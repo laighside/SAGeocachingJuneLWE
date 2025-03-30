@@ -450,9 +450,10 @@ function submitForm() {
                             stripe.redirectToCheckout({
                                 sessionId: jsonObj.stripeSessionId
                             })
-                        } else if (jsonObj.redirect !== undefined){
-                            var url = jsonObj.redirect;
-                            window.location.href = url;
+                        } else if (jsonObj.redirect !== undefined && jsonObj.redirect){
+                            window.location.href = jsonObj.redirect;
+                        } else if (jsonObj.stripeUrl !== undefined && jsonObj.stripeUrl){
+                            window.location.href = jsonObj.stripeUrl;
                         } else {
                             document.getElementById("loader").style.display = "none";
                             alert("Unknown error");

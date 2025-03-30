@@ -73,9 +73,9 @@ int main () {
                 delete prep_stmt;
 
                 if (regType == "camping_only") {
-                    result = "<p>Payment (and camping) has been cancelled. <a href=\"/camping\">Click here to start over and submit another campsite booking.</a></p>\n";
+                    result = "<p>Payment (and camping) has been cancelled. <a href=\"/register\">Click here to start over and submit another booking.</a></p>\n";
                 } else if (regType == "dinner_only") {
-                    result = "<p>Payment (and dinner) has been cancelled. <a href=\"/dinner\">Click here to start over and submit another dinner booking.</a></p>\n";
+                    result = "<p>Payment (and dinner) has been cancelled. <a href=\"/register\">Click here to start over and submit another booking.</a></p>\n";
                 } else {
                     result = "<p>Payment (and registration) has been cancelled. <a href=\"/register\">Click here to start over and submit another registration.</a></p>\n";
                 }

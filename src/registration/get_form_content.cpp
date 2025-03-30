@@ -35,6 +35,43 @@ struct menu_item {
     int price;
 };
 
+nlohmann::json getDinnerOptions(sql::Connection * con, int meal_id = 0, int category_id = 0) {
+    sql::PreparedStatement *prep_stmt;
+    sql::ResultSet *res;
+
+    nlohmann::json options = nlohmann::json::array();
+
+    if (meal_id) {
+        prep_stmt = con->prepareStatement("SELECT id,name,question,option_type,option_values FROM dinner_menu_options WHERE menu_item_id = ? ORDER BY display_order;");
+        prep_stmt->setInt(1, meal_id);
+    } else if (category_id) {
+        prep_stmt = con->prepareStatement("SELECT id,name,question,option_type,option_values FROM dinner_menu_options WHERE category_id = ? ORDER BY display_order;");
+        prep_stmt->setInt(1, category_id);
+    } else {
+        return nlohmann::json::array();;
+    }
+    res = prep_stmt->executeQuery();
+    while (res->next()) {
+        nlohmann::json jsonOption;
+
+        jsonOption["id"] = res->getInt(1);
+        jsonOption["name"] = res->getString(2);
+        jsonOption["question"] = res->getString(3);
+        jsonOption["type"] = res->getString(4);
+        if (res->isNull(5)) {
+            jsonOption["values"] = nullptr;
+        } else {
+            jsonOption["values"] = JlweUtils::splitString(res->getString(5), ';');
+        }
+
+        options.push_back(jsonOption);
+    }
+    delete res;
+    delete prep_stmt;
+
+    return options;
+}
+
 int main () {
     try {
         JlweCore jlwe;
@@ -73,6 +110,15 @@ int main () {
         delete res;
         delete prep_stmt;
 
+        // new format options
+        if (jsonDinner.contains("config") && jsonDinner.at("config").is_object() && jsonDinner.at("config").contains("categories") && jsonDinner.at("config").at("categories").is_array()) {
+            for (nlohmann::json::iterator it = jsonDinner.at("config").at("categories").begin(); it != jsonDinner.at("config").at("categories").end(); ++it) {
+                int category_id = it.value().at("id");
+                it.value()["options"] = getDinnerOptions(jlwe.getMysqlCon(), 0, category_id);
+            }
+        }
+
+        // old format options
         for (unsigned int i = 0; i < menu_items.size(); i++) {
             menu_item m = menu_items.at(i);
 
@@ -84,28 +130,8 @@ int main () {
             if (m.null_course_id) jsonItem["course_id"] = nullptr; else jsonItem["course_id"] = m.course_id;
             if (m.null_meal_category_id) jsonItem["meal_category_id"] = nullptr; else jsonItem["meal_category_id"] = m.meal_category_id;
             jsonItem["price"] = m.price;
-            jsonItem["options"] = nlohmann::json::array();
 
-            prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT id,name,question,option_type,option_values FROM dinner_menu_options WHERE menu_item_id = ? ORDER BY display_order;");
-            prep_stmt->setInt(1, m.id);
-            res = prep_stmt->executeQuery();
-            while (res->next()) {
-                nlohmann::json jsonOption;
-
-                jsonOption["id"] = res->getInt(1);
-                jsonOption["name"] = res->getString(2);
-                jsonOption["question"] = res->getString(3);
-                jsonOption["type"] = res->getString(4);
-                if (res->isNull(5)) {
-                    jsonOption["values"] = nullptr;
-                } else {
-                    jsonOption["values"] = JlweUtils::splitString(res->getString(5), ';');
-                }
-
-                jsonItem["options"].push_back(jsonOption);
-            }
-            delete res;
-            delete prep_stmt;
+            jsonItem["options"] = getDinnerOptions(jlwe.getMysqlCon(), m.id, 0);
 
             jsonDinner["items"].push_back(jsonItem);
         }

@@ -178,6 +178,7 @@ CREATE TABLE `csp_reports` (
 -- Table structure for table `dinner_forms`
 --
 
+DROP TABLE IF EXISTS `dinner_forms`;
 CREATE TABLE `dinner_forms` (
   `dinner_id` int NOT NULL AUTO_INCREMENT,
   `title` text NOT NULL,
@@ -201,6 +202,7 @@ UNLOCK TABLES;
 -- Table structure for table `dinner_menu`
 --
 
+DROP TABLE IF EXISTS `dinner_menu`;
 CREATE TABLE `dinner_menu` (
   `id` int NOT NULL AUTO_INCREMENT,
   `dinner_form_id` int NOT NULL,
@@ -224,9 +226,11 @@ UNLOCK TABLES;
 -- Table structure for table `dinner_menu_options`
 --
 
+DROP TABLE IF EXISTS `dinner_menu_options`;
 CREATE TABLE `dinner_menu_options` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `menu_item_id` int NOT NULL,
+  `menu_item_id` int DEFAULT NULL,
+  `category_id` int DEFAULT NULL,
   `display_order` int NOT NULL DEFAULT '1',
   `name` varchar(100) NOT NULL,
   `question` varchar(100) NOT NULL,

@@ -34,8 +34,9 @@ void DinnerOrderXLS::makeOrdersSheet(OpenXLSX::XLWorksheet &sheet, sql::Connecti
     sql::ResultSet *res;
 
     std::vector<menu_option> meal_options;
-    prep_stmt = con->prepareStatement("SELECT id,name,option_type,option_values FROM dinner_menu_options WHERE menu_item_id = ? ORDER BY display_order;");
+    prep_stmt = con->prepareStatement("SELECT id,name,option_type,option_values FROM dinner_menu_options WHERE menu_item_id = ? OR category_id = ? ORDER BY display_order;");
     prep_stmt->setInt(1, category_id);
+    prep_stmt->setInt(2, category_id);
     res = prep_stmt->executeQuery();
     while (res->next()) {
         meal_options.push_back({res->getInt(1), res->getString(2), res->getString(3), JlweUtils::splitString(res->getString(4), ';'), ""});

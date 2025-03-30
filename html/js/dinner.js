@@ -147,6 +147,8 @@ function makeMealOrderElement(dinner_form_id, category_id, meal_idx) {
     var id_str = "dinner_" + dinner_form_id.toString() + "_category_" + category_id.toString() + "_meal_" + meal_idx.toString();
     output += makeOptionHTML(id_str + "_name", {type: "text", question: "Name", placeholder: "Name..."});
 
+    var options_array = [];
+
     if (dinner_info[dinner_form_id].config.courses) {
         var courses = dinner_info[dinner_form_id].config.courses.filter(function(item) {return item.category_id === category_id});
         var j;
@@ -157,13 +159,20 @@ function makeMealOrderElement(dinner_form_id, category_id, meal_idx) {
             output += makeOptionHTML(id_str + "_course_" + courses[j].id.toString(), {type: "select", question: courses[j].name, values: ["None", ...options], value_ids: [0, ...options_ids]});
         }
 
+        if (dinner_info[dinner_form_id].config.categories) {
+            var category = dinner_info[dinner_form_id].config.categories.filter(function(item) {return item.id === category_id})[0];
+            if (category && category.options)
+                options_array = category.options;
+        }
+
     } else {
+        options_array = dinner_info[dinner_form_id].items.filter(function(item) {return item.id === category_id})[0].options;
+    }
 
-        var item = dinner_info[dinner_form_id].items.filter(function(item) {return item.id === category_id})[0];
-
+    if (options_array && options_array.length > 0) {
         var j;
-        for (j = 0; j < item.options.length; j++) {
-            output += makeOptionHTML(id_str + "_option_" + item.options[j].id.toString(), item.options[j]);
+        for (j = 0; j < options_array.length; j++) {
+            output += makeOptionHTML(id_str + "_option_" + options_array[j].id.toString(), options_array[j]);
         }
 
     }
@@ -208,6 +217,7 @@ function makeOptionHTML(id_str, option) {
     }
 
     if (option.type === 'text' || option.type === '') {
+        output += "<div style=\"display: inline-block;vertical-align: middle;\"><p>";
         output += "<input type=\"text\" style=\"width:200px;\" id=\"" + id_str + "\" name=\"" + id_str + "\" " + (option.placeholder ? "placeholder=\"" + option.placeholder + "\"" : "") + ">";
     }
     return output + "</p></div></div>";
@@ -232,6 +242,8 @@ function saveOptions(dinner_form_id, category_id) {
         if (name_ele)
             meal.name = name_ele.value;
 
+        var options_array = [];
+
         if (dinner_info[dinner_form_id].config.courses) {
 
             meal.courses = {};
@@ -243,32 +255,41 @@ function saveOptions(dinner_form_id, category_id) {
                     meal.courses[courses[j].id.toString()] = Number(ele.value);
                 }
             }
+
+            if (dinner_info[dinner_form_id].config.categories) {
+                var category = dinner_info[dinner_form_id].config.categories.filter(function(item) {return item.id === category_id})[0];
+                if (category && category.options)
+                    options_array = category.options;
+            }
+
         } else {
-            var item = dinner_info[dinner_form_id].items.filter(function(item) {return item.id === category_id})[0];
+            options_array = dinner_info[dinner_form_id].items.filter(function(item) {return item.id === category_id})[0].options;
+        }
+        if (options_array && options_array.length > 0) {
             meal.item_options = {};
             var j;
-            for (j = 0; j < item.options.length; j++) {
-                if (item.options[j].type === 'select') {
-                    var ele = document.getElementById(id_str + "_option_" + item.options[j].id.toString());
+            for (j = 0; j < options_array.length; j++) {
+                if (options_array[j].type === 'select') {
+                    var ele = document.getElementById(id_str + "_option_" + options_array[j].id.toString());
                     if (ele) {
-                        meal.item_options[item.options[j].id.toString()] = ele.value;
+                        meal.item_options[options_array[j].id.toString()] = ele.value;
                     }
-                } else if (item.options[j].type === 'checkbox') {
+                } else if (options_array[j].type === 'checkbox') {
                     var checkboxes = [];
                     var k;
-                    for (k = 0; k < item.options[j].values.length; k++) {
-                        var cb = document.getElementById(id_str + "_option_" + item.options[j].id.toString() + "_value_" + k.toString());
+                    for (k = 0; k < options_array[j].values.length; k++) {
+                        var cb = document.getElementById(id_str + "_option_" + options_array[j].id.toString() + "_value_" + k.toString());
                         if (cb) {
                             checkboxes.push(cb.checked);
                         } else {
                             checkboxes.push(false);
                         }
                     }
-                    meal.item_options[item.options[j].id.toString()] = checkboxes;
+                    meal.item_options[options_array[j].id.toString()] = checkboxes;
                 } else { // text
-                    var text_ele = document.getElementById(id_str + "_option_" + item.options[j].id.toString());
+                    var text_ele = document.getElementById(id_str + "_option_" + options_array[j].id.toString());
                     if (text_ele) {
-                        meal.item_options[item.options[j].id.toString()] = text_ele.value;
+                        meal.item_options[options_array[j].id.toString()] = text_ele.value;
                     }
                 }
             }
@@ -299,6 +320,7 @@ function restoreOptions(dinner_form_id, category_id) {
         if (name_ele)
             name_ele.value = meal.name;
 
+
         if (meal.courses) {
             var courses = dinner_info[dinner_form_id].config.courses.filter(function(item) {return item.category_id === category_id});
             var j;
@@ -310,31 +332,40 @@ function restoreOptions(dinner_form_id, category_id) {
             }
         }
 
-        if (meal.item_options) {
-            var item = dinner_info[dinner_form_id].items.filter(function(item) {return item.id === category_id})[0];
+        var options_array = [];
+
+        if (dinner_info[dinner_form_id].config.categories) {
+            var category = dinner_info[dinner_form_id].config.categories.filter(function(item) {return item.id === category_id})[0];
+            if (category && category.options)
+                options_array = category.options;
+        } else {
+            options_array = dinner_info[dinner_form_id].items.filter(function(item) {return item.id === category_id})[0].options;
+        }
+
+        if (meal.item_options && options_array && options_array.length > 0) {
 
             var j;
-            for (j = 0; j < item.options.length; j++) {
-                if (item.options[j].type === 'select') {
-                    var ele = document.getElementById(id_str + "_option_" + item.options[j].id.toString());
-                    if (ele && meal.item_options[item.options[j].id.toString()]) {
-                        ele.value = meal.item_options[item.options[j].id.toString()];
+            for (j = 0; j < options_array.length; j++) {
+                if (options_array[j].type === 'select') {
+                    var ele = document.getElementById(id_str + "_option_" + options_array[j].id.toString());
+                    if (ele && meal.item_options[options_array[j].id.toString()]) {
+                        ele.value = meal.item_options[options_array[j].id.toString()];
                     }
-                } else if (item.options[j].type === 'checkbox') {
-                    var cb_values = meal.item_options[item.options[j].id.toString()];
+                } else if (options_array[j].type === 'checkbox') {
+                    var cb_values = meal.item_options[options_array[j].id.toString()];
                     if (cb_values) {
                         var k;
                         for (k = 0; k < cb_values.length; k++) {
-                            var cb = document.getElementById(id_str + "_option_" + item.options[j].id.toString() + "_value_" + k.toString());
+                            var cb = document.getElementById(id_str + "_option_" + options_array[j].id.toString() + "_value_" + k.toString());
                             if (cb) {
                                 cb.checked = cb_values[k];
                             }
                         }
                     }
                 } else {
-                    var text_ele = document.getElementById(id_str + "_option_" + item.options[j].id.toString());
-                    if (text_ele && meal.item_options[item.options[j].id.toString()]) {
-                        text_ele.value = meal.item_options[item.options[j].id.toString()];
+                    var text_ele = document.getElementById(id_str + "_option_" + options_array[j].id.toString());
+                    if (text_ele && meal.item_options[options_array[j].id.toString()]) {
+                        text_ele.value = meal.item_options[options_array[j].id.toString()];
                     }
                 }
             }
@@ -365,6 +396,8 @@ function saveAllDinnerOptions(dinner_form_id) {
 function getDinnerCost(dinner_form_id) {
     var total_cost = 0;
 
+    var has_categories = dinner_has_categories[dinner_form_id];
+
     for (var k = 0; k < dinner_info[dinner_form_id].config.categories.length; k++) {
         var category_id = dinner_info[dinner_form_id].config.categories[k].id;
 
@@ -375,7 +408,7 @@ function getDinnerCost(dinner_form_id) {
             var meal = dinner_selected_options[dinner_form_id].categories[category_id][i];
             var id_str = "dinner_" + dinner_form_id.toString() + "_category_" + category_id.toString() + "_meal_" + i.toString();
 
-            if (meal.courses) {
+            if (meal.courses && has_categories === true) {
                 var courses = dinner_info[dinner_form_id].config.courses.filter(function(item) {return item.category_id === category_id});
                 var j;
                 for (j = 0; j < courses.length; j++) {
@@ -390,7 +423,7 @@ function getDinnerCost(dinner_form_id) {
                 }
             }
 
-            if (meal.item_options) {
+            if (meal.item_options && has_categories === false) {
                 var item = dinner_info[dinner_form_id].items.filter(function(item) {return item.id === category_id})[0];
                 if (item && item.price)
                     total_cost += item.price;

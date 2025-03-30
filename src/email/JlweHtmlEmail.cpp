@@ -39,7 +39,7 @@ std::string dinnerOptionsToString(std::string json_str, const std::vector<Dinner
         for (nlohmann::json::iterator meal_it = meal_array.begin(); meal_it != meal_array.end(); ++meal_it) {
             nlohmann::json meal = meal_it.value();
             std::string line_str = "";
-            if (meal.contains("name"))
+            if (meal.contains("name") && std::string(meal.at("name")).size())
                 line_str += std::string(meal.at("name")) + ": ";
 
             std::vector<std::string> item_list;
@@ -57,7 +57,8 @@ std::string dinnerOptionsToString(std::string json_str, const std::vector<Dinner
                 for (nlohmann::json::iterator items_it = meal.at("item_options").begin(); items_it != meal.at("item_options").end(); ++items_it) {
                     nlohmann::json item = items_it.value();
                     if (item.is_string())
-                        item_list.push_back(item);
+                        if (!JlweUtils::compareStringsNoCase(item, "none"))
+                            item_list.push_back(item);
                 }
             }
 

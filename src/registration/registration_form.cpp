@@ -119,7 +119,7 @@ void outputCampingTab(const std::string &camping_registration_html, bool camping
     if (camping_only)
         std::cout << FormElements::emailUsernamePhoneBoxes(false);
 
-    std::cout << FormElements::numberInput("number_people_camping", "Number of people sharing your campsite:", 0, 0, 5);
+    std::cout << FormElements::numberInput("number_people_camping", "Number of people (over 10 yrs old) sharing your campsite:", 0, 0, 5);
     std::cout << FormElements::radioButtons("camping_type", "What camping site would you like?", camping_options);
 
     std::vector<FormElements::dropDownOption> arrive_dates;

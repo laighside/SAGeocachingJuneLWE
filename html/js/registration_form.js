@@ -225,7 +225,7 @@ function leavingTab(tabNumber) {
         camping = document.getElementById("camping_yes").checked;
         for (var i = 0; i < dinner_forms.length; i++)
             dinner[i] = document.getElementById("dinner_yes_" + dinner_forms[i].dinner_id.toString()).checked;
-        document.getElementById("number_people_camping").value = parseInt(document.getElementById("number_adults").value) + parseInt(document.getElementById("number_children").value);
+        document.getElementById("number_people_camping").value = parseInt(document.getElementById("number_adults").value);// + parseInt(document.getElementById("number_children").value);
     }
 }
 

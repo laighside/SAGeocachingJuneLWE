@@ -28,9 +28,9 @@
 // This function calculates the camping price
 static inline int getCampingPrice(const std::string &type, int number_people, int number_nights) {
     if (type == "powered")
-        return (number_people <= 2 ? 2500 : (number_people > 5 ? 4000 : 1500 + number_people * 500)) * number_nights;
+        return (number_people <= 2 ? 3000 : (number_people > 5 ? 4500 : 2000 + number_people * 500)) * number_nights;
     //if (type == "unpowered")
-        return (number_people <= 2 ? 1500 : (number_people > 5 ? 3000 : 500 + number_people * 500)) * number_nights;
+        return (number_people <= 2 ? 2000 : (number_people > 5 ? 3500 : 1000 + number_people * 500)) * number_nights;
     //return 0;
 }
 
@@ -38,9 +38,9 @@ static inline int getCampingPrice(const std::string &type, int number_people, in
 static inline std::string getCampingPriceJS() {
     std::string result = "function getCampingPrice(type, number_people, number_nights) {\n";
     result += "  if (type == \"powered\")\n";
-    result += "    return (number_people <= 2 ? 2500 : (number_people > 5 ? 4000 : 1500 + number_people * 500)) * number_nights;\n";
+    result += "    return (number_people <= 2 ? 3000 : (number_people > 5 ? 4500 : 2000 + number_people * 500)) * number_nights;\n";
     //result += "  if (type == \"unpowered\")\n";
-    result += "    return (number_people <= 2 ? 1500 : (number_people > 5 ? 3000 : 500 + number_people * 500)) * number_nights;\n";
+    result += "    return (number_people <= 2 ? 2000 : (number_people > 5 ? 3500 : 1000 + number_people * 500)) * number_nights;\n";
     //result += "  return 0;\n";
     result += "}\n";
     return result;
@@ -48,8 +48,8 @@ static inline std::string getCampingPriceJS() {
 
 // This function returns the camping price explained in English for the users to read
 static inline std::string getCampingPriceHTML() {
-    return "Powered sites: $25 per night twinshare, $5 per additional person (max 5 people per campsite)<br />Unpowered sites: $15 per night twinshare, $5 per additional person (max 5 people per campsite)";
-    //return "Unpowered sites: $15 per night twinshare, $5 per additional person (max 5 people per campsite)";
+    return "Powered sites: $30 per night twinshare, $5 per additional person (max 5 people per campsite)<br />Unpowered sites: $20 per night twinshare, $5 per additional person (max 5 people per campsite)<br />(kids 10 years and under are free)";
+    //return "Unpowered sites: $20 per night twinshare, $5 per additional person (max 5 people per campsite)";
 }
 
 // dinner prices

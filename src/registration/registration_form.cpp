@@ -265,11 +265,11 @@ int main () {
 
         // check if registration is currently open
         if (registration_open_date > time_now) {
-            std::string open_time_html = "<span class=\"date_only\" data-value=\"" + std::to_string(registration_open_date) + "\">" + FormElements::timeToDateString(registration_open_date) + "</span>";
+            std::string open_time_html = "<span class=\"date_time_simple\" data-value=\"" + std::to_string(registration_open_date) + "\">" + FormElements::timeToDateString(registration_open_date) + "</span>";
             if (jlwe.getPermissionValue("perm_registrations")) { //if logged in
                 std::cout << "<div class=\"note\"><p><span style=\"font-weight:bold;\">The registration form is currently closed.</span> This is a preview available to admins. It will open to everyone on <span style=\"font-weight:bold;\">" << open_time_html << "</span></p></div>\n";
             } else {
-                std::cout << "<p>The registration form will be live on " << open_time_html << "</p>";
+                std::cout << "<p>Registration will open on " << open_time_html << "</p>";
 
                 std::cout << FormElements::includeJavascript("/js/format_date_time.js?v=2024");
                 html.outputFooter();

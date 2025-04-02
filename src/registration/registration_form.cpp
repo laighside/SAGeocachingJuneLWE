@@ -372,6 +372,10 @@ int main () {
             std::cout << "<p style=\"color:red;text-align:center;font-weight:bold;\">Error: jlwe_date is not set to a weekend. Please contact us on " << std::string(jlwe.config.at("adminEmail")) << "</p>\n";
         }
 
+        // Check the year is correct
+        if ((1900 + jlwe_date_tm->tm_year) != JlweUtils::getCurrentYear()) {
+            std::cout << "<div class=\"note\"><p><span style=\"font-weight:bold;\">Warning:</span> jlwe_date is not set to the current year. This means dates in this form are probably wrong.</p></div>\n";
+        }
 
         std::string event_registration_html, camping_registration_html;
         stmt = jlwe.getMysqlCon()->createStatement();

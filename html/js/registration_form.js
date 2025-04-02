@@ -180,8 +180,17 @@ function validateForm() {
     }
 
     if (tabs[currentTab].id == "campingTab") {
-        if (parseInt(document.getElementById("number_people_camping").value) <= 0) {
+        var number_people_camping = parseInt(document.getElementById("number_people_camping").value);
+        if (number_people_camping <= 0) {
             addFormMessage("Number of people:", "There must be at least one person staying on your campsite");
+            valid = false;
+        }
+        if (number_people_camping > 5) {
+            addFormMessage("Number of people:", "There is a limit of 5 people per campsite. " + number_people_camping.toString() + " is too many.");
+            valid = false;
+        }
+        if (isNaN(number_people_camping)) {
+            addFormMessage("Number of people:", "You need to enter a valid number of people into the box");
             valid = false;
         }
         if (isRadioChecked("camping_type") == false) {
@@ -189,7 +198,8 @@ function validateForm() {
             addFormMessage("Camping:", "Please select if you would like a powered or unpowered site");
             valid = false;
         }
-        if (parseInt(document.getElementById("camping_leave").value) - parseInt(document.getElementById("camping_arrive").value) < 1) {
+        var number_of_days = parseInt(document.getElementById("camping_leave").value) - parseInt(document.getElementById("camping_arrive").value);
+        if (isNaN(number_of_days) || (number_of_days < 1)) {
             addFormMessage("Camping dates:", "Invalid camping dates, you need to stay for at least one night");
             valid = false;
         }

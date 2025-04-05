@@ -24,6 +24,7 @@
 #include "../core/JlweCore.h"
 #include "../core/JlweUtils.h"
 #include "../core/PaymentUtils.h"
+#include "../prices.h"
 #include "DinnerUtils.h"
 
 bool paymentSortByTime (PaymentUtils::paymentEntry i, PaymentUtils::paymentEntry j) { return (i.timestamp<j.timestamp); }
@@ -159,12 +160,14 @@ int main () {
                     std::cout << "Have been to past JLWE: " << (res->getInt(3) ? "Yes" : "No") << "<br />\n";
                     std::cout << "Have Lanyard: " << (res->getInt(4) ? "Yes" : "No") << "<br />\n";
                     std::cout << "Real names (adults): " << Encoder::htmlEntityEncode(res->getString(5)) << "<br />\n";
-                    std::cout << "Real names (children): " << Encoder::htmlEntityEncode(res->getString(6)) << "</p>\n";
+                    std::cout << "Real names (children): " << Encoder::htmlEntityEncode(res->getString(6)) << "<br />\n";
+                    int cost = res->getInt(1) * PRICE_EVENT_ADULT + res->getInt(2) * PRICE_EVENT_CHILD;
+                    std::cout << "Event Fee: " << PaymentUtils::currencyToString(cost) << "</p>\n";
                 }
                 delete res;
                 delete prep_stmt;
 
-                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT number_people,camping_type,arrive_date,leave_date,camping_comment FROM camping WHERE idempotency = ?;");
+                prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT camping.number_people,camping.camping_type,camping.arrive_date,camping.leave_date,camping.camping_comment,camping_options.price_code FROM camping INNER JOIN camping_options ON camping.camping_type=camping_options.id_string WHERE camping.idempotency = ?;");
                 prep_stmt->setString(1, userKey);
                 res = prep_stmt->executeQuery();
                 if (res->next()) {
@@ -172,14 +175,18 @@ int main () {
                     std::cout << "Number of People: " << res->getInt(1) << "<br />\n";
                     std::cout << "Type: " << Encoder::htmlEntityEncode(res->getString(2)) << "<br />\n";
                     std::cout << "Dates: June " << JlweUtils::numberToOrdinal(res->getInt(3)) << " - " << JlweUtils::numberToOrdinal(res->getInt(4)) << "<br />\n";
-                    std::cout << "Comment: " << Encoder::htmlEntityEncode(res->getString(5)) << "</p>\n";
+                    std::cout << "Comment: " << Encoder::htmlEntityEncode(res->getString(5)) << "<br />\n";
+                    int cost = getCampingPrice(res->getString(6), res->getInt(1), res->getInt(4) - res->getInt(3));
+                    std::cout << "Camping Fee: " << PaymentUtils::currencyToString(cost) << "</p>\n";
                 }
                 delete res;
                 delete prep_stmt;
 
                 std::vector<DinnerUtils::dinner_form> dinner_forms = DinnerUtils::getDinnerFormList(jlwe.getMysqlCon());
                 for (unsigned int i = 0; i < dinner_forms.size(); i++) {
-                    prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT number_adults,number_children,dinner_comment FROM sat_dinner WHERE idempotency = ? AND dinner_form_id = ?;");
+                    std::vector<DinnerUtils::dinner_menu_item> menu_items = DinnerUtils::getDinnerMenuItems(jlwe.getMysqlCon(), dinner_forms.at(i).dinner_id);
+
+                    prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT number_adults,number_children,dinner_comment,dinner_options_adults FROM sat_dinner WHERE idempotency = ? AND dinner_form_id = ?;");
                     prep_stmt->setString(1, userKey);
                     prep_stmt->setInt(2, dinner_forms.at(i).dinner_id);
                     res = prep_stmt->executeQuery();
@@ -187,12 +194,21 @@ int main () {
                         std::cout << "<p><span style=\"font-weight:bold;\">" << Encoder::htmlEntityEncode(dinner_forms.at(i).title) << "</span><br />\n";
                         std::cout << "Number of Adults: " << res->getInt(1) << "<br />\n";
                         std::cout << "Number of Children: " << res->getInt(2)  << "<br />\n";
-                        std::cout << "Comment: " << Encoder::htmlEntityEncode(res->getString(3)) << "</p>\n";
+                        std::cout << "Comment: " << Encoder::htmlEntityEncode(res->getString(3)) << "<br />\n";
+                        int cost = DinnerUtils::getDinnerCost(jlwe.getMysqlCon(), dinner_forms.at(i).dinner_id, res->getString(4), menu_items);
+                        std::cout << "Dinner Fee: " << PaymentUtils::currencyToString(cost) << "</p>\n";
+                        std::cout << "<p style=\"margin:0px;\">" << Encoder::htmlEntityEncode(dinner_forms.at(i).title) << " orders:</p>\n";
+                        std::cout << "<p style=\"padding-left:15px;margin-top:0px;\">" << DinnerUtils::dinnerOptionsToString(res->getString(4), menu_items) << "</p>\n";
                     }
                     delete res;
                     delete prep_stmt;
                 }
 
+                int card_fees = PaymentUtils::getCardPaymentFees(jlwe.getMysqlCon(), userKey);
+                if (card_fees)
+                    std::cout << "<p>Stripe card fees: " << PaymentUtils::currencyToString(card_fees) << "</p>\n";
+
+                std::cout << "<p><span style=\"font-weight:bold;\">Total cost: " << PaymentUtils::currencyToString(PaymentUtils::getUserCost(jlwe.getMysqlCon(), userKey)) << "</span></p>\n";
 
                 std::cout << "<p><span style=\"font-weight:bold;\">Payment History</span><br />\n";
                 std::cout << "The time for bank and cash payments is only approximate.</p>\n";

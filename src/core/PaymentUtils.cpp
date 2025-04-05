@@ -104,6 +104,21 @@ int PaymentUtils::getTotalPaymentReceived(std::vector<PaymentUtils::paymentEntry
     return total;
 }
 
+int PaymentUtils::getCardPaymentFees(sql::Connection *con, const std::string &userKey) {
+    int total = 0;
+    sql::PreparedStatement *prep_stmt;
+    sql::ResultSet *res;
+    prep_stmt = con->prepareStatement("SELECT fee FROM stripe_card_fees WHERE idempotency = ?;");
+    prep_stmt->setString(1, userKey);
+    res = prep_stmt->executeQuery();
+    while (res->next()){
+        total += res->getInt(1);
+    }
+    delete res;
+    delete prep_stmt;
+    return total;
+}
+
 int PaymentUtils::getUserCost(sql::Connection *con, const std::string &userKey) {
     int result = 0;
     sql::PreparedStatement *prep_stmt;
@@ -147,14 +162,7 @@ int PaymentUtils::getUserCost(sql::Connection *con, const std::string &userKey) 
     delete prep_stmt;
 
     // card payment fees
-    prep_stmt = con->prepareStatement("SELECT fee FROM stripe_card_fees WHERE idempotency = ?;");
-    prep_stmt->setString(1, userKey);
-    res = prep_stmt->executeQuery();
-    if (res->next()){
-        result += res->getInt(1);
-    }
-    delete res;
-    delete prep_stmt;
+    result += PaymentUtils::getCardPaymentFees(con, userKey);
 
     return result;
 }

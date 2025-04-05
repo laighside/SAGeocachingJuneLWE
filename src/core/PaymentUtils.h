@@ -114,6 +114,15 @@ public:
      */
     static std::string getUserName(sql::Connection *con, const std::string &userKey);
 
+    /*!
+     * \brief Gets the Stripe card fee for a given order/user
+     *
+     * \param con MySQL connection object
+     * \param userKey The key of the user to get info for
+     * \return The total card fees for the order
+     */
+    static int getCardPaymentFees(sql::Connection *con, const std::string &userKey);
+
 };
 
 #endif // PAYMENTFUNCTIONS_H

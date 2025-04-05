@@ -12,6 +12,9 @@
  */
 #include "DinnerUtils.h"
 
+#include "../core/Encoder.h"
+#include "../core/JlweUtils.h"
+
 #include <mysql_driver.h>
 #include <mysql_connection.h>
 
@@ -115,4 +118,55 @@ int DinnerUtils::getDinnerCost(sql::Connection *con, int dinner_form_id, std::st
     }
 
     return total_cost;
+}
+
+std::string DinnerUtils::dinnerOptionsToString(std::string json_str, const std::vector<DinnerUtils::dinner_menu_item> &menu_items) {
+    std::string output = "";
+    nlohmann::json json_object = nlohmann::json::parse(json_str);
+    nlohmann::json category_array = nlohmann::json::array();
+    if (json_object.contains("categories"))
+        category_array = json_object.at("categories");
+    if (json_object.contains("meals"))
+        category_array = json_object.at("meals");
+
+    for (nlohmann::json::iterator category_it = category_array.begin(); category_it != category_array.end(); ++category_it) {
+        nlohmann::json meal_array = category_it.value();
+        for (nlohmann::json::iterator meal_it = meal_array.begin(); meal_it != meal_array.end(); ++meal_it) {
+            nlohmann::json meal = meal_it.value();
+            std::string line_str = "";
+            if (meal.contains("name") && std::string(meal.at("name")).size())
+                line_str += std::string(meal.at("name")) + ": ";
+
+            std::vector<std::string> item_list;
+            if (meal.contains("courses")) {
+                for (nlohmann::json::iterator courses_it = meal.at("courses").begin(); courses_it != meal.at("courses").end(); ++courses_it) {
+                    int item_id = courses_it.value();
+                    for (unsigned int i = 0; i < menu_items.size(); i++) {
+                        if (menu_items.at(i).id == item_id) {
+                            item_list.push_back(menu_items.at(i).name);
+                        }
+                    }
+                }
+            }
+            if (meal.contains("item_options")) {
+                for (nlohmann::json::iterator items_it = meal.at("item_options").begin(); items_it != meal.at("item_options").end(); ++items_it) {
+                    nlohmann::json item = items_it.value();
+                    if (item.is_string())
+                        if (!JlweUtils::compareStringsNoCase(item, "none"))
+                            item_list.push_back(item);
+                }
+            }
+
+            for (unsigned int i = 0; i < item_list.size(); i++) {
+                if (i != 0)
+                    line_str += ", ";
+                line_str += item_list.at(i);
+            }
+
+            if (line_str.size())
+                output += Encoder::htmlEntityEncode(line_str) + "<br/>";
+        }
+    }
+
+    return output;
 }

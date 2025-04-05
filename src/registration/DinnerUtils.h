@@ -69,6 +69,15 @@ public:
      */
     static int getDinnerCost(sql::Connection *con, int dinner_form_id, std::string order_json, std::vector<dinner_menu_item> menu_items = {});
 
+    /*!
+     * \brief Gets the user's dinner order as a string, format is name followed by list of items ordered
+     *
+     * \param json_str The JSON (as a string) of the order details
+     * \param menu_items List of all the menu items
+     * \return The name and list of items ordered as a string
+     */
+    static std::string dinnerOptionsToString(std::string json_str, const std::vector<DinnerUtils::dinner_menu_item> &menu_items);
+
 };
 
 #endif // DINNERUTILS_H

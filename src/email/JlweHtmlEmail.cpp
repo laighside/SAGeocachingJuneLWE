@@ -430,7 +430,7 @@ void JlweHtmlEmail::setHtmlInTemplate(std::string logo_url) {
 
     result += "<p style=\"font-size:0;\">\n";
     result += "<img src=\"" + logo_url + "\" alt=\"" + logo_url + "\" /></p>\n";
-    result += "<p>June LWE Geocaching SA</p>\n";
+    result += "<p>June LWE Geocaching Event</p>\n";
 
     result += "      </td></tr>\n";
     result += "      <tr><td width=\"100%\">\n";

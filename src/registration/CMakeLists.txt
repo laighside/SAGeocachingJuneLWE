@@ -38,6 +38,9 @@ target_link_libraries(payment_reminder_email.cgi email dinner_lib jlwecore ${MYS
 add_executable(registration_reminder_email.cgi registration_reminder_email.cpp)
 target_link_libraries(registration_reminder_email.cgi email dinner_lib jlwecore ${MYSQLCPPCONN_LIBRARY})
 
+add_executable(create_stripe_session.cgi create_stripe_session.cpp)
+target_link_libraries(create_stripe_session.cgi email dinner_lib jlwecore ${MYSQLCPPCONN_LIBRARY} httprequest)
+
 add_executable(cancel.cgi cancel.cpp)
 target_link_libraries(cancel.cgi email jlwecore ${MYSQLCPPCONN_LIBRARY})
 

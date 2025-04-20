@@ -289,6 +289,8 @@ void DinnerOrderXLS::makeDinnerOrderXLS(const std::string &filename, JlweCore *j
                 std::string category_name = category_it.value().value("name_plural", category_it.value().value("name", ""));
 
                 std::string sheet_name = dinner_forms.at(i).title + ", " + category_name;
+                if (sheet_name.length() > 31) // MS Excel complains if sheet names are longer than 31 chars
+                    sheet_name = sheet_name.substr(0, 31);
                 wbk.addWorksheet(sheet_name);
                 OpenXLSX::XLWorksheet sheet = wbk.sheet(sheet_name);
                 makeOrdersSheet(sheet, jlwe->getMysqlCon(), dinner_forms.at(i).dinner_id, category_id, configJson);
@@ -300,6 +302,8 @@ void DinnerOrderXLS::makeDinnerOrderXLS(const std::string &filename, JlweCore *j
                 std::string category_name = items.at(j).name_plural.size() ? items.at(j).name_plural : items.at(j).name;
 
                 std::string sheet_name = dinner_forms.at(i).title + ", " + category_name;
+                if (sheet_name.length() > 31) // MS Excel complains if sheet names are longer than 31 chars
+                    sheet_name = sheet_name.substr(0, 31);
                 wbk.addWorksheet(sheet_name);
                 OpenXLSX::XLWorksheet sheet = wbk.sheet(sheet_name);
                 makeOrdersSheet(sheet, jlwe->getMysqlCon(), dinner_forms.at(i).dinner_id, meal_id, configJson);

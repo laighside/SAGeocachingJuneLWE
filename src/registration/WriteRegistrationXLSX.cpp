@@ -17,6 +17,7 @@
 #include "../core/Encoder.h"
 #include "../core/JlweUtils.h"
 #include "../core/PaymentUtils.h"
+#include "DinnerUtils.h"
 
 #include "../ext/pugixml/pugixml.hpp"
 
@@ -393,7 +394,8 @@ void WriteRegistrationXLSX::addDinnerSheet(sql::Connection *con, int dinner_form
     if (full_mode) {
         sheetData += makeStringCell(++colId, rowId, "Payment type", TITLE_BOLD);
     }
-    sheetData += makeStringCell(++colId, rowId, "Cost", TITLE_BOLD);
+    sheetData += makeStringCell(++colId, rowId, "Dinner Cost", TITLE_BOLD);
+    sheetData += makeStringCell(++colId, rowId, "Total Cost", TITLE_BOLD);
     if (full_mode) {
         sheetData += makeStringCell(++colId, rowId, "Payment received", TITLE_BOLD);
         sheetData += makeStringCell(++colId, rowId, "cs_id", TITLE_BOLD);
@@ -409,6 +411,7 @@ void WriteRegistrationXLSX::addDinnerSheet(sql::Connection *con, int dinner_form
     sql::ResultSet *res = prep_stmt->executeQuery();
     while (res->next()) {
         std::string userKey = res->getString(4);
+        int cost_dinner = DinnerUtils::getDinnerCost(con, dinner_form_id, res->getString(13));
         int cost_total = PaymentUtils::getUserCost(con, userKey);
         int payment_received = PaymentUtils::getTotalPaymentReceived(con, userKey);
 
@@ -431,10 +434,11 @@ void WriteRegistrationXLSX::addDinnerSheet(sql::Connection *con, int dinner_form
         if (full_mode) {
             sheetData += makeStringCell(++colId, rowId, res->getString(11), NO_STYLE);    // payment type
         }
+        sheetData += makeNumberCell(++colId, rowId, static_cast<double>(cost_dinner) / 100, CURRENCY);  // dinner cost
         if (res->getString(11) == "event") {
             sheetData += makeStringCell(++colId, rowId, "Inc. in rego", NO_STYLE);
         } else {
-            sheetData += makeNumberCell(++colId, rowId, static_cast<double>(cost_total) / 100, CURRENCY);  // cost
+            sheetData += makeNumberCell(++colId, rowId, static_cast<double>(cost_total) / 100, CURRENCY);  // total cost
         }
         bool hasPaid = (payment_received >= cost_total);
         if (full_mode) {

@@ -59,6 +59,11 @@ int main () {
                 std::cout << "<div class=\"note\"><p><span style=\"font-weight:bold;\">Stripe test mode is enabled.</span> See <a href=\"https://stripe.com/docs/testing\">https://stripe.com/docs/testing</a></p></div>\n";
             }
 
+            time_t jlwe_date = 0;
+            try {
+                jlwe_date = std::stoll(jlwe.getGlobalVar("jlwe_date"));
+            } catch (...) {}
+
             html.outputAdminMenu();
 
             // List of dinner forms
@@ -84,12 +89,15 @@ int main () {
             std::cout << "<th>Email</th><th>Username</th><th>Phone number</th><th>#Adults</th><th>#Children</th><th>Total cost</th><th>Paid</th><th>Payment</th><th>Status</th><th></th>\n";
             std::cout << "</tr>\n";
 
+            std::vector<int> username_count_per_day;
+            std::vector<int> people_count_per_day;
+
             int rowId = 0;
 
             int adult_count = 0;
             int child_count = 0;
             stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT registration_id,idempotency,email_address,gc_username,phone_number,number_adults,number_children,payment_type,status FROM event_registrations;");
+            res = stmt->executeQuery("SELECT registration_id,idempotency,email_address,gc_username,phone_number,number_adults,number_children,payment_type,status,UNIX_TIMESTAMP(timestamp) FROM event_registrations;");
             while (res->next()) {
                 std::string userKey = res->getString(2);
                 bool saved = (res->getString(9) == "S");
@@ -135,6 +143,17 @@ int main () {
                         }
                     } else {
                         team_list.push_back({res->getString(4), res->getString(3), userKey, res->getInt(6) + res->getInt(7), -1, std::vector<int>(dinner_forms.size(), -1)});
+                    }
+
+                    time_t reg_time = res->getInt64(10);
+                    int days_before = (jlwe_date - reg_time) / 86400;
+                    if (days_before >= 0 && days_before < 365) { // ignore registrations that happen after the event
+                        if (days_before >= username_count_per_day.size())
+                            username_count_per_day = std::vector<int>(days_before + 1, 0);
+                        username_count_per_day[days_before]++;
+                        if (days_before >= people_count_per_day.size())
+                            people_count_per_day = std::vector<int>(days_before + 1, 0);
+                        people_count_per_day[days_before] += res->getInt(6) + res->getInt(7);
                     }
                 }
             }
@@ -387,6 +406,70 @@ int main () {
             std::cout << "}\n";
 
             std::cout << "</script>\n";
+
+
+            std::cout << "<h2 style=\"text-align:center;margin-top:50px;margin-bottom:0px;\">Registration Stats</h2>\n";
+            std::cout << "<canvas id=\"users_per_day_plot\"></canvas>\n";
+
+            std::cout << "<script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script>\n";
+            std::cout << "<script>\n";
+
+            int current_days_to_event = (jlwe_date - time(nullptr)) / 86400;
+            std::cout << "var usernames_per_day = [0";
+            int total = 0;
+            for (unsigned int i = username_count_per_day.size(); i > 0; i--) {
+                total += username_count_per_day.at(i - 1);
+                if (static_cast<int>(i) - 1 > current_days_to_event) {
+                    std::cout << "," << total;
+                } else {
+                    std::cout << ",null";
+                }
+            }
+            std::cout << "];\n";
+            std::cout << "var people_per_day = [0";
+            total = 0;
+            for (unsigned int i = people_count_per_day.size(); i > 0; i--) {
+                total += people_count_per_day.at(i - 1);
+                if (static_cast<int>(i) - 1 > current_days_to_event) {
+                    std::cout << "," << total;
+                } else {
+                    std::cout << ",null";
+                }
+            }
+            std::cout << "];\n";
+
+            std::cout << "var usernames_per_day_plot_data = [];\n";
+            std::cout << "var start_day = 1 - usernames_per_day.length;\n";
+            std::cout << "for (var i = 0; i < usernames_per_day.length; i++)\n";
+            std::cout << "  usernames_per_day_plot_data.push({x: start_day + i, y: usernames_per_day[i]});\n";
+
+            std::cout << "new Chart(document.getElementById('users_per_day_plot'), {\n";
+            std::cout << "  type: 'line',\n";
+            std::cout << "  data: {\n";
+            std::cout << "    datasets: [{\n";
+            std::cout << "      label: '" << JlweUtils::getCurrentYearString() << "',\n";
+            std::cout << "      data: usernames_per_day_plot_data\n";
+            std::cout << "    }]\n";
+            std::cout << "  },\n";
+            std::cout << "  options: {\n";
+            std::cout << "    plugins: {\n";
+            std::cout << "      title: {display: true, text: 'Total usernames registered over time'}\n";
+            std::cout << "    },\n";
+            std::cout << "    scales: {\n";
+            std::cout << "      x: {\n";
+            std::cout << "        type: 'linear',\n";
+            std::cout << "        title: {display: true, text: 'Days before event'}\n";
+            std::cout << "      },\n";
+            std::cout << "      y: {\n";
+            std::cout << "        type: 'linear',\n";
+            std::cout << "        title: {display: true, text: 'No. of usernames'}\n";
+            std::cout << "      }\n";
+            std::cout << "    }\n";
+            std::cout << "  }\n";
+            std::cout << "});\n";
+
+            std::cout << "</script>\n";
+
 
         } else {
             if (jlwe.isLoggedIn()) {

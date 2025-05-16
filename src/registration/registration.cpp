@@ -438,18 +438,36 @@ int main () {
             }
             std::cout << "];\n";
 
+            std::cout << "(async function main () {\n";
+
+            std::cout << "var current_year = " << JlweUtils::getCurrentYearString() << ";\n";
             std::cout << "var usernames_per_day_plot_data = [];\n";
             std::cout << "var start_day = 1 - usernames_per_day.length;\n";
             std::cout << "for (var i = 0; i < usernames_per_day.length; i++)\n";
             std::cout << "  usernames_per_day_plot_data.push({x: start_day + i, y: usernames_per_day[i]});\n";
+            std::cout << "var current_dataset = {label: current_year.toString(), data: usernames_per_day_plot_data};\n";
+
+            std::cout << "try {\n";
+            std::cout << "  var past_year_data = [];\n";
+            std::cout << "  const response = await fetch(\"/reg_stats.json\");\n";
+            std::cout << "  if (response.ok)\n";
+            std::cout << "    past_year_data = await response.json();\n";
+            std::cout << "} catch (error) {}\n";
+
+            std::cout << "var past_datasets = past_year_data.map(item => {\n";
+            std::cout << "  var start_day = 1 - item.usernames.length;\n";
+            std::cout << "  var usernames_per_day_plot_data = [];\n";
+            std::cout << "  for (var i = 0; i < item.usernames.length; i++)\n";
+            std::cout << "    usernames_per_day_plot_data.push({x: start_day + i, y: item.usernames[i]});\n";
+            std::cout << "  return {label: item.year.toString(), data: usernames_per_day_plot_data};\n";
+            std::cout << "});\n";
+
+            std::cout << "var all_datasets = [current_dataset].concat(past_datasets);\n";
 
             std::cout << "new Chart(document.getElementById('users_per_day_plot'), {\n";
             std::cout << "  type: 'line',\n";
             std::cout << "  data: {\n";
-            std::cout << "    datasets: [{\n";
-            std::cout << "      label: '" << JlweUtils::getCurrentYearString() << "',\n";
-            std::cout << "      data: usernames_per_day_plot_data\n";
-            std::cout << "    }]\n";
+            std::cout << "    datasets: all_datasets\n";
             std::cout << "  },\n";
             std::cout << "  options: {\n";
             std::cout << "    plugins: {\n";
@@ -467,6 +485,8 @@ int main () {
             std::cout << "    }\n";
             std::cout << "  }\n";
             std::cout << "});\n";
+
+            std::cout << "})();\n";
 
             std::cout << "</script>\n";
 

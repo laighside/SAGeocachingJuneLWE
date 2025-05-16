@@ -18,6 +18,9 @@ target_link_libraries(download_gpx.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 add_executable(download_cache_list.cgi download_cache_list.cpp WriteCacheListDOCX.cpp ../ooxml/WriteDOCX.cpp)
 target_link_libraries(download_cache_list.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 
+add_executable(download_cache_photos.cgi download_cache_photos.cpp WriteCachePhotosDOCX.cpp ../ooxml/WriteDOCX.cpp)
+target_link_libraries(download_cache_photos.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
+
 add_executable(delete_cache.cgi delete_cache.cpp)
 target_link_libraries(delete_cache.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 

@@ -65,11 +65,74 @@ public:
     std::string saveDocxFile(const std::string &title, const std::string &creatorName);
 
     /*!
-     * \brief Takes the body XML, puts it into the docuemnt file and saves it
+     * \brief Takes the body XML, puts it into the document file and saves it
      *
      * \param bodyXML The <w:body> element and it's inner text
      */
     void makeDocumentFromXML(const std::string &bodyXML);
+
+    /*!
+     * \brief Adds a media file to the document
+     *
+     * The file is copied into the /word/media folder
+     *
+     * \param filename The full filename of the file to add to the document
+     * \return The relationship ID for the file (to be used with the makeImageXML() function)
+     */
+    std::string addMediaFile(const std::string &filename);
+
+    /*!
+     * \brief Adds a type to the list in the [Content_Types].xml file
+     *
+     * \param extension The file extension
+     * \param mimeType The MIME type
+     */
+    void addMimeType(const std::string &extension, const std::string &mimeType);
+
+    /*!
+     * \brief Makes the XML for a section properties element <w:sectPr>
+     *
+     * \param pageWidth Page width in "twentieths of a point" or 1/1440 of an inch
+     * \param pageHeight Page height in "twentieths of a point" or 1/1440 of an inch
+     * \param isLandscape True for a landscape page, False for a portrait page
+     * \param columns Number of columns to divide the page into
+     * \param margins Page margin width in "twentieths of a point" or 1/1440 of an inch
+     * \param header Height of the header in "twentieths of a point" or 1/1440 of an inch
+     * \param footer Height of the footer in "twentieths of a point" or 1/1440 of an inch
+     * \return The XML
+     */
+    std::string makeSectionPropertiesXML(int pageWidth, int pageHeight, bool isLandscape = false, int columns = 1, int margins = 400, int header = 400, int footer = 400);
+
+    /*!
+     * \brief Makes the XML for a run properties element <w:rPr>
+     *
+     * \param bold Set to true to make the text bold
+     * \param italic Set to true to make the text italic
+     * \param setFont Set to true to include a font size element (<w:sz>) in the XML
+     * \param fontSize The font size to put in the <w:sz> element
+     * \return The XML
+     */
+    std::string makeRunPropertiesXML(bool bold = false, bool italic = false, bool setFont = false, double fontSize = 12.0);
+
+    /*!
+     * \brief Makes the XML for a text element <w:t>
+     *
+     * \param text The text to put on the page
+     * \return The XML
+     */
+    std::string makeTextXML(const std::string &text);
+
+    /*!
+     * \brief Makes the XML to place an image on the page, inside a <w:drawing> element
+     *
+     * \param imageRId Relationship ID for the image file
+     * \param id Unique string to use as the id for the image
+     * \param name The name of the image
+     * \param width The width to display the image on the page, unit is EMUs
+     * \param height The height to display the image on the page, unit is EMUs
+     * \return The XML
+     */
+    std::string makeImageXML(const std::string &imageRId, const std::string &id, const std::string &name, int width, int height);
 
 private:
 
@@ -95,6 +158,9 @@ private:
     // List of content types for the [Content_Types].xml file
     std::vector<content_type_default> defaultContentTypes;
     std::vector<content_type_override> overrideContentTypes;
+
+    // A list of media files in the /word/media folder
+    std::vector<std::string> media_files;
 
     /*!
      * \brief Makes the XML for the [Content_Types].xml file

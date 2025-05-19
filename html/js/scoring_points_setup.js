@@ -369,6 +369,7 @@ function makeZonesRowHtml(jsonData, row) {
 
     row.appendChild(makeEditableTextCell(jsonData.name, "zones_name_" + jsonData.id.toString(), saveZoneName.bind(this, jsonData.id)));
     row.appendChild(makeEditableNumberCell(jsonData.points, "zones_value_" + jsonData.id.toString(), saveZonePoints.bind(this, jsonData.id), true, "1"));
+    row.appendChild(makeEditableNumberCell(jsonData.group, "zones_group_" + jsonData.id.toString(), saveZoneGroup.bind(this, jsonData.id), true, "1"));
 
     var deleteCell = document.createElement("td");
     var deleteButton = document.createElement("input");
@@ -770,6 +771,28 @@ function saveZonePoints(id, newValue, successCallback) {
         type: "zone",
         id: id,
         point_value: newValue
+    };
+    postUrl('set_points.cgi', JSON.stringify(jsonObj), null,
+            function(data, responseCode) {
+                httpResponseHandler(data, responseCode, true, function(){
+                    if (successCallback)
+                        successCallback();
+                }, null);
+         }, httpErrorResponseHandler);
+}
+
+/**
+ * Saves a edited zone group number, this sends the new group number to the server
+ *
+ * @param {Number} id The ID number of the zone being edited
+ * @param {String} newValue The new group number of the zone
+ * @param {Function} successCallback Function to call once the new value is successfully saved
+ */
+function saveZoneGroup(id, newValue, successCallback) {
+    var jsonObj = {
+        type: "zone",
+        id: id,
+        zone_group: newValue
     };
     postUrl('set_points.cgi', JSON.stringify(jsonObj), null,
             function(data, responseCode) {

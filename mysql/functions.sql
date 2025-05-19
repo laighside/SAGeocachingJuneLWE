@@ -1076,7 +1076,7 @@ CREATE FUNCTION setToken(usernameIn VARCHAR(100), IPin VARCHAR(100), tokenIn VAR
     NOT DETERMINISTIC
 BEGIN
     IF (EXISTS(SELECT * FROM users WHERE username = usernameIn)) THEN
-        INSERT INTO user_tokens (token, username, ip_address, expire_time) VALUES (tokenIn, usernameIn, IPin, DATE_ADD(NOW(), INTERVAL 7 DAY));
+        INSERT INTO user_tokens (token, username, ip_address, expire_time) VALUES (tokenIn, usernameIn, IPin, DATE_ADD(NOW(), INTERVAL 28 DAY));
         RETURN 0;
     ELSE
         RETURN 1;
@@ -1176,6 +1176,22 @@ BEGIN
         RETURN 0;
     END IF;
     RETURN 2;
+END$$
+DELIMITER ;
+
+/**
+ * setZoneGroup This sets the group number for a given id in the zones table
+ */
+DROP FUNCTION IF EXISTS setZoneGroup;
+DELIMITER $$
+CREATE FUNCTION setZoneGroup(idIn INT, zone_groupIn INT, userIP VARCHAR(50), username VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM zones WHERE id = idIn)) THEN
+        UPDATE zones SET zone_group = zone_groupIn WHERE id = idIn;
+        RETURN 0;
+    END IF;
+    RETURN 1;
 END$$
 DELIMITER ;
 

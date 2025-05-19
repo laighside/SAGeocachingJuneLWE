@@ -236,9 +236,28 @@ function updateCoords(clicked) {
                 if (jsonObj.in_playing_field != null) {
                     if (jsonObj.in_playing_field == true) {
                         var note = 'Cache is inside playing field.';
-                        if (jsonObj.zone_name != null){
+                        if (jsonObj.zone_name != null){ // not used anymore
                             zone_bonus_points = jsonObj.zone_points;
                             note = note + '<br/>Cache is in bouns zone: ' + jsonObj.zone_name + ' (' + jsonObj.zone_points.toString() + ' points)';
+                        }
+                        if (jsonObj.bonus_zones != null) {
+                            var zones_str = "";
+                            var total_points = 0;
+                            for (var i = 0; i < jsonObj.bonus_zones.length; i++) {
+                                if (i != 0)
+                                    zones_str += ', ';
+                                zones_str += jsonObj.bonus_zones[i].name;
+                                if (jsonObj.bonus_zones[i].points > 0) {
+                                    zones_str += ' (' + jsonObj.bonus_zones[i].points.toString() + ' point' + (jsonObj.bonus_zones[i].points == 1 ? '' : 's') + ')';
+                                    total_points += jsonObj.bonus_zones[i].points;
+                                }
+                                if (jsonObj.bonus_zones[i].error) {
+                                    zones_str += ' (' + jsonObj.bonus_zones[i].error.toString() + ')';
+                                }
+                            }
+                            zone_bonus_points = total_points;
+                            if (jsonObj.bonus_zones.length > 0)
+                                note = note + '<br/>Cache is in bouns zone' + (jsonObj.bonus_zones.length == 1 ? '' : 's') + ': ' + zones_str;
                         }
                         if (jsonObj.from_osm_road != null){
                             osm_distance = jsonObj.from_osm_road;

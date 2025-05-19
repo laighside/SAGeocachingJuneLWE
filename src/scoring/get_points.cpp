@@ -75,14 +75,15 @@ int main () {
             delete stmt;
 
             stmt = jlwe.getMysqlCon()->createStatement();
-            res = stmt->executeQuery("SELECT id, kml_file, name, points, enabled FROM zones;");
+            res = stmt->executeQuery("SELECT id, kml_file, name, points, zone_group, enabled FROM zones;");
             while (res->next()) {
                 nlohmann::json jsonObject;
                 jsonObject["id"] = res->getInt(1);
                 jsonObject["kml_file"] = res->getString(2);
                 jsonObject["name"] = res->getString(3);
                 jsonObject["points"] = res->getInt(4);
-                jsonObject["enabled"] = (res->getInt(5) != 0);
+                jsonObject["group"] = res->getInt(5);
+                jsonObject["enabled"] = (res->getInt(6) != 0);
 
                 jsonDocument["zones"].push_back(jsonObject);
             }

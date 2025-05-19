@@ -17,6 +17,7 @@
  */
 #include <iostream>
 #include <string>
+#include <set>
 
 #include "core/KeyValueParser.h"
 #include "core/CgiEnvironment.h"
@@ -67,22 +68,33 @@ int main () {
 
         jsonDocument["in_playing_field"] = pointInPlayingField;
 
+        std::set<int> groups_done;
+
         if (pointInPlayingField == true){
             // check if point is in any bonus zones
+            jsonDocument["bonus_zones"] = nlohmann::json::array();
             sql::Statement *stmt = jlwe.getMysqlCon()->createStatement();
-            sql::ResultSet *res = stmt->executeQuery("SELECT kml_file,name,points FROM zones ORDER BY points DESC;");
+            sql::ResultSet *res = stmt->executeQuery("SELECT kml_file,name,points,zone_group FROM zones WHERE enabled != 0 ORDER BY points DESC;");
             while (res->next()){
+                if (groups_done.count(res->getInt(4)))
+                    continue; // skip zone if that group is already matched
+
+                nlohmann::json jsonOject;
                 std::string zone_kml = res->getString(1);
                 KmlFile kmlZone;
                 if (kmlZone.loadFile(fileDir + zone_kml)) {
                     bool pointInZone = kmlZone.pointInPolygon(lat, lon);
                     if (pointInZone == true){
-                        jsonDocument["zone_name"] = res->getString(2);
-                        jsonDocument["zone_points"] = res->getInt(3);
-                        break;
+                        jsonOject["name"] = res->getString(2);
+                        jsonOject["points"] = res->getInt(3);
+                        jsonOject["group"] = res->getInt(4);
+                        jsonDocument["bonus_zones"].push_back(jsonOject);
+                        groups_done.insert(res->getInt(4));
                     }
                 } else {
-                    jsonDocument["zone_error"] = kmlZone.ParseError();
+                    jsonOject["name"] = res->getString(2);
+                    jsonOject["error"] = kmlZone.ParseError();
+                    jsonDocument["bonus_zones"].push_back(jsonOject);
                 }
             }
             delete res;

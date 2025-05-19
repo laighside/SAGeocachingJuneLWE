@@ -72,8 +72,9 @@ int main () {
 
             std::cout << "<h3>Bonus zones</h4>\n";
             std::cout << "<p>These KML files define the areas that zone bonus points apply to. Note that zone bonus points need to be set before any caches are entered into the GPX builder.</p>\n";
+            std::cout << "<p>Only one zone from each group number will be assigned to each cache. Use different group numbers if you want to allow caches to be in multiple zones.</p>\n";
             std::cout << "<table id=\"zones_table\" align=\"center\"><tr>\n";
-            std::cout << "<th>KML File</th><th>Name</th><th>Point value</th>\n";
+            std::cout << "<th>KML File</th><th>Name</th><th>Point value</th><th>Group</th>\n";
             std::cout << "</table>\n";
             std::cout << "<p style=\"text-align:center\">Add a new zone: <select id=\"add_zone_kmls\"><option value=\"\"></select> <input type=\"button\" onclick=\"addNewZone();\" value=\"Create\"></p>\n";
 

@@ -921,6 +921,7 @@ CREATE TABLE `zones` (
   `kml_file` varchar(100) NOT NULL,
   `name` varchar(100) NOT NULL DEFAULT '',
   `points` int NOT NULL DEFAULT '0',
+  `zone_group` int NOT NULL DEFAULT '0',
   `enabled` int NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

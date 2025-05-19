@@ -308,7 +308,7 @@ int main () {
                     delete res;
                     delete prep_stmt;
 
-                    prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT id, kml_file, name, points, enabled FROM zones WHERE id = ?;");
+                    prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT id, kml_file, name, points, zone_group, enabled FROM zones WHERE id = ?;");
                     prep_stmt->setInt(1, new_id);
                     res = prep_stmt->executeQuery();
                     if (res->next()) {
@@ -317,7 +317,8 @@ int main () {
                         jsonObject["kml_file"] = res->getString(2);
                         jsonObject["name"] = res->getString(3);
                         jsonObject["points"] = res->getInt(4);
-                        jsonObject["enabled"] = (res->getInt(5) != 0);
+                        jsonObject["group"] = res->getInt(5);
+                        jsonObject["enabled"] = (res->getInt(6) != 0);
                         jsonObject["success"] = true;
                         result = JsonUtils::makeJsonHeader() + jsonObject.dump();
                     } else {
@@ -360,6 +361,26 @@ int main () {
                         if (res->next()) {
                             if (res->getInt(1) == 0) {
                                 result = JsonUtils::makeJsonSuccess("Point value updated");
+                            } else {
+                                result = JsonUtils::makeJsonError("ID not found");
+                            }
+                        } else {
+                            result = JsonUtils::makeJsonError("Unable to execute query");
+                        }
+                        delete res;
+                        delete prep_stmt;
+                    }
+
+                    if (jsonDocument.contains("zone_group")) {
+                        prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT setZoneGroup(?,?,?,?);");
+                        prep_stmt->setInt(1, item_id);
+                        prep_stmt->setInt(2, jsonDocument.at("zone_group"));
+                        prep_stmt->setString(3, jlwe.getCurrentUserIP());
+                        prep_stmt->setString(4, jlwe.getCurrentUsername());
+                        res = prep_stmt->executeQuery();
+                        if (res->next()) {
+                            if (res->getInt(1) == 0) {
+                                result = JsonUtils::makeJsonSuccess("Zone group updated");
                             } else {
                                 result = JsonUtils::makeJsonError("ID not found");
                             }

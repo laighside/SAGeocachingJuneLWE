@@ -309,6 +309,10 @@ function makeFindPointsExtrasRowHtml(jsonData, row) {
             display_text: "B Thunder",
             selected: (jsonData.extras_type === "B")
         }, {
+            value: "F",
+            display_text: "Flash mob",
+            selected: (jsonData.extras_type === "F")
+        }, {
             value: "O",
             display_text: "Other",
             selected: (jsonData.extras_type === "O")

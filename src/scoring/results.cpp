@@ -18,6 +18,7 @@
 
 #include "../core/CgiEnvironment.h"
 #include "../core/Encoder.h"
+#include "../core/FormElements.h"
 #include "../core/HtmlTemplate.h"
 #include "../core/JlweCore.h"
 #include "../core/JlweUtils.h"
@@ -399,6 +400,50 @@ int main () {
             std::cout << "</table>\n";
 
             std::cout << "<p style=\"text-align:center\"><a href=\"?cache_list=true\">Click here for a breakdown of the points for each cache</a></p>\n";
+
+
+            std::cout << "<h3 style=\"text-align:center\">Points chart</h2>\n";
+            std::cout << "<div id=\"chart_div\"><canvas id=\"chart_canvas\"></canvas></div>\n";
+            std::cout << FormElements::includeJavascript("/js/ext/chart.js");
+            std::cout << FormElements::includeJavascript("/js/utils.js");
+
+            std::cout << "<script>\n";
+            std::cout << "downloadUrl(\"/cgi-bin/scoring/get_results.cgi\", null,\n";
+            std::cout << "  function(data, responseCode) {\n";
+            std::cout << "    if (responseCode === 200){\n";
+            std::cout << "      var results_data = JSON.parse(data);\n";
+
+            std::cout << "      if (results_data.error) {\n";
+            std::cout << "        document.getElementById('chart_div').innerText = results_data.error.toString();\n";
+            std::cout << "        return;\n";
+            std::cout << "      }\n";
+            std::cout << "      document.getElementById('chart_div').style.height = (results_data.chart_data.labels.length * 30).toString() + \"px\";\n";
+
+            std::cout << "      new Chart(document.getElementById('chart_canvas'), {\n";
+            std::cout << "        type: 'bar',\n";
+            std::cout << "        data: results_data.chart_data,\n";
+            std::cout << "        options: {\n";
+            std::cout << "          scales: {\n";
+            std::cout << "            x: {stacked: true, title: {text: 'Points', display: true}},\n";
+            std::cout << "            y: {stacked: true}\n";
+            std::cout << "          },\n";
+            std::cout << "          indexAxis: 'y',\n";
+            std::cout << "          responsive: true,\n";
+            std::cout << "          maintainAspectRatio: false,\n";
+            std::cout << "          plugins: {\n";
+            std::cout << "            legend: {position: 'top'},\n";
+            std::cout << "            title: {\n";
+            std::cout << "              display: results_data.has_teams_with_edited_score,\n";
+            std::cout << "              text: 'Teams marked with a (*) have a final score that does not match the calculated score',\n";
+            std::cout << "              position: 'bottom'\n";
+            std::cout << "            }\n";
+            std::cout << "          }\n";
+            std::cout << "        }\n";
+            std::cout << "      });\n";
+
+            std::cout << "    }\n";
+            std::cout << "  });\n";
+            std::cout << "</script>\n";
         }
 
 

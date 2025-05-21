@@ -55,3 +55,6 @@ target_link_libraries(save_scoring_data.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 add_executable(results.cgi results.cpp)
 target_link_libraries(results.cgi jlwecore ${MYSQLCPPCONN_LIBRARY} point_calculator)
 
+add_executable(get_results.cgi get_results.cpp)
+target_link_libraries(get_results.cgi jlwecore ${MYSQLCPPCONN_LIBRARY} point_calculator)
+

@@ -72,7 +72,12 @@ int main () {
                     extra_finds_in_order.push_back(value);
                 }
 
-                team_list.push_back({res->getString(2), trad_finds, extra_finds_in_order, {hide_score, caches_not_returned, late}});
+                std::vector<int> owned_caches_int;
+                std::vector<PointCalculator::Cache> owned_caches = point_calculator.getCachesForTeam(team_id);
+                for (unsigned int i = 0; i < owned_caches.size(); i++)
+                    owned_caches_int.push_back(owned_caches.at(i).cache_number);
+
+                team_list.push_back({res->getString(2), trad_finds, extra_finds_in_order, {hide_score, caches_not_returned, late}, owned_caches_int});
             }
             delete res;
             delete stmt;

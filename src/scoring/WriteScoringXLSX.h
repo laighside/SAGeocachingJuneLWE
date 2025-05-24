@@ -31,6 +31,7 @@ public:
         std::vector<int> finds;
         std::vector<int> finds_extras;
         std::vector<int> finds_default_extras;
+        std::vector<int> owned_caches;
     };
 
     /*! \struct CachePoints
@@ -102,18 +103,19 @@ private:
         TEAM_NAME = 8,
         GRID_PINK = 9,
         GRID_BLUE = 10,
-        GRID_DARK_GREY = 11,
-        GRID_LIGHT_GREY = 12,
-        GRID_BROWN = 13,
-        TOTALS_ROW = 14,
-        HYPERLINK_BOLD = 15,
-        BOLD_NO_COLOR = 16,
-        BOLD_NO_COLOR_CENTER = 17,
-        TEXT_CENTER = 18,
-        RED_BACKGROUND = 19,
-        HYPERLINK = 20,
-        RED_TEXT = 21,
-        TEAM_NAME_BROWN = 22,
+        GRID_YELLOW = 11,
+        GRID_DARK_GREY = 12,
+        GRID_LIGHT_GREY = 13,
+        GRID_BROWN = 14,
+        TOTALS_ROW = 15,
+        HYPERLINK_BOLD = 16,
+        BOLD_NO_COLOR = 17,
+        BOLD_NO_COLOR_CENTER = 18,
+        TEXT_CENTER = 19,
+        RED_BACKGROUND = 20,
+        HYPERLINK = 21,
+        RED_TEXT = 22,
+        TEAM_NAME_BROWN = 23,
     };
 
     unsigned int m_cacheCount;

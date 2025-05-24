@@ -12,6 +12,7 @@
   https://github.com/laighside/SAGeocachingJuneLWE
  */
 #include "WriteScoringXLSX.h"
+#include <algorithm>
 #include <stdexcept>
 
 #include "../core/Encoder.h"
@@ -99,10 +100,11 @@ void WriteScoringXLSX::addEnterDataSheet(const std::vector<TeamFinds> &teams, un
             bool isOddPage = ((i / STAMPS_PER_PAGE) % 2 == 0);
             if (hasTeam && teams.at(j).finds.size() > i) {
                 int value = teams.at(j).finds.at(i);
+                bool isOwnCache = (std::find(teams.at(j).owned_caches.begin(), teams.at(j).owned_caches.end(), i + 1) != teams.at(j).owned_caches.end());
                 if (value) {
-                    sheetData += makeNumberCell(i + 2, j + 2, value, isOddPage ? GRID_PINK : GRID_BLUE);
+                    sheetData += makeNumberCell(i + 2, j + 2, value, isOwnCache ? GRID_YELLOW : (isOddPage ? GRID_PINK : GRID_BLUE));
                 } else {
-                    sheetData += makeEmptyCell(i + 2, j + 2, isOddPage ? GRID_PINK : GRID_BLUE);
+                    sheetData += makeEmptyCell(i + 2, j + 2, isOwnCache ? GRID_YELLOW : (isOddPage ? GRID_PINK : GRID_BLUE));
                 }
             } else {
                 sheetData += makeEmptyCell(i + 2, j + 2, isOddPage ? GRID_PINK : GRID_BLUE);

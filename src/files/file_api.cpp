@@ -103,7 +103,7 @@ int main () {
                         nlohmann::json jsonObject;
                         jsonObject["href"] = upload_folder_url;
                         jsonObject["size"] = 0;
-                        prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT SUM(file_size) FROM public_file_upload;");
+                        prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT SUM(file_size) FROM public_file_upload WHERE status = 'S';");
                         res = prep_stmt->executeQuery();
                         if (res->next()) {
                             jsonObject["size"] = res->getInt(1);
@@ -119,7 +119,7 @@ int main () {
                         jsonDocumentOut["items"].push_back(jsonObject);
 
                         stmt = jlwe.getMysqlCon()->createStatement();
-                        res = stmt->executeQuery("SELECT server_filename,unix_timestamp(timestamp),file_size,user_ip FROM public_file_upload ORDER BY timestamp DESC;");
+                        res = stmt->executeQuery("SELECT server_filename,unix_timestamp(timestamp),file_size,user_ip FROM public_file_upload WHERE status = 'S' ORDER BY timestamp DESC;");
                         while (res->next()) {
                             nlohmann::json jsonObject;
                             jsonObject["href"] = upload_folder_url + res->getString(1);

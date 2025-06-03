@@ -84,7 +84,7 @@ int main () {
                 std::cout << "<td style=\"text-align:center;\">" << (res->getInt(1) > 0 ? std::to_string(res->getInt(1)) : "-") << "</td>\n";
                 std::cout << "<td><a href=\"" << Encoder::htmlAttributeEncode(public_upload_url + ".resize/" + filename) << "\" data-lightbox=\"image-list\" data-title=\"" << Encoder::htmlAttributeEncode(filename) << "\">" << Encoder::htmlEntityEncode(filename) << "</a> ";
                 std::cout << "(<a href=\"" << Encoder::htmlAttributeEncode(url) << "\">full size</a>)</td>\n";
-                std::cout << "<td>" << (res->getInt(1) > 0 ? fileSizeToString(res->getInt(3)) : "") << "</td>\n";
+                std::cout << "<td>" << fileSizeToString(res->getInt(3)) << "</td>\n";
                 std::cout << "<td id=\"on_gd_cell_" + Encoder::htmlAttributeEncode(filename) + "\" style=\"text-align:center;\">" + (hasGoogleDrive ? "" : "N/A") + "</td>\n";
 
                 std::vector<FormElements::dropDownMenuItem> menu_items = {{"sendFileToGD('" + Encoder::javascriptAttributeEncode(filename) + "')", "Send to Google Drive", hasGoogleDrive},

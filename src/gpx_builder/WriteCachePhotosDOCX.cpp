@@ -111,15 +111,15 @@ void WriteCachePhotosDOCX::makeDocumentCachePhotos(JlweCore *jlwe, KeyValueParse
 
     // Get a list of photos from the database
     std::string query = "SELECT p.server_filename,p.cache_number,caches.cache_name,caches.camo,caches.permanent FROM public_file_upload AS p "
-                        "LEFT OUTER JOIN caches ON p.cache_number=caches.cache_number";
+                        "LEFT OUTER JOIN caches ON p.cache_number=caches.cache_number WHERE p.status = 'S'";
 
     // If we only want one photo of each cache, then select the biggest file (or maybe this should be something else?)
     if (one_per_cache) {
         query = "SELECT p.server_filename,p.cache_number,caches.cache_name,caches.camo,caches.permanent FROM ("
                   "SELECT public_file_upload.cache_number, public_file_upload.server_filename FROM public_file_upload "
                   "INNER JOIN ("
-                    "SELECT cache_number, max(file_size) AS max_file_size FROM public_file_upload GROUP BY cache_number"
-                  ") t on t.cache_number = public_file_upload.cache_number and t.max_file_size = public_file_upload.file_size"
+                    "SELECT cache_number, max(file_size) AS max_file_size FROM public_file_upload WHERE status = 'S' GROUP BY cache_number"
+                  ") t ON t.cache_number = public_file_upload.cache_number and t.max_file_size = public_file_upload.file_size WHERE public_file_upload.status = 'S'"
                 ") AS p LEFT OUTER JOIN caches ON p.cache_number=caches.cache_number";
     }
     query += std::string(all_photos ? ";" : " WHERE p.cache_number != 0;");
@@ -160,6 +160,8 @@ void WriteCachePhotosDOCX::makeDocumentCachePhotos(JlweCore *jlwe, KeyValueParse
 
         if (photo.cache_number && !res->isNull(3))
             photo.full_name = JlweUtils::makeFullCacheName(photo.cache_number, res->getString(3), res->getInt(4) != 0, res->getInt(5) != 0);
+        if (photo.full_name.size() > 60)
+            photo.full_name = photo.full_name.substr(0, 58) + "...";
 
         // Figure out which page orientation the photo would best fit on
         double best_ratio = 1.0;

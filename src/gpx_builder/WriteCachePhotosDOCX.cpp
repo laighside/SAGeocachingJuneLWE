@@ -112,6 +112,7 @@ void WriteCachePhotosDOCX::makeDocumentCachePhotos(JlweCore *jlwe, KeyValueParse
     // Get a list of photos from the database
     std::string query = "SELECT p.server_filename,p.cache_number,caches.cache_name,caches.camo,caches.permanent FROM public_file_upload AS p "
                         "LEFT OUTER JOIN caches ON p.cache_number=caches.cache_number WHERE p.status = 'S'";
+    query += std::string(all_photos ? ";" : " AND p.cache_number != 0;");
 
     // If we only want one photo of each cache, then select the biggest file (or maybe this should be something else?)
     if (one_per_cache) {
@@ -121,8 +122,8 @@ void WriteCachePhotosDOCX::makeDocumentCachePhotos(JlweCore *jlwe, KeyValueParse
                     "SELECT cache_number, max(file_size) AS max_file_size FROM public_file_upload WHERE status = 'S' GROUP BY cache_number"
                   ") t ON t.cache_number = public_file_upload.cache_number and t.max_file_size = public_file_upload.file_size WHERE public_file_upload.status = 'S'"
                 ") AS p LEFT OUTER JOIN caches ON p.cache_number=caches.cache_number";
+        query += std::string(all_photos ? ";" : " WHERE p.cache_number != 0;");
     }
-    query += std::string(all_photos ? ";" : " WHERE p.cache_number != 0;");
 
     std::vector<photo_s> photos;
     std::vector<bool> caches_with_photos(number_game_caches, false);

@@ -64,6 +64,12 @@ void WriteCacheListDOCX::makeDocumentCacheList(JlweCore *jlwe, KeyValueParser *o
 
     result += insertHeaderRow(column_options, paragraph_settings);
 
+    int caches_per_page = 55;
+    if (page_size == "a4_landscape")
+        caches_per_page = 37;
+    if (page_size == "a3_portrait")
+        caches_per_page = 80;
+
     int cache_number = 1;
 
     sql::Statement *stmt;
@@ -84,7 +90,7 @@ void WriteCacheListDOCX::makeDocumentCacheList(JlweCore *jlwe, KeyValueParser *o
                 cache_number++;
             }
         }
-        if (cache_number == 51 || cache_number == 101 || cache_number == 151)
+        if (cache_number % caches_per_page == 1 && cache_number != 1)
             result += insertPageSplit(page_size, column_options, paragraph_settings);
 
         std::string cache_number_str = res->getString(1);
@@ -177,7 +183,7 @@ void WriteCacheListDOCX::makeDocumentCacheList(JlweCore *jlwe, KeyValueParser *o
 
     if (all_caches){
         while (cache_number <= number_game_caches){
-            if (cache_number == 51 || cache_number == 101 || cache_number == 151)
+            if (cache_number % caches_per_page == 1 && cache_number != 1)
                 result += insertPageSplit(page_size, column_options, paragraph_settings);
             std::string cache_number_str = std::to_string(cache_number);
             if (cache_number_str.size() == 1)
@@ -196,7 +202,9 @@ void WriteCacheListDOCX::makeDocumentCacheList(JlweCore *jlwe, KeyValueParser *o
         result += " <w:pgSz w:w=\"16838\" w:h=\"23812\" w:orient=\"portrait\"/>\n";
     } else if (page_size == "a3_landscape") {
         result += " <w:pgSz w:w=\"23812\" w:h=\"16838\" w:orient=\"landscape\"/>\n";
-    } else { //default to A4
+    } else if (page_size == "a4_landscape") {
+        result += " <w:pgSz w:w=\"16838\" w:h=\"11906\" w:orient=\"landscape\"/>\n";
+    } else { //default to A4 portrait
         result += " <w:pgSz w:w=\"11906\" w:h=\"16838\" w:orient=\"portrait\"/>\n";
     }
     result += "  <w:pgMar w:top=\"567\" w:right=\"567\" w:bottom=\"567\" w:left=\"567\" w:header=\"567\" w:footer=\"567\" w:gutter=\"0\"/>\n";
@@ -282,7 +290,9 @@ void WriteCacheListDOCX::makeDocumentOwnerList(JlweCore *jlwe, KeyValueParser *o
         result += " <w:pgSz w:w=\"16838\" w:h=\"23812\" w:orient=\"portrait\"/>\n";
     } else if (page_size == "a3_landscape") {
         result += " <w:pgSz w:w=\"23812\" w:h=\"16838\" w:orient=\"landscape\"/>\n";
-    } else { //default to A4
+    } else if (page_size == "a4_landscape") {
+        result += " <w:pgSz w:w=\"16838\" w:h=\"11906\" w:orient=\"landscape\"/>\n";
+    } else { //default to A4 portrait
         result += " <w:pgSz w:w=\"11906\" w:h=\"16838\" w:orient=\"portrait\"/>\n";
     }
     result += "  <w:pgMar w:top=\"567\" w:right=\"567\" w:bottom=\"567\" w:left=\"567\" w:header=\"567\" w:footer=\"567\" w:gutter=\"0\"/>\n";
@@ -358,6 +368,8 @@ std::string WriteCacheListDOCX::insertTableHeader(std::string page_size){
         result += "      <w:tblW w:w=\"15706\" w:type=\"dxa\" />\n";
     } else if (page_size == "a3_landscape"){
         result += "      <w:tblW w:w=\"22680\" w:type=\"dxa\" />\n";
+    } else if (page_size == "a4_landscape"){
+        result += "      <w:tblW w:w=\"15706\" w:type=\"dxa\" />\n";
     } else { //default to A4
         result += "      <w:tblW w:w=\"10774\" w:type=\"dxa\" />\n";
     }

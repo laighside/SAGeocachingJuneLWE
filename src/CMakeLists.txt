@@ -53,6 +53,9 @@ ENDIF()
 # Find curl
 find_package(CURL REQUIRED)
 
+# OpenSSL
+find_package(OpenSSL REQUIRED)
+
 # Find maxminddb
 find_library(MAXMINDDB_LIBRARY NAMES maxminddb)
 IF(NOT MAXMINDDB_LIBRARY STREQUAL "MAXMINDDB_LIBRARY-NOTFOUND")
@@ -83,6 +86,7 @@ add_subdirectory(password)
 add_subdirectory(log)
 add_subdirectory(users)
 add_subdirectory(contact_form)
+add_subdirectory(public_upload)
 
 add_executable(jlwe.cgi jlwe.cpp)
 target_link_libraries(jlwe.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
@@ -93,7 +97,7 @@ target_link_libraries(jlwe_year.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 add_executable(jlwe_map.cgi jlwe_map.cpp)
 target_link_libraries(jlwe_map.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 
-add_executable(download_file.cgi download_file.cpp)
+add_executable(download_file.cgi download_file.cpp public_upload/ImageUtils.cpp)
 target_link_libraries(download_file.cgi jlwecore ${MYSQLCPPCONN_LIBRARY})
 
 add_executable(js_files.cgi js_files.cpp)

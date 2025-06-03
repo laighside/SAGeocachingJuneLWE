@@ -50,6 +50,10 @@
         "enabled":false
     },
 
+    /* JSON authentication file from Google Service Account */
+    /* This is used for uploading files to Google Drive */
+    "google_drive_json_auth_file":"",
+
     /* Settings for Google reCAPTCHA service */
     "recaptcha": {
         "url":"https://www.google.com/recaptcha/api/siteverify",

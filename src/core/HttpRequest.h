@@ -85,9 +85,11 @@ public:
      *
      * \param data The data to send in the post request
      * \param content_type The content type of the data (this ends up in the Content-Type header)
+     * \param use_put If set to true, a PUT request will be used instead of a POST request
+     * \param use_patch If set to true, a PATCH request will be used instead of a POST request
      * \return True if the request was successful, false otherwise
      */
-    bool post(const std::string &data, const std::string &content_type);
+    bool post(const std::string &data, const std::string &content_type, bool use_put = false, bool use_patch = false);
 
     /*!
      * \brief Sends a POST request and blocks until the response is received (or timeout occurs).
@@ -95,9 +97,11 @@ public:
      * \param data The data to send in the post request
      * \param size The size of the data
      * \param content_type The content type of the data (this ends up in the Content-Type header)
+     * \param use_put If set to true, a PUT request will be used instead of a POST request
+     * \param use_patch If set to true, a PATCH request will be used instead of a POST request
      * \return True if the request was successful, false otherwise
      */
-    bool post(const char *data, size_t size, const std::string &content_type);
+    bool post(const char *data, size_t size, const std::string &content_type, bool use_put = false, bool use_patch = false);
 
     /*!
      * \brief Gets the response data.

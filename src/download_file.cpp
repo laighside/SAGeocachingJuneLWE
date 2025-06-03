@@ -18,6 +18,7 @@
 #include "core/JlweCore.h"
 #include "core/JlweUtils.h"
 #include "core/KeyValueParser.h"
+#include "public_upload/ImageUtils.h"
 
 int main () {
     try {
@@ -79,14 +80,20 @@ int main () {
         if ((!validFilename) && includePublicUploads && jlwe.isLoggedIn()) {
             size_t idx = filename.find_last_of('/');
             std::string sub_dir = (idx != std::string::npos) ? filename.substr(0, idx) : "";
+            bool is_resized_file = (base_file_dir + sub_dir == public_upload_dir + "/.resize");
             std::string filename_only = (idx != std::string::npos) ? filename.substr(idx + 1) : "";
-            if (base_file_dir + sub_dir == public_upload_dir && filename_only.size() > 0) {
+            if (base_file_dir + sub_dir == public_upload_dir + (is_resized_file ? "/.resize" : "") && filename_only.size() > 0) {
                 prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT server_filename FROM public_file_upload WHERE server_filename = ?;");
                 prep_stmt->setString(1, filename_only);
                 res = prep_stmt->executeQuery();
                 if (res->next()) { // if the file exists in MySQL
                     mysql_filename = res->getString(1);
-                    full_filename = public_upload_dir + "/" + mysql_filename;
+                    if (is_resized_file) {
+                        // This will create the resized image if it doesn't exist
+                        full_filename = ImageUtils::getResizedImage(mysql_filename, public_upload_dir); //public_upload_dir + "/.resize/" + mysql_filename;
+                    } else {
+                        full_filename = public_upload_dir + "/" + mysql_filename;
+                    }
                     validFilename = true;
                 }
                 delete res;

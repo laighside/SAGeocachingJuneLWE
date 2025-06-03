@@ -135,11 +135,11 @@ bool HttpRequest::get() {
     return success;
 }
 
-bool HttpRequest::post(const std::string &data, const std::string &content_type) {
-    return this->post(data.c_str(), data.size(), content_type);
+bool HttpRequest::post(const std::string &data, const std::string &content_type, bool use_put, bool use_patch) {
+    return this->post(data.c_str(), data.size(), content_type, use_put, use_patch);
 }
 
-bool HttpRequest::post(const char *data, size_t size, const std::string &content_type) {
+bool HttpRequest::post(const char *data, size_t size, const std::string &content_type, bool use_put, bool use_patch) {
     if (!this->curl)
         return false;
 
@@ -164,6 +164,11 @@ bool HttpRequest::post(const char *data, size_t size, const std::string &content
 
     curl_easy_setopt(this->curl, CURLOPT_POSTFIELDS, this->postData);
     curl_easy_setopt(this->curl, CURLOPT_POSTFIELDSIZE, size);
+
+    if (use_put)
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+    if (use_patch)
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PATCH");
 
     return this->get();
 }

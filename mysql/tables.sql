@@ -20,6 +20,19 @@ CREATE TABLE `admin_notes` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
+-- Table structure for table `auth_tokens`
+--
+
+DROP TABLE IF EXISTS `auth_tokens`;
+CREATE TABLE `auth_tokens` (
+  `id` varchar(20) NOT NULL,
+  `token` text NOT NULL,
+  `expires` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id_UNIQUE` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
 -- Table structure for table `best_caches`
 --
 
@@ -571,6 +584,7 @@ CREATE TABLE `public_file_upload` (
   `timestamp` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `file_size` int NOT NULL DEFAULT '0',
   `user_ip` varchar(50) DEFAULT NULL,
+  `status` char(1) NOT NULL DEFAULT 'S',
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

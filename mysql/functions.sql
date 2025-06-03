@@ -332,6 +332,21 @@ END$$
 DELIMITER ;
 
 /**
+ * deletePublicFile This deletes a file from the public upload folder (marks the status as 'D' in the public_file_upload table)
+ */
+DROP FUNCTION IF EXISTS deletePublicFile;
+DELIMITER $$
+CREATE FUNCTION deletePublicFile(server_filename_in TEXT, userIn VARCHAR(100), userIP VARCHAR(50)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    DECLARE dummy INT;
+    UPDATE public_file_upload SET status = 'D' WHERE server_filename = server_filename_in;
+    SET dummy = log_user_event(userIP, userIn, CONCAT("Deleted public upload file: \"",  server_filename_in, "\""));
+    RETURN 0;
+END$$
+DELIMITER ;
+
+/**
  * deleteTeam This deletes an entry from the game_teams table
  */
 DROP FUNCTION IF EXISTS deleteTeam;
@@ -577,6 +592,23 @@ BEGIN
     ELSE
         RETURN 1;
     END IF;
+END$$
+DELIMITER ;
+
+/**
+ * setAuthToken This adds an entry, or updates an existing entry in the auth_tokens table (for Google Drive)
+ */
+DROP FUNCTION IF EXISTS setAuthToken;
+DELIMITER $$
+CREATE FUNCTION setAuthToken(idIn VARCHAR(20), tokenIn TEXT, expiresIn INT) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    IF (EXISTS(SELECT * FROM auth_tokens WHERE id = idIn)) THEN
+        UPDATE auth_tokens SET token = tokenIn, expires = FROM_UNIXTIME(expiresIn) WHERE id = idIn;
+    ELSE
+        INSERT INTO auth_tokens (id, token, expires) VALUES(idIn, tokenIn, FROM_UNIXTIME(expiresIn));
+    END IF;
+    RETURN 0;
 END$$
 DELIMITER ;
 

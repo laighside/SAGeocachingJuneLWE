@@ -56,6 +56,20 @@ int main () {
             std::cout << "    }\n";
             std::cout << "}\n\n";
 
+            std::cout << "function clearCachesTable(){\n";
+            std::cout << "    if (confirm(\"This will erase all data in the caches and user hidden caches tables. Are you sure you want to proceed?\") == true) {\n";
+            std::cout << "        var jsonObj = {\n";
+            std::cout << "            \"confirm\":true,\n";
+            std::cout << "            \"table\":\"caches\"\n";
+            std::cout << "        };\n";
+
+            std::cout << "        postUrl('clear_table.cgi', JSON.stringify(jsonObj), null,\n";
+            std::cout << "                function(data, responseCode) {\n";
+            std::cout << "                    httpResponseHandler(data, responseCode, false, null, null);\n";
+            std::cout << "             }, httpErrorResponseHandler);\n";
+            std::cout << "    }\n";
+            std::cout << "}\n\n";
+
             std::cout << "function clearGameTeamsTable(){\n";
             std::cout << "    if (confirm(\"This will erase all data in the game teams table. Are you sure you want to proceed?\") == true) {\n";
             std::cout << "        var jsonObj = {\n";
@@ -75,6 +89,20 @@ int main () {
             std::cout << "        var jsonObj = {\n";
             std::cout << "            \"confirm\":true,\n";
             std::cout << "            \"table\":\"email_list\"\n";
+            std::cout << "        };\n";
+
+            std::cout << "        postUrl('clear_table.cgi', JSON.stringify(jsonObj), null,\n";
+            std::cout << "                function(data, responseCode) {\n";
+            std::cout << "                    httpResponseHandler(data, responseCode, false, null, null);\n";
+            std::cout << "             }, httpErrorResponseHandler);\n";
+            std::cout << "    }\n";
+            std::cout << "}\n\n";
+
+            std::cout << "function clearPublicFileUploadTable(){\n";
+            std::cout << "    if (confirm(\"This will erase all data in the public file upload table, and permanently delete all the files uploaded. Are you sure you want to proceed?\") == true) {\n";
+            std::cout << "        var jsonObj = {\n";
+            std::cout << "            \"confirm\":true,\n";
+            std::cout << "            \"table\":\"public_file_upload\"\n";
             std::cout << "        };\n";
 
             std::cout << "        postUrl('clear_table.cgi', JSON.stringify(jsonObj), null,\n";
@@ -107,9 +135,17 @@ int main () {
             std::cout << "<p>This clears the cache handout table.</p>\n";
             std::cout << "<p>Number of game caches: <input type=\"number\" name=\"new_cache_count_input\" id=\"new_cache_count_input\" min=\"1\" max=\"10000\" step=\"1\" value=\"100\"> <input type=\"button\" onclick=\"clearHandoutTable();\" value=\"Clear table and reset cache count\" class=\"red_button\" ></p>\n";
 
+            std::cout << "<h3>Cache table</h3>\n";
+            std::cout << "<p>This clears the list of caches in the GPX builder.</p>\n";
+            std::cout << "<p><input type=\"button\" onclick=\"clearCachesTable();\" value=\"Clear caches table\" class=\"red_button\" ></p>\n";
+
             std::cout << "<h3>Game teams table</h3>\n";
             std::cout << "<p>This clears the list of competing teams.</p>\n";
             std::cout << "<p><input type=\"button\" onclick=\"clearGameTeamsTable();\" value=\"Clear game teams table\" class=\"red_button\" ></p>\n";
+
+            std::cout << "<h3>Public file upload table</h3>\n";
+            std::cout << "<p>This deletes all the files in the public_upload folder.</p>\n";
+            std::cout << "<p><input type=\"button\" onclick=\"clearPublicFileUploadTable();\" value=\"Clear public file upload\" class=\"red_button\" ></p>\n";
 
             std::cout << "<h3>Email list table</h3>\n";
             std::cout << "<p>This clears the mailing list.</p>\n";

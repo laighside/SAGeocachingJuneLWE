@@ -13,6 +13,7 @@
  */
 #include <iostream>
 #include <string>
+#include <filesystem>
 
 #include "../core/CgiEnvironment.h"
 #include "../core/KeyValueParser.h"
@@ -35,6 +36,7 @@ int main () {
             return 0;
         }
 
+        sql::Statement *stmt;
         sql::PreparedStatement *prep_stmt;
         sql::ResultSet *res;
 
@@ -83,6 +85,48 @@ int main () {
                     } else {
                         std::cout << JsonUtils::makeJsonError("Error updating number_game_caches setting");
                     }
+
+                } else if (table_name == "public_file_upload") {
+
+                    // delete the files first
+                    std::string public_upload_dir = jlwe.config.at("publicFileUpload").at("directory");
+                    stmt = jlwe.getMysqlCon()->createStatement();
+                    res = stmt->executeQuery("SELECT server_filename FROM public_file_upload;");
+                    while (res->next()) {
+                        std::string filename = res->getString(1);
+                        std::string full_filename = public_upload_dir + "/" + filename;
+                        if (std::filesystem::is_regular_file(full_filename)) {
+                            if (!std::filesystem::remove(full_filename))
+                                throw std::runtime_error("Unable to delete file: " + full_filename);
+                        }
+                        full_filename = public_upload_dir + "/.resize/" + filename;
+                        if (std::filesystem::is_regular_file(full_filename)) {
+                            if (!std::filesystem::remove(full_filename))
+                                throw std::runtime_error("Unable to delete file: " + full_filename);
+                        }
+                    }
+                    delete res;
+                    delete stmt;
+
+                    prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT clearPublicFileUpload(?,?);");
+                    prep_stmt->setString(1, jlwe.getCurrentUserIP());
+                    prep_stmt->setString(2, jlwe.getCurrentUsername());
+                    res = prep_stmt->executeQuery();
+                    delete res;
+                    delete prep_stmt;
+
+                    std::cout << JsonUtils::makeJsonSuccess("Public file list successfully cleared");
+
+                } else if (table_name == "caches") {
+
+                    prep_stmt = jlwe.getMysqlCon()->prepareStatement("SELECT clearGpxBuilder(?,?);");
+                    prep_stmt->setString(1, jlwe.getCurrentUserIP());
+                    prep_stmt->setString(2, jlwe.getCurrentUsername());
+                    res = prep_stmt->executeQuery();
+                    delete res;
+                    delete prep_stmt;
+
+                    std::cout << JsonUtils::makeJsonSuccess("Caches list successfully cleared");
 
                 } else if (table_name == "game_teams") {
 

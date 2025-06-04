@@ -200,6 +200,37 @@ END$$
 DELIMITER ;
 
 /**
+ * clearGpxBuilder This clears the caches and user_hidden_caches tables
+ */
+DROP FUNCTION IF EXISTS clearGpxBuilder;
+DELIMITER $$
+CREATE FUNCTION clearGpxBuilder(userIP VARCHAR(50), usernameIn VARCHAR(100)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    DECLARE dummy INT;
+    SET dummy = log_user_event(userIP, usernameIn, CONCAT("Tables caches and user_hidden_caches were cleared"));
+    DELETE FROM caches;
+    DELETE FROM user_hidden_caches;
+    RETURN 0;
+END$$
+DELIMITER ;
+
+/**
+ * clearPublicFileUpload This clears the public_file_upload table
+ */
+DROP FUNCTION IF EXISTS clearPublicFileUpload;
+DELIMITER $$
+CREATE FUNCTION clearPublicFileUpload(userIP VARCHAR(50), usernameIn VARCHAR(100)) RETURNS INT
+    NOT DETERMINISTIC
+BEGIN
+    DECLARE dummy INT;
+    SET dummy = log_user_event(userIP, usernameIn, CONCAT("Table public_file_upload was cleared"));
+    DELETE FROM public_file_upload;
+    RETURN 0;
+END$$
+DELIMITER ;
+
+/**
  * clearRegistrations This clears the event_registrations, camping, sat_dinner tables
  */
 DROP FUNCTION IF EXISTS clearRegistrations;
@@ -217,7 +248,7 @@ END$$
 DELIMITER ;
 
 /**
- * clearTeamList This clears the game_teams table
+ * clearTeamList This clears the game_teams and game_find_list tables
  */
 DROP FUNCTION IF EXISTS clearTeamList;
 DELIMITER $$
@@ -225,8 +256,9 @@ CREATE FUNCTION clearTeamList(userIP VARCHAR(50), usernameIn VARCHAR(100)) RETUR
     NOT DETERMINISTIC
 BEGIN
     DECLARE dummy INT;
-    SET dummy = log_user_event(userIP, usernameIn, CONCAT("Table game_teams was cleared"));
+    SET dummy = log_user_event(userIP, usernameIn, CONCAT("Tables game_teams and game_find_list were cleared"));
     DELETE FROM game_teams;
+    DELETE FROM game_find_list;
     UPDATE cache_handout SET team_id = -1;
     RETURN 0;
 END$$

@@ -56,16 +56,30 @@ int main () {
                 query += "sharedWithMe";
             }
 
+            nlohmann::json result = {{"files", nlohmann::json::array()}};
+            int pageCount = 0;
+            std::string nextPageToken = "";
             std::string auth_header = GoogleAuthToken::getAuthorizationHeader(&jlwe);
-            HttpRequest request("https://www.googleapis.com/drive/v3/files?q=" + Encoder::urlEncode(query));
-            request.setHeader("Authorization: " + auth_header);
-            if (request.get()) {
-                nlohmann::json jsonResponse = nlohmann::json::parse(request.responseAsString());
-                std::cout << JsonUtils::makeJsonHeader() << jsonResponse.dump();
-            } else {
-                std::cout << JsonUtils::makeJsonError(request.errorMessage());
+
+            while (nextPageToken.size() > 0 || pageCount == 0) {
+
+                HttpRequest request("https://www.googleapis.com/drive/v3/files?q=" + Encoder::urlEncode(query) + (nextPageToken.size() ? ("&pageToken=" + Encoder::urlEncode(nextPageToken)) : ""));
+                request.setHeader("Authorization: " + auth_header);
+                if (request.get()) {
+                    nlohmann::json jsonResponse = nlohmann::json::parse(request.responseAsString());
+                    nextPageToken = jsonResponse.value("nextPageToken", "");
+                    result["files"].insert(result["files"].end(), jsonResponse["files"].begin(), jsonResponse["files"].end());
+                    pageCount++;
+                } else {
+                    throw std::runtime_error(request.errorMessage());
+                }
+
+                if (pageCount >= 100)
+                    break;
             }
 
+            result["pageCount"] = pageCount;
+            std::cout << JsonUtils::makeJsonHeader() << result.dump();
         } else {
             std::cout << JsonUtils::makeJsonError("You do not have permission to view this area");
         }

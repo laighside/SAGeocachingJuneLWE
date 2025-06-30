@@ -14,6 +14,7 @@
 #include "WriteRegistrationXLSX.h"
 #include <stdexcept>
 
+#include "../prices.h"
 #include "../core/Encoder.h"
 #include "../core/JlweUtils.h"
 #include "../core/PaymentUtils.h"
@@ -140,7 +141,8 @@ void WriteRegistrationXLSX::addEventRegistrationsSheet(sql::Connection *con, boo
         sheetData += makeStringCell(++colId, rowId, "Dinner?", TITLE_BOLD);
         sheetData += makeStringCell(++colId, rowId, "Payment type", TITLE_BOLD);
     }
-    sheetData += makeStringCell(++colId, rowId, "Cost", TITLE_BOLD);
+    sheetData += makeStringCell(++colId, rowId, "Registration Cost", TITLE_BOLD);
+    sheetData += makeStringCell(++colId, rowId, "Total Cost", TITLE_BOLD);
     if (full_mode) {
         sheetData += makeStringCell(++colId, rowId, "Payment received", TITLE_BOLD);
         sheetData += makeStringCell(++colId, rowId, "cs_id", TITLE_BOLD);
@@ -155,6 +157,7 @@ void WriteRegistrationXLSX::addEventRegistrationsSheet(sql::Connection *con, boo
     sql::ResultSet *res = stmt->executeQuery("SELECT UNIX_TIMESTAMP(timestamp),IP_address,registration_id,idempotency,email_address,gc_username,phone_number,real_names_adults,real_names_children,number_adults,number_children,past_jlwe,have_lanyard,camping,dinner,payment_type,stripe_session_id FROM event_registrations WHERE status = 'S';");
     while (res->next()) {
         std::string userKey = res->getString(4);
+        int cost_registration = res->getInt(10) * PRICE_EVENT_ADULT + res->getInt(11) * PRICE_EVENT_CHILD;
         int cost_total = PaymentUtils::getUserCost(con, userKey);
         int payment_received = PaymentUtils::getTotalPaymentReceived(con, userKey);
         std::string gc_username = res->getString(6);
@@ -197,6 +200,7 @@ void WriteRegistrationXLSX::addEventRegistrationsSheet(sql::Connection *con, boo
             sheetData += makeStringCell(++colId, rowId, res->getString(15), NO_STYLE);         // dinner
             sheetData += makeStringCell(++colId, rowId, res->getString(16), NO_STYLE);         // payment type
         }
+        sheetData += makeNumberCell(++colId, rowId, static_cast<double>(cost_registration) / 100, CURRENCY);  // registration cost
         sheetData += makeNumberCell(++colId, rowId, static_cast<double>(cost_total) / 100, CURRENCY);  // cost
         bool hasPaid = (payment_received >= cost_total);
         if (full_mode) {
@@ -271,7 +275,8 @@ void WriteRegistrationXLSX::addCampingSheet(sql::Connection *con, bool full_mode
     if (full_mode) {
         sheetData += makeStringCell(++colId, rowId, "Payment type", TITLE_BOLD);
     }
-    sheetData += makeStringCell(++colId, rowId, "Cost", TITLE_BOLD);
+    sheetData += makeStringCell(++colId, rowId, "Camping Cost", TITLE_BOLD);
+    sheetData += makeStringCell(++colId, rowId, "Total Cost", TITLE_BOLD);
     if (full_mode) {
         sheetData += makeStringCell(++colId, rowId, "Payment received", TITLE_BOLD);
         sheetData += makeStringCell(++colId, rowId, "cs_id", TITLE_BOLD);
@@ -283,9 +288,10 @@ void WriteRegistrationXLSX::addCampingSheet(sql::Connection *con, bool full_mode
     sheetData += "</row>\n";
 
     sql::Statement *stmt = con->createStatement();
-    sql::ResultSet *res = stmt->executeQuery("SELECT UNIX_TIMESTAMP(timestamp),IP_address,registration_id,idempotency,email_address,gc_username,phone_number,camping_type,number_people,arrive_date,leave_date,camping_comment,payment_type,stripe_session_id FROM camping WHERE status = 'S';");
+    sql::ResultSet *res = stmt->executeQuery("SELECT UNIX_TIMESTAMP(camping.timestamp),camping.IP_address,camping.registration_id,camping.idempotency,camping.email_address,camping.gc_username,camping.phone_number,camping.camping_type,camping.number_people,camping.arrive_date,camping.leave_date,camping.camping_comment,camping.payment_type,camping.stripe_session_id,camping_options.price_code FROM camping LEFT OUTER JOIN camping_options ON camping.camping_type=camping_options.id_string WHERE camping.status = 'S';");
     while (res->next()) {
         std::string userKey = res->getString(4);
+        int cost_camping = getCampingPrice(res->getString(15), res->getInt(9), res->getInt(11) - res->getInt(10));
         int cost_total = PaymentUtils::getUserCost(con, userKey);
         int payment_received = PaymentUtils::getTotalPaymentReceived(con, userKey);
 
@@ -318,6 +324,7 @@ void WriteRegistrationXLSX::addCampingSheet(sql::Connection *con, bool full_mode
         if (full_mode) {
             sheetData += makeStringCell(++colId, rowId, res->getString(13), NO_STYLE);    // payment type
         }
+        sheetData += makeNumberCell(++colId, rowId, static_cast<double>(cost_camping) / 100, CURRENCY);  // camping cost
         if (res->getString(13) == "event") {
             sheetData += makeStringCell(++colId, rowId, "Inc. in rego", NO_STYLE);
         } else {
@@ -406,12 +413,13 @@ void WriteRegistrationXLSX::addDinnerSheet(sql::Connection *con, int dinner_form
 
     sheetData += "</row>\n";
 
+    std::vector<DinnerUtils::dinner_menu_item> menu_items = DinnerUtils::getDinnerMenuItems(con, dinner_form_id);
     sql::PreparedStatement *prep_stmt = con->prepareStatement("SELECT UNIX_TIMESTAMP(timestamp),IP_address,registration_id,idempotency,email_address,gc_username,phone_number,number_adults,number_children,dinner_comment,payment_type,stripe_session_id, dinner_options_adults, dinner_options_children FROM sat_dinner WHERE status = 'S' AND dinner_form_id = ?;");
     prep_stmt->setInt(1, dinner_form_id);
     sql::ResultSet *res = prep_stmt->executeQuery();
     while (res->next()) {
         std::string userKey = res->getString(4);
-        int cost_dinner = DinnerUtils::getDinnerCost(con, dinner_form_id, res->getString(13));
+        int cost_dinner = DinnerUtils::getDinnerCost(con, dinner_form_id, res->getString(13), menu_items);
         int cost_total = PaymentUtils::getUserCost(con, userKey);
         int payment_received = PaymentUtils::getTotalPaymentReceived(con, userKey);
 
